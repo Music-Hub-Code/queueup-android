@@ -1,4 +1,5 @@
-# queueup-player-android
-Android App Player for QueueUp
+# QueueuUp Player for Android
 
-This the Android Player for Queueup. Check out [Queueup](https://github.com/extrakt/queuep-spotify.git)
+This the Android Player for [Queueup](https://github.com/extrakt/queuep-spotify.git). Read that for much more information.
+
+More documentation coming soon.
