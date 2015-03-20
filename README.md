@@ -4,4 +4,4 @@ This the Android Player for [Queueup](https://github.com/extrakt/queueup-spotify
 
 More documentation coming soon.
 
-![Screenshot](/images/screenshot.png =338x600)
+<img src="/images/screenshot.png" height=480/>
