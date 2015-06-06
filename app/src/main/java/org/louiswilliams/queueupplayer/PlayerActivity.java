@@ -1,7 +1,7 @@
 package org.louiswilliams.queueupplayer;
 
+import android.app.Activity;
 import android.content.Intent;
-import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
@@ -13,15 +13,16 @@ import android.widget.TextView;
 import com.github.nkzawa.emitter.Emitter;
 import com.github.nkzawa.socketio.client.IO;
 import com.github.nkzawa.socketio.client.Socket;
-import com.spotify.sdk.android.Spotify;
 import com.spotify.sdk.android.authentication.AuthenticationClient;
 import com.spotify.sdk.android.authentication.AuthenticationRequest;
 import com.spotify.sdk.android.authentication.AuthenticationResponse;
-import com.spotify.sdk.android.playback.Config;
-import com.spotify.sdk.android.playback.ConnectionStateCallback;
-import com.spotify.sdk.android.playback.Player;
-import com.spotify.sdk.android.playback.PlayerNotificationCallback;
-import com.spotify.sdk.android.playback.PlayerState;
+import com.spotify.sdk.android.player.Config;
+import com.spotify.sdk.android.player.ConnectionStateCallback;
+import com.spotify.sdk.android.player.Player;
+import com.spotify.sdk.android.player.PlayerNotificationCallback;
+import com.spotify.sdk.android.player.PlayerState;
+import com.spotify.sdk.android.player.PlayerStateCallback;
+import com.spotify.sdk.android.player.Spotify;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -30,10 +31,11 @@ import org.json.JSONObject;
 import java.net.URISyntaxException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.concurrent.TimeUnit;
+import java.util.Timer;
+import java.util.TimerTask;
 
 
-public class PlayerActivity extends ActionBarActivity
+public class PlayerActivity extends Activity
     implements PlayerNotificationCallback, ConnectionStateCallback {
 
     private static final int REQUEST_CODE = 1234;
@@ -44,9 +46,10 @@ public class PlayerActivity extends ActionBarActivity
     private static Socket mSocket;
     private static boolean isPlaying;
     private static boolean isDisabled;
-    private static  String currentTrack;
+    private static String currentTrack;
     private static String[] queue;
     private static String playlistId;
+    private static Timer progressTimer;
     private Button playButton;
     private Button stopButton;
     private TextView updateTextView;
@@ -64,13 +67,17 @@ public class PlayerActivity extends ActionBarActivity
         String id = getIntent().getStringExtra("playlist_id");
         if (playlistId == null) {
             playlistId = id;
+
+            if (mPlayer != null) {
+                initSocket(playlistId);
+            }
         } else if (!playlistId.equals(id)) {
             closeSocket();
             playlistId = id;
             initSocket(playlistId);
         }
 
-        if (mPlayer == null || mPlayer.isShutdown()) {
+        if (mPlayer == null) {
             spotifyLogin();
         }
 
@@ -87,26 +94,14 @@ public class PlayerActivity extends ActionBarActivity
         stopButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(final View v) {
-                if (isDisabled) {
-                    initSocket(playlistId);
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            isDisabled = false;
-                            ((TextView) v).setText("Disable Updates");
-                        }
-                    });
-                } else {
-                    closeSocket();
-                    updatePlaying(false);
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            isDisabled = true;
-                            ((TextView) v).setText("Enable Updates");
-                        }
-                    });
-                }
+                closeSocket();
+                progressTimer.cancel();
+                updatePlaying(false);
+                currentTrack = null;
+
+                playlistId = null;
+//                mPlayer.logout();
+                finish();
 
 
             }
@@ -223,15 +218,16 @@ public class PlayerActivity extends ActionBarActivity
 
                 @Override
                 public void onInitialized(Player player) {
-                    Log.d(LOG_TAG, "Iinit Player");
+                    Log.d(LOG_TAG, "Init Player");
                     player.addConnectionStateCallback(PlayerActivity.this);
                     player.addPlayerNotificationCallback(PlayerActivity.this);
-                    isPlaying = false;
+                    updatePlaying(false);
 
                     // Only initialize one the player has been
-                    if (mSocket != null) {
-                        mSocket.close();
-                    }
+//                    if (mSocket != null) {
+//                        closeSocket();
+//                    }
+
                     initSocket(playlistId);
                 }
 
@@ -245,7 +241,7 @@ public class PlayerActivity extends ActionBarActivity
     private void initSocket(final String playlistId) {
 
         try {
-            mSocket = IO.socket("http://queueup.louiswilliams.org/");
+            mSocket = IO.socket("http://dev.qup.louiswilliams.org/");
         } catch (URISyntaxException e) {
             Log.e(LOG_TAG, e.getMessage());
         }
@@ -362,20 +358,58 @@ public class PlayerActivity extends ActionBarActivity
         }
     }
 
+    private void updateDuration(long progress, long duration) {
+        try {
+            mSocket.emit("track_progress", new JSONObject("{progress: " + progress + ", duration: " + duration + "}"));
+        } catch (JSONException e ) {
+            Log.d(LOG_TAG, e.getMessage());
+        }
+
+
+    }
+
     private void closeSocket() {
         mSocket.off();
         mSocket.disconnect();
         logEvent("Socket closed");
     }
 
+    private void startProgressTimer() {
+        if (progressTimer != null) {
+            progressTimer.cancel();
+        }
+
+        progressTimer = new Timer();
+
+        progressTimer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                mPlayer.getPlayerState(new PlayerStateCallback() {
+                    @Override
+                    public void onPlayerState(PlayerState playerState) {
+                        updateDuration(playerState.positionInMs, playerState.durationInMs);
+                    }
+                });
+            }
+        }, 0, 1000);
+    }
+
+    private void stopProgressTimer() {
+        if(progressTimer != null) {
+            progressTimer.cancel();
+        }
+    }
+
     private void updatePlaying(boolean play) {
         if (!isPlaying && play) {
             logEvent("Playing");
             mPlayer.resume();
+            startProgressTimer();
             isPlaying = true;
         } else if (!play && isPlaying) {
             logEvent("Paused");
             mPlayer.pause();
+            stopProgressTimer();
             isPlaying = false;
         }
         updatePlayButton(isPlaying);

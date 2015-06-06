@@ -6,7 +6,7 @@ android {
 
     defaultConfig {
         applicationId "org.louiswilliams.queueupplayer"
-        minSdkVersion 15
+        minSdkVersion 16
         targetSdkVersion 21
         versionCode 1
         versionName "1.0"
@@ -34,8 +34,12 @@ repositories {
 
 dependencies {
     compile fileTree(include: ['*.jar'], dir: 'libs')
-    compile 'com.android.support:appcompat-v7:22.0.0'
-    compile 'org.json:json:20140107'
-    compile 'com.spotify.sdk:spotifysdk:1.0.0-beta8@aar'
+    compile 'com.facebook.android:facebook-android-sdk:4.1.0'
+    compile 'com.android.support:appcompat-v7:22.1.1'
+    compile 'com.android.support:support-v4:22.1.1'
+    compile 'com.spotify.sdk:spotify-auth:1.0.0-beta10@aar'
+    compile 'com.spotify.sdk:spotify-player:1.0.0-beta10@aar'
+    compile 'com.squareup.picasso:picasso:2.5.2'
+    compile 'com.github.navasmdc:MaterialDesign:1.5@aar'
     compile project(':socket.io')
 }

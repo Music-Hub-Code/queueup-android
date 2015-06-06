@@ -9,19 +9,36 @@
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
+
+        <meta-data
+            android:name="com.facebook.sdk.ApplicationId"
+            android:value="@string/facebook_app_id" />
+
         <activity
-            android:name=".MainActivity"
-            android:label="@string/app_name" >
+            android:name=".LoginActivity"
+            android:theme="@android:style/Theme.Material.NoActionBar"
+            android:label="@string/title_activity_login" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
         </activity>
+
         <activity
-            android:name="com.spotify.sdk.android.authentication.LoginActivity"
-            android:theme="@android:style/Theme.Translucent.NoTitleBar" >
+            android:name=".MainActivity"
+            android:launchMode="singleInstance"
+            >
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data android:host="callback" android:scheme="queueup" />
+            </intent-filter>
         </activity>
+
+
         <activity
             android:name=".QueueActivity"
             android:label="@string/title_activity_queue"
@@ -34,19 +51,28 @@
             android:name=".PlayerActivity"
             android:label="@string/title_activity_player"
             android:launchMode="singleTask"
-            android:parentActivityName=".PlaylistChooserActivity" >
+            android:parentActivityName=".PlaylistListFragment" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="org.louiswilliams.queueupplayer.PlaylistChooserActivity" />
+                android:value=".PlaylistListFragment" />
         </activity>
         <activity
-            android:name=".PlaylistChooserActivity"
-            android:label="@string/title_activity_playlist_chooser"
-            android:parentActivityName=".MainActivity" >
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value="org.louiswilliams.queueupplayer.MainActivity" />
+            android:name=".PlaylistListFragment"
+            android:label="@string/title_activity_playlist_chooser">
         </activity>
+
+        <activity
+            android:name="com.spotify.sdk.android.authentication.LoginActivity"
+            android:theme="@android:style/Theme.Material.NoActionBar.TranslucentDecor" >
+        </activity>
+
+        <activity
+            android:name="com.facebook.FacebookActivity"
+            android:configChanges="keyboard|keyboardHidden|screenLayout|screenSize|orientation"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar"
+            android:label="@string/app_name">
+        </activity>
+
     </application>
 
 </manifest>

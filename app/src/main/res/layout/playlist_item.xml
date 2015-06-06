@@ -1,25 +1,44 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical" android:layout_width="match_parent"
-    android:layout_height="match_parent">
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center_horizontal"
+    android:elevation="4dp"
+    android:translationX="-2dp"
+    android:background="@drawable/grid_item_rect"
+    android:orientation="vertical"
+    android:id="@+id/playlist_list_item"
+    android:clipToPadding="false">
 
-    <TextView
-        android:layout_width="wrap_content"
+    <ImageView
+        android:id="@+id/playlist_list_item_image"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceLarge"
-        android:id="@+id/playlist_list_item_title"
-        android:layout_gravity="center_horizontal" />
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceLarge"
-        android:id="@+id/playlist_list_item_track"
-        android:layout_gravity="center_horizontal" />
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceLarge"
-        android:visibility="gone"
-        android:id="@+id/playlist_list_item_id"
-        android:layout_gravity="center_horizontal" />
-</LinearLayout>
+        android:scaleType="fitStart"/>
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_alignBottom="@+id/playlist_list_item_image"
+        android:layout_alignTop="@+id/playlist_list_item_image"
+        android:layout_alignLeft="@+id/playlist_list_item_image"
+        android:layout_alignRight="@+id/playlist_list_item_image"
+        android:background="#AA222222"
+        android:orientation="vertical"
+        >
+
+        <TextView
+            android:textColor="@color/primary_material_light"
+            android:layout_gravity="center_vertical"
+            android:layout_centerVertical="true"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="20sp"
+            android:fontFeatureSettings="bold"
+            android:id="@+id/playlist_list_item_title"
+            android:gravity="center"
+            android:layout_centerInParent="true"
+            />
+    </RelativeLayout>
+</RelativeLayout>

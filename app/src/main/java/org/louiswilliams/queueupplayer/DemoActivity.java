@@ -35,18 +35,18 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.spotify.sdk.android.Spotify;
 import com.spotify.sdk.android.authentication.AuthenticationClient;
 import com.spotify.sdk.android.authentication.AuthenticationRequest;
 import com.spotify.sdk.android.authentication.AuthenticationResponse;
-import com.spotify.sdk.android.playback.Config;
-import com.spotify.sdk.android.playback.ConnectionStateCallback;
-import com.spotify.sdk.android.playback.Connectivity;
-import com.spotify.sdk.android.playback.PlaybackBitrate;
-import com.spotify.sdk.android.playback.Player;
-import com.spotify.sdk.android.playback.PlayerNotificationCallback;
-import com.spotify.sdk.android.playback.PlayerState;
-import com.spotify.sdk.android.playback.PlayerStateCallback;
+import com.spotify.sdk.android.player.Config;
+import com.spotify.sdk.android.player.ConnectionStateCallback;
+import com.spotify.sdk.android.player.Connectivity;
+import com.spotify.sdk.android.player.PlaybackBitrate;
+import com.spotify.sdk.android.player.Player;
+import com.spotify.sdk.android.player.PlayerNotificationCallback;
+import com.spotify.sdk.android.player.PlayerState;
+import com.spotify.sdk.android.player.PlayerStateCallback;
+import com.spotify.sdk.android.player.Spotify;
 
 import java.util.Arrays;
 import java.util.List;
@@ -62,9 +62,9 @@ public class DemoActivity extends ActionBarActivity implements
     //
 
     @SuppressWarnings("SpellCheckingInspection")
-    private static final String CLIENT_ID = "16cfe9a1c56f488cbcd7b845a0e655b3";
+    private static final String CLIENT_ID = "null";
     @SuppressWarnings("SpellCheckingInspection")
-    private static final String REDIRECT_URI = "queueup://callback";
+    private static final String REDIRECT_URI = "testschema://callback";
 
     @SuppressWarnings("SpellCheckingInspection")
     private static final String TEST_SONG_URI = "spotify:track:6KywfgRqvgvfJc3JRwaZdZ";
@@ -113,28 +113,17 @@ public class DemoActivity extends ActionBarActivity implements
      * (or effectively, after the user has logged in).
      */
     private static final int[] REQUIRES_INITIALIZED_STATE = {
-//            R.id.show_player_state_button,
             R.id.play_track_button,
             R.id.play_mono_track_button,
             R.id.play_48khz_track_button,
             R.id.play_album_button,
-            R.id.play_playlist_button,
-//            R.id.pause_button,
-//            R.id.seek_button,
-//            R.id.low_bitrate_button,
-//            R.id.normal_bitrate_button,
-//            R.id.high_bitrate_button
+            R.id.play_playlist_button
     };
 
     /**
      * UI controls which should only be enabled if the player is actively playing.
      */
     private static final int[] REQUIRES_PLAYING_STATE = {
-//            R.id.skip_next_button,
-//            R.id.skip_prev_button,
-//            R.id.queue_song_button,
-//            R.id.toggle_shuffle_button,
-//            R.id.toggle_repeat_button
     };
 
     //  _____ _      _     _
@@ -146,12 +135,12 @@ public class DemoActivity extends ActionBarActivity implements
 
     /**
      * The player used by this activity. There is only ever one instance of the player,
-     * which is owned by the {@link com.spotify.sdk.android.Spotify} class and refcounted.
+     * which is owned by the {@link Spotify} class and refcounted.
      * This means that you may use the Player from as many Fragments as you want, and be
      * assured that state remains consistent between them.
      * <p/>
      * However, each fragment, activity, or helper class <b>must</b> call
-     * {@link com.spotify.sdk.android.Spotify#destroyPlayer(Object)} when they are no longer
+     * {@link Spotify#destroyPlayer(Object)} when they are no longer
      * need that player. Failing to do so will result in leaked resources.
      */
     private Player mPlayer;
@@ -161,7 +150,7 @@ public class DemoActivity extends ActionBarActivity implements
     /**
      * Used to get notifications from the system about the current network state in order
      * to pass them along to
-     * {@link com.spotify.sdk.android.playback.Player#setConnectivityStatus(com.spotify.sdk.android.playback.Connectivity)}.
+     * {@link Player#setConnectivityStatus(Connectivity)}.
      * Note that this implies <pre>android.permission.ACCESS_NETWORK_STATE</pre> must be
      * declared in the manifest. Not setting the correct network state in the SDK may
      * result in strange behavior.
@@ -169,7 +158,7 @@ public class DemoActivity extends ActionBarActivity implements
     private BroadcastReceiver mNetworkStateReceiver;
 
     /**
-     * Used to log messages to a {@link android.widget.TextView} in this activity.
+     * Used to log messages to a {@link TextView} in this activity.
      */
     private TextView mStatusText;
     /**
@@ -229,14 +218,14 @@ public class DemoActivity extends ActionBarActivity implements
      *
      * @param context Android context
      * @return Connectivity state to be passed to the SDK
-     * @see com.spotify.sdk.android.playback.Player#setConnectivityStatus(com.spotify.sdk.android.playback.Connectivity)
+     * @see Player#setConnectivityStatus(Connectivity)
      */
     //TODO(nik): ^-- is that actually true? I think so, but someone ought to look it up...
     private Connectivity getNetworkConnectivity(Context context) {
         ConnectivityManager connectivityManager;
         connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo activeNetwork = connectivityManager.getActiveNetworkInfo();
-        if (activeNetwork != null) {
+        if (activeNetwork != null && activeNetwork.isConnected()) {
             return Connectivity.fromNetworkType(activeNetwork.getType());
         } else {
             return Connectivity.OFFLINE;

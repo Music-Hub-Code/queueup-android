@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:materialdesign="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:translationX="-2dp"
+    android:orientation="vertical"
+    android:padding="8dp"
+    android:elevation="4dp"
+    android:background="@color/background_material_light"
+    >
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        >
+
+
+        <ImageView
+            android:id="@+id/playlist_image"
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:scaleType="fitCenter"
+            />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingLeft="12dp"
+            android:orientation="vertical"
+
+            >
+            <TextView
+                android:id="@+id/playlist_current_track"
+                android:textColor="@color/primary_material_dark"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="16sp"
+                android:gravity="left"
+                android:layout_gravity="center|top"
+                />
+            <TextView
+                android:id="@+id/playlist_current_artist"
+                android:textColor="@color/primary_dark_material_light"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="14sp"
+                android:gravity="left"
+                android:layout_gravity="center|top"
+                />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <TextView
+        android:layout_gravity="right"
+        android:layout_marginTop="-12dp"
+        android:layout_marginBottom="2dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="@color/primary_dark_material_light"
+        android:text="0:00/4:20"/>
+
+
+    <com.gc.materialdesign.views.ProgressBarDeterminate
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+
+        />
+
+
+</LinearLayout>
