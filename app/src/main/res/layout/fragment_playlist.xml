@@ -21,10 +21,10 @@
 
 
     <ImageButton
-        android:id="@+id/play_button"
+        android:id="@+id/add_track_button"
         android:layout_width="56dp"
         android:layout_height="56dp"
-        android:background="@drawable/white_circle"
+        android:background="@drawable/white_oval_ripple"
         android:src="@drawable/ic_action_add"
         android:elevation="8dp"
         android:translationX="-2dp"

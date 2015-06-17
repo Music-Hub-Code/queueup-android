@@ -14,6 +14,8 @@ import queueup.objects.QueueupStateChange;
  */
 public class PlaylistPlayer extends PlaylistClient {
 
+    private QueueupStateChange currentState;
+
     public PlaylistPlayer(String clientId, String email, Queueup.CallReceiver<PlaylistClient> receiver) {
         super(clientId, email, receiver);
     }
@@ -31,6 +33,7 @@ public class PlaylistPlayer extends PlaylistClient {
                     @Override
                     public void call(Object... args) {
                         QueueupStateChange state = new QueueupStateChange((JSONObject) args[0]);
+                        currentState = state;
                         listener.onStateChange(state);
                     }
                 });
@@ -91,4 +94,7 @@ public class PlaylistPlayer extends PlaylistClient {
         }
     }
 
+    public QueueupStateChange getCurrentState() {
+        return currentState;
+    }
 }

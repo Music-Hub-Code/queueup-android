@@ -26,9 +26,7 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:paddingLeft="12dp"
             android:paddingTop="5dp"
-            android:paddingBottom="8dp"
             android:orientation="vertical"
 
             >
@@ -45,65 +43,29 @@
                 android:textColor="@color/primary_dark_material_light"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textSize="16sp"
+                android:textSize="14sp"
+
                 android:gravity="center"
                 />
 
         </LinearLayout>
 
-        <TextView
-            android:layout_gravity="right"
-            android:layout_marginTop="-12dp"
-            android:layout_marginBottom="2dp"
-            android:layout_marginRight="16dp"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textColor="@color/primary_dark_material_light"
-            android:text="0:00/4:20"/>
-
-
-        <com.gc.materialdesign.views.ProgressBarDeterminate
+        <FrameLayout
+            android:id="@+id/playlist_control_frame"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginLeft="16dp"
-            android:layout_marginRight="16dp"
-            />
+            android:gravity="center_horizontal">
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:padding="0dp"
-            android:clipToPadding="false"
-            android:gravity="center_horizontal"
-            >
-
-
-            <ImageButton
+            <com.gc.materialdesign.views.ButtonFlat
+                android:id="@+id/play_here_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
-                android:id="@+id/play_button"
-                android:layout_width="56dp"
-                android:layout_height="56dp"
-                android:src="@drawable/ic_action_play_arrow_36"
-                android:background="@drawable/background_transparent"
-                >
-
-            </ImageButton>
-
-            <ImageButton
-                android:layout_gravity="center_horizontal"
-                android:id="@+id/skip_button"
-                android:layout_width="56dp"
-                android:layout_height="56dp"
-                android:src="@drawable/ic_action_skip_next_36"
-                android:background="@drawable/background_transparent"
-
-                android:layout_marginLeft="12dp"
-                >
-
-            </ImageButton>
-        </LinearLayout>
-
+                android:background="@color/link_text_material_light"
+                android:text="Play here"
+                android:layout_marginBottom="8dp"
+                />
+        </FrameLayout>
     </LinearLayout>
 
 

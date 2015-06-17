@@ -15,7 +15,7 @@
         android:id="@+id/playlist_list_item_image"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:scaleType="fitStart"/>
+        android:scaleType="centerCrop"/>
 
     <RelativeLayout
         android:layout_width="match_parent"
@@ -24,17 +24,19 @@
         android:layout_alignTop="@+id/playlist_list_item_image"
         android:layout_alignLeft="@+id/playlist_list_item_image"
         android:layout_alignRight="@+id/playlist_list_item_image"
-        android:background="#AA222222"
+        android:background="@drawable/opaque_dark_ripple"
         android:orientation="vertical"
         >
 
         <TextView
+            android:padding="8dp"
+            android:textStyle="bold"
             android:textColor="@color/primary_material_light"
             android:layout_gravity="center_vertical"
             android:layout_centerVertical="true"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textSize="20sp"
+            android:textSize="18sp"
             android:fontFeatureSettings="bold"
             android:id="@+id/playlist_list_item_title"
             android:gravity="center"

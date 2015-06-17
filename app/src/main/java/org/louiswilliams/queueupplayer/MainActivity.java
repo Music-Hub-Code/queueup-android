@@ -3,6 +3,7 @@ package org.louiswilliams.queueupplayer;
 import android.app.Activity;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
+import android.app.usage.UsageEvents;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
@@ -17,6 +18,7 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import com.facebook.FacebookSdk;
 import com.facebook.login.LoginManager;
@@ -28,10 +30,18 @@ import com.spotify.sdk.android.player.ConnectionStateCallback;
 import com.spotify.sdk.android.player.Player;
 import com.spotify.sdk.android.player.PlayerNotificationCallback;
 import com.spotify.sdk.android.player.PlayerState;
+import com.spotify.sdk.android.player.PlayerStateCallback;
 import com.spotify.sdk.android.player.Spotify;
 
+import java.util.Timer;
+import java.util.TimerTask;
+
+import queueup.PlaylistClient;
+import queueup.PlaylistPlayer;
 import queueup.Queueup;
 import queueup.QueueupClient;
+import queueup.objects.QueueupStateChange;
+import queueup.objects.SpotifyTrack;
 
 
 public class MainActivity extends Activity implements FragmentManager.OnBackStackChangedListener, ConnectionStateCallback, PlayerNotificationCallback {
@@ -39,14 +49,18 @@ public class MainActivity extends Activity implements FragmentManager.OnBackStac
     private static final int REQUEST_CODE = 1234;
     private static final String REDIRECT_URI = "queueup://callback";
     private String[] navigationTitles = {"Hot","Me"};
-    private String CLIENT_ID = this.getString(R.string.spotify_client_id);
+    private String CLIENT_ID;
     private DrawerLayout mDrawerLayout;
     private ListView mDrawerList;
     private ActionBarDrawerToggle mDrawerToggle;
-    private QueueupClient queueupClient;
-    private Player mPlayer;
+    private QueueupClient mQueueupClient;
     private String mUserId;
     private String mClientToken;
+    private Timer mProgressTimer;
+
+    private PlaylistListener mPlaylistListener;
+    private PlaylistPlayer mPlaylistPlayer;
+    private Player mPlayer;
 
     private static final String STORE_NAME = "authStore";
     private static final String LOG_TAG = "QUEUEUP";
@@ -54,6 +68,8 @@ public class MainActivity extends Activity implements FragmentManager.OnBackStac
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        CLIENT_ID = getString(R.string.spotify_client_id);
 
         getFragmentManager().addOnBackStackChangedListener(this);
 
@@ -63,11 +79,15 @@ public class MainActivity extends Activity implements FragmentManager.OnBackStac
 
         if (mClientToken != null && mUserId != null) {
 
-            queueupClient = new QueueupClient(mClientToken, mUserId);
+            mQueueupClient = new QueueupClient(mClientToken, mUserId);
 
-            FragmentTransaction transaction = getFragmentManager().beginTransaction();
-            transaction.replace(R.id.content_frame, new PlaylistListFragment());
-            transaction.commit();
+            if (savedInstanceState == null) {
+                FragmentTransaction transaction = getFragmentManager().beginTransaction();
+                PlaylistListFragment playlistListFragment = new PlaylistListFragment();
+
+                transaction.replace(R.id.content_frame, playlistListFragment );
+                transaction.commit();
+            }
 
         } else {
 
@@ -113,6 +133,135 @@ public class MainActivity extends Activity implements FragmentManager.OnBackStac
 
         displayHomeUp();
 
+
+    }
+
+    public  void goToLogin() {
+        Intent intent = new Intent(getBaseContext(), LoginActivity.class);
+        startActivity(intent);
+        finish();
+    }
+
+    public void showPlaylistFragment(String playlistId) {
+        FragmentTransaction transaction = getFragmentManager().beginTransaction();
+        Bundle bundle = new Bundle();
+        bundle.putString("playlist_id", playlistId);
+
+        PlaylistFragment playlistFragment = new PlaylistFragment();
+        playlistFragment.setArguments(bundle);
+
+        transaction.replace(R.id.content_frame, playlistFragment);
+        transaction.addToBackStack(null);
+        transaction.commit();
+    }
+
+    public void setPlaylistListener(PlaylistListener listener) {
+        mPlaylistListener = listener;
+    }
+
+    public String getCurrentUserId() {
+        return mUserId;
+    }
+
+    public PlaylistPlayer getPlaylistPlayer() {
+        return mPlaylistPlayer;
+    }
+
+    public PlaylistPlayer subscribeToPlaylist(final String playlistId) {
+
+        /* Listen to updates from the server about the playlist */
+        final PlaylistClient.StateChangeListener stateChangeListener = new PlaylistClient.StateChangeListener() {
+            @Override
+            public void onStateChange(final QueueupStateChange state) {
+                Log.d(Queueup.LOG_TAG, "State change: " + state);
+
+                if (mPlayer!= null) {
+
+                    mPlayer.getPlayerState(new PlayerStateCallback() {
+                        @Override
+                        public void onPlayerState(PlayerState playerState) {
+
+                            /* If the player's playlist is the same as the listener's  */
+                            if (mPlaylistListener != null && mPlaylistPlayer.getPlaylistId().equals(mPlaylistListener.getPlaylistId())) {
+
+                                /* New track */
+                                if (!playerState.trackUri.equals(state.current.uri)) {
+                                    Log.d(Queueup.LOG_TAG, "Changing tracks...");
+                                    mPlaylistListener.onTrackChanged(state.current);
+                                    mPlayer.play(state.current.uri);
+                                }
+
+                                /* If the playing state is not what it currently is (changed) */
+                                if (playerState.playing && !state.playing) {
+                                    Log.d(Queueup.LOG_TAG, "Pausing...");
+                                    mPlaylistListener.onPlayingChanged(false);
+                                    mPlayer.pause();
+                                } else if (!playerState.playing && state.playing) {
+                                    Log.d(Queueup.LOG_TAG, "Resuming...");
+                                    mPlaylistListener.onPlayingChanged(true);
+                                    mPlayer.resume();
+                                }
+
+                                /* New queue */
+                                if (state.tracks != null) {
+                                    mPlaylistListener.onQueueChanged(state.tracks);
+                                }
+                            }
+
+                        }
+                    });
+                }
+
+            }
+
+            @Override
+            public void onError(String message) {
+                toast(message);
+                Log.e(Queueup.LOG_TAG, message);
+            }
+        };
+
+        unsubscribeFromCurrentPlaylist();
+
+        /* Initial authentication to get the player */
+        mPlaylistPlayer = mQueueupClient.getPlaylistPlayer(new Queueup.CallReceiver<PlaylistClient>() {
+            @Override
+            public void onResult(PlaylistClient result) {
+                Log.d(Queueup.LOG_TAG, "AUTH SUCCESS");
+                PlaylistPlayer player  = (PlaylistPlayer) result;
+
+                /* Perform the subscription */
+                player.subscribe(playlistId, true, stateChangeListener);
+            }
+
+            @Override
+            public void onException(Exception e) {
+                toast(e.getMessage());
+                Log.e(Queueup.LOG_TAG, "AUTH PROBLEM: " + e.getMessage());
+            }
+        });
+
+        return mPlaylistPlayer;
+    }
+
+    public void unsubscribeFromCurrentPlaylist() {
+        if (mPlaylistPlayer != null) {
+            mPlaylistPlayer.disconnect();
+        }
+    }
+
+    public QueueupClient getQueueupClient() {
+        return mQueueupClient;
+    }
+
+    public void spotifyLogin() {
+        AuthenticationRequest.Builder builder = new AuthenticationRequest.Builder(CLIENT_ID,
+                AuthenticationResponse.Type.TOKEN,
+                REDIRECT_URI);
+        builder.setScopes(new String[]{"user-read-private", "streaming"});
+        AuthenticationRequest request = builder.build();
+
+        AuthenticationClient.openLoginInBrowser(this, request);
     }
 
     @Override
@@ -133,50 +282,6 @@ public class MainActivity extends Activity implements FragmentManager.OnBackStac
         }
     }
 
-    public  void goToLogin() {
-        Intent intent = new Intent(getBaseContext(), LoginActivity.class);
-        startActivity(intent);
-        finish();
-    }
-
-    public void showPlaylistFragment(String playlistId) {
-        FragmentTransaction transaction = getFragmentManager().beginTransaction();
-        Bundle bundle = new Bundle();
-        bundle.putString("playlist_id", playlistId);
-        PlaylistFragment playlistFragment = new PlaylistFragment();
-        playlistFragment.setArguments(bundle);
-
-        transaction.replace(R.id.content_frame, playlistFragment);
-        transaction.addToBackStack(null);
-        transaction.commit();
-    }
-
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent intent) {
-        super.onActivityResult(requestCode, resultCode, intent);
-
-        if (requestCode == REQUEST_CODE) {
-
-            Log.d(LOG_TAG, "REQUEST_CODE");
-            AuthenticationResponse response = AuthenticationClient.getResponse(resultCode, intent);
-
-            if (response.getType() == AuthenticationResponse.Type.TOKEN) {
-                initPlayer(response.getAccessToken());
-            }
-        }
-    }
-
-    public void spotifyLogin() {
-        AuthenticationRequest.Builder builder = new AuthenticationRequest.Builder(CLIENT_ID,
-                AuthenticationResponse.Type.TOKEN,
-                REDIRECT_URI);
-        builder.setScopes(new String[]{"user-read-private", "streaming"});
-        AuthenticationRequest request = builder.build();
-
-        AuthenticationClient.openLoginInBrowser(this, request);
-    }
-
-
     public void initPlayer(String accessToken) {
         Config playerConfig = new Config(this, accessToken, CLIENT_ID);
         mPlayer = Spotify.getPlayer(playerConfig, this, new Player.InitializationObserver() {
@@ -186,10 +291,13 @@ public class MainActivity extends Activity implements FragmentManager.OnBackStac
                 Log.d(LOG_TAG, "Init Player");
                 player.addConnectionStateCallback(MainActivity.this);
                 player.addPlayerNotificationCallback(MainActivity.this);
-//                updatePlaying(false);
 
-                player.play("spotify:track:2To3PTOTGJUtRsK3nQemP4");
-//                initSocket(playlistId);
+                SpotifyTrack current = mPlaylistPlayer.getCurrentState().current;
+                player.play(current.uri);
+
+                if (!mPlaylistPlayer.getCurrentState().playing) {
+                    player.pause();
+                }
             }
 
             @Override
@@ -203,18 +311,42 @@ public class MainActivity extends Activity implements FragmentManager.OnBackStac
         return mPlayer;
     }
 
-    public String getCurrentUserId() {
-        return mUserId;
+    public void startProgressUpdater() {
+        stopProgressUpdater();
+        mProgressTimer = new Timer();
+
+        mProgressTimer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                mPlayer.getPlayerState(new PlayerStateCallback() {
+                    @Override
+                    public void onPlayerState(PlayerState playerState) {
+                        int duration = playerState.durationInMs;
+                        int progress = playerState.positionInMs;
+
+                        Log.d(Queueup.LOG_TAG, "Progress: " + progress + "/" + duration);
+
+                        mPlaylistPlayer.updateTrackProgress(progress, duration);
+                        if (mPlaylistListener != null) {
+                            mPlaylistListener.onTrackProgress(progress, duration);
+                        }
+                    }
+                });
+            }
+        }, 0, 1000);
     }
 
-    public QueueupClient getQueueupClient() {
-        return queueupClient;
+    public void stopProgressUpdater() {
+        if (mProgressTimer != null) {
+            mProgressTimer.cancel();
+        }
     }
 
     public void displayHomeUp() {
-        mDrawerToggle.setDrawerIndicatorEnabled(getFragmentManager().getBackStackEntryCount() ==  0);
+        mDrawerToggle.setDrawerIndicatorEnabled(getFragmentManager().getBackStackEntryCount() == 0);
 
     }
+
 
     @Override
     protected void onPostCreate(Bundle savedInstanceState) {
@@ -267,9 +399,13 @@ public class MainActivity extends Activity implements FragmentManager.OnBackStac
         if (mPlayer != null) {
             Spotify.destroyPlayer(this);
         }
+        if (mPlaylistPlayer != null) {
+            mPlaylistPlayer.disconnect();
+        }
 
         super.onDestroy();
     }
+
 
     @Override
     public void onBackStackChanged() {
@@ -307,11 +443,28 @@ public class MainActivity extends Activity implements FragmentManager.OnBackStac
 
     @Override
     public void onPlaybackEvent(EventType eventType, PlayerState playerState) {
-
+        if (eventType == EventType.END_OF_CONTEXT) {
+            if (mPlaylistPlayer != null) {
+                mPlaylistPlayer.updateTrackDone();
+            }
+        } else if (eventType == EventType.PAUSE) {
+            stopProgressUpdater();
+        } else if (eventType == EventType.PLAY) {
+            startProgressUpdater();
+        }
     }
 
     @Override
     public void onPlaybackError(ErrorType errorType, String s) {
 
+    }
+
+    public void toast(final String message) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                Toast.makeText(MainActivity.this, message, Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 }

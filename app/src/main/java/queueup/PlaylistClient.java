@@ -29,10 +29,9 @@ public class PlaylistClient {
         try {
             mSocket = IO.socket(API_URL);
 
-            mSocket.on(Socket.EVENT_CONNECT, new Emitter.Listener() {
+            final Emitter.Listener onConnectListener = new Emitter.Listener() {
                 @Override
                 public void call(Object... args) {
-
                     mSubcription = null;
 
                     Log.d(Queueup.LOG_TAG, "CONNECTED");
@@ -70,13 +69,17 @@ public class PlaylistClient {
                         mSocket.disconnect();
                     }
 
+
                 }
-            });
+            };
+
+            mSocket.on(Socket.EVENT_CONNECT, onConnectListener);
 
             mSocket.on(Socket.EVENT_DISCONNECT, new Emitter.Listener() {
                 @Override
                 public void call(Object... args) {
                     mSocket.off();
+                    mSocket.on(Socket.EVENT_CONNECT, onConnectListener);
                 }
             });
 
@@ -113,6 +116,7 @@ public class PlaylistClient {
     }
 
     public void unsubscribe() {
+        mSubcription = null;
         mSocket.off("state_change");
         mSocket.emit("client_unsubscribe");
     }
@@ -125,7 +129,12 @@ public class PlaylistClient {
         return mSubcription != null;
     }
 
+    public String getPlaylistId() {
+        return mSubcription;
+    }
+
     public void disconnect() {
+        mSubcription = null;
         if (mSocket != null) {
             mSocket.off();
             mSocket.disconnect();

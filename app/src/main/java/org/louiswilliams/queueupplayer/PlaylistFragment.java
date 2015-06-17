@@ -1,5 +1,6 @@
 package org.louiswilliams.queueupplayer;
 
+import android.app.Activity;
 import android.app.Fragment;
 import android.content.Context;
 import android.media.Image;
@@ -9,23 +10,21 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
+import android.widget.Button;
+import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.ListView;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import com.spotify.sdk.android.authentication.AuthenticationClient;
-import com.spotify.sdk.android.authentication.AuthenticationRequest;
-import com.spotify.sdk.android.authentication.AuthenticationResponse;
+import com.gc.materialdesign.views.ButtonFlat;
+import com.gc.materialdesign.views.ProgressBarDeterminate;
+import com.spotify.sdk.android.player.Player;
 import com.squareup.picasso.Picasso;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
-import queueup.PlaylistClient;
-import queueup.PlaylistPlayer;
 import queueup.Queueup;
 import queueup.QueueupClient;
 import queueup.objects.QueueupPlaylist;
@@ -36,18 +35,18 @@ import queueup.objects.SpotifyTrack;
 /**
  * Created by Louis on 5/25/2015.
  */
-public class PlaylistFragment extends Fragment implements View.OnClickListener {
+public class PlaylistFragment extends Fragment implements PlaylistListener {
 
     private String mPlaylistId;
-    private PlaylistPlayer mPlaylistPlayer;
     private QueueupClient mQueueupClient;
     private View mView;
 
-    private QueueupPlaylist currentPlaylist;
+    private MainActivity mActivity;
 
     @Override
-    public void onCreate(Bundle savedState) {
-        super.onCreate(savedState);
+    public void onAttach(Activity activity) {
+        mActivity = (MainActivity) activity;
+        super.onAttach(activity);
     }
 
     @Override
@@ -57,53 +56,23 @@ public class PlaylistFragment extends Fragment implements View.OnClickListener {
 
         Log.d(Queueup.LOG_TAG, "Loading playlist" + mPlaylistId);
 
-        mQueueupClient = ((MainActivity) getActivity()).getQueueupClient();
+        /* Get the client*/
+        mQueueupClient = mActivity.getQueueupClient();
 
+        /* Get the playlist data to initially populate the view */
         mQueueupClient.playlistGet(mPlaylistId, new Queueup.CallReceiver<QueueupPlaylist>() {
             @Override
             public void onResult(QueueupPlaylist result) {
                 Log.d(Queueup.LOG_TAG, result.toString());
 
-                currentPlaylist = result;
                 populateView(result);
 
             }
 
             @Override
             public void onException(Exception e) {
-                toast(e.getMessage());
+                mActivity.toast(e.getMessage());
                 Log.e(Queueup.LOG_TAG, "Problem getting playlist: " + e.getMessage());
-            }
-        });
-
-        final PlaylistClient.StateChangeListener stateChangeListener = new PlaylistClient.StateChangeListener() {
-            @Override
-            public void onStateChange(QueueupStateChange state) {
-                Log.d(Queueup.LOG_TAG, "State change: " + state);
-
-                handleStateChange(state);
-            }
-
-            @Override
-            public void onError(String message) {
-                toast(message);
-                Log.e(Queueup.LOG_TAG, message);
-            }
-        };
-
-        mPlaylistPlayer = mQueueupClient.getPlaylistPlayer(new Queueup.CallReceiver<PlaylistClient>() {
-            @Override
-            public void onResult(PlaylistClient result) {
-                Log.d(Queueup.LOG_TAG, "AUTH SUCCESS");
-                PlaylistPlayer player  = (PlaylistPlayer) result;
-                player.subscribe(mPlaylistId, true, stateChangeListener);
-
-            }
-
-            @Override
-            public void onException(Exception e) {
-                toast(e.getMessage());
-                Log.e(Queueup.LOG_TAG, "AUTH PROBLEM: " + e.getMessage());
             }
         });
 
@@ -111,44 +80,74 @@ public class PlaylistFragment extends Fragment implements View.OnClickListener {
         return mView;
     }
 
+    @Override
+    public void onDestroyView() {
+        /* Make sure the activity knows that there is no playlist listener anymore  */
+        mActivity.setPlaylistListener(null);
+
+        super.onDestroyView();
+    }
+
     private void populateView(final QueueupPlaylist playlist) {
         List<QueueupTrack> tracks = playlist.tracks;
         String userId = playlist.adminId;
         final boolean isAdmin = userId.equals(mQueueupClient.getUserId());
 
-        final TrackListAdapter trackListAdapter = new TrackListAdapter(getActivity(), tracks, R.layout.track_item);
+        final TrackListAdapter trackListAdapter = new TrackListAdapter(mActivity, tracks, R.layout.track_item);
         final ListView trackList = (ListView) mView.findViewById(R.id.track_list);
 
         final View playlistHeader;
 
+        /* If the user is the admin of the current playlist, display special playlist header */
         if (isAdmin) {
-            playlistHeader = getActivity().getLayoutInflater().inflate(R.layout.playlist_player_header, null);
+            playlistHeader = mActivity.getLayoutInflater().inflate(R.layout.playlist_player_header, null);
+
+            /* If the current playlist playlist is this one, show the controls */
+            if (mActivity.getPlaylistPlayer() != null && mActivity.getPlaylistPlayer().getPlaylistId().equals(mPlaylistId)) {
+                showPlaylistControls(playlistHeader, playlist.playing);
+
+            } else {
+
+                final ButtonFlat playHereButton = (ButtonFlat) playlistHeader.findViewById(R.id.play_here_button);
+
+                /* Listen to the "play here" button */
+                View.OnClickListener playHereListener = new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+
+                        /* Prevent the button from being pressed again*/
+                        playHereButton.setOnClickListener(null);
+
+                        /* Log into spotify */
+                        mActivity.spotifyLogin();
+                        /* Tell the activity to subscribe to this playlist and launch the player */
+                        mActivity.subscribeToPlaylist(mPlaylistId);
+
+                        /* Insert the playlist controls */
+                        showPlaylistControls(playlistHeader, playlist.playing);
+
+                    }
+                };
+
+                playHereButton.setOnClickListener(playHereListener);
+
+            }
+
+
         } else {
-            playlistHeader = getActivity().getLayoutInflater().inflate(R.layout.playlist_header, null);
+            playlistHeader = mActivity.getLayoutInflater().inflate(R.layout.playlist_header, null);
         }
 
         final ImageView albumArt = (ImageView) playlistHeader.findViewById(R.id.playlist_image);
         final TextView trackName = (TextView) playlistHeader.findViewById(R.id.playlist_current_track);
         final TextView trackArist = (TextView) playlistHeader.findViewById(R.id.playlist_current_artist);
 
-//        final ImageButton playButton = (ImageButton) mView.findViewById(R.id.play_button);
 
-//        if (userId.equals(mQueueupClient.getUserId())) {
-//            playButton.setOnClickListener(this);
-//        } else {
-//            playButton.setVisibility(View.GONE);
-//        }
-
-        getActivity().runOnUiThread(new Runnable() {
+        mActivity.runOnUiThread(new Runnable() {
             @Override
             public void run() {
-//                if (currentPlaylist.playing) {
-//                    playButton.setImageResource(R.drawable.ic_action_pause);
-//                } else {
-//                    playButton.setImageResource(R.drawable.ic_action_play_arrow);
-//                }
 
-                Picasso.with(getActivity()).load(playlist.current.album.imageUrls.get(0)).into(albumArt);
+                Picasso.with(mActivity).load(playlist.current.album.imageUrls.get(0)).into(albumArt);
                 if (isAdmin) {
                     albumArt.getLayoutParams().height = trackList.getWidth() - (trackList.getPaddingLeft() + trackList.getPaddingRight());
                     albumArt.requestLayout();
@@ -159,51 +158,84 @@ public class PlaylistFragment extends Fragment implements View.OnClickListener {
                 trackList.addHeaderView(playlistHeader, null, false);
                 trackList.setAdapter(trackListAdapter);
 
-                getActivity().setTitle(playlist.name);
+                mActivity.setTitle(playlist.name);
             }
         });
 
     }
 
-    @Override
-    public void onDestroy() {
-        if (mPlaylistPlayer != null) {
-            mPlaylistPlayer.disconnect();
+    public void showPlaylistControls(View parent, boolean playing) {
+        View playlistControls = mActivity.getLayoutInflater().inflate(R.layout.playlist_controls, null);
+
+        /* Replace the contents of the frame with the new control layout */
+        FrameLayout controlFrame = (FrameLayout) parent.findViewById(R.id.playlist_control_frame);
+        controlFrame.removeAllViews();
+        controlFrame.addView(playlistControls);
+
+        ImageButton playButton = (ImageButton) playlistControls.findViewById(R.id.play_button);
+        ImageButton skipButton = (ImageButton) playlistControls.findViewById(R.id.skip_button);
+
+        View.OnClickListener playButtonListener = new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                /* Just invert the current playing status */
+                QueueupStateChange current =  mActivity.getPlaylistPlayer().getCurrentState();
+                Player player = mActivity.getSpotifyPlayer();
+
+                boolean updateToPlaying = !current.playing;
+                updateTrackPlaying(updateToPlaying);
+            }
+        };
+
+        View.OnClickListener skipButtonListener = new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                /* Send the update signal */
+                mActivity.getPlaylistPlayer().updateTrackDone();
+            }
+        };
+
+        playButton.setOnClickListener(playButtonListener);
+        skipButton.setOnClickListener(skipButtonListener);
+
+        /* Initialize the play button */
+        updatePlayButton(playButton, playing);
+
+        /* Tell the activity that we are now listening to playlist updates */
+        mActivity.setPlaylistListener(PlaylistFragment.this);
+    }
+
+    private  void updatePlayButton(final ImageButton button, final boolean playing) {
+        if (button != null) {
+            mActivity.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    if (playing) {
+                        button.setImageResource(R.drawable.ic_action_pause_36);
+                    } else {
+                        button.setImageResource(R.drawable.ic_action_play_arrow_36);
+                    }
+                }
+            });
+        } else {
+            Log.d(Queueup.LOG_TAG, "NULL!");
         }
-
-        super.onDestroy();
-    }
-
-    @Override
-    public void onClick(View v) {
-    //        ((MainActivity) getActivity()).spotifyLogin();
-        updateTrackPlaying(!currentPlaylist.playing);
-    }
-
-    private  void updatePlayButton(final boolean playing) {
-//        final ImageButton button =  (ImageButton)  mView.findViewById(R.id.play_button);
-//        if (button != null) {
-//            getActivity().runOnUiThread(new Runnable() {
-//                @Override
-//                public void run() {
-//                    if (playing) {
-//                        button.setImageResource(R.drawable.ic_action_pause);
-//                    } else {
-//                        button.setImageResource(R.drawable.ic_action_play_arrow);
-//                    }
-//                }
-//            });
-//        } else {
-//            Log.d(Queueup.LOG_TAG, "NULL!");
-//        }
     }
 
     private void updateTrackPlaying(boolean playing) {
-        currentPlaylist.playing = playing;
+        mActivity.getPlaylistPlayer().updateTrackPlaying(playing);
+        Player player = mActivity.getSpotifyPlayer();
 
-        mPlaylistPlayer.updateTrackPlaying(playing);
+        if (player != null) {
+            if (playing) {
+                player.resume();
+            } else {
+                player.pause();
+            }
+        }
 
-        updatePlayButton(playing);
+        ImageButton button = (ImageButton)  mView.findViewById(R.id.play_button);
+        updatePlayButton(button, playing);
     }
 
     private void updateCurrentTrack(final SpotifyTrack current) {
@@ -211,10 +243,10 @@ public class PlaylistFragment extends Fragment implements View.OnClickListener {
         final TextView trackName = (TextView) mView.findViewById(R.id.playlist_current_track);
         final TextView trackArist = (TextView) mView.findViewById(R.id.playlist_current_artist);
 
-        getActivity().runOnUiThread(new Runnable() {
+        mActivity.runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                Picasso.with(getActivity()).load(current.album.imageUrls.get(0)).into(albumArt);
+                Picasso.with(mActivity).load(current.album.imageUrls.get(0)).into(albumArt);
                 trackName.setText(current.name);
                 trackArist.setText(current.artists.get(0).name);
             }
@@ -222,13 +254,34 @@ public class PlaylistFragment extends Fragment implements View.OnClickListener {
 
     }
 
-    public void handleStateChange(QueueupStateChange state) {
-        updatePlayButton(state.playing);
+    @Override
+    public void onPlayingChanged(boolean playing) {
+        ImageButton button =  (ImageButton)  mView.findViewById(R.id.play_button);
+        updatePlayButton(button, playing);
 
-        if (state.current != null) {
-            updateCurrentTrack(state.current);
-        }
+    }
 
+    @Override
+    public void onTrackChanged(SpotifyTrack track) {
+        updateCurrentTrack(track);
+    }
+
+    @Override
+    public void onTrackProgress(int progress, int duration) {
+        final ProgressBarDeterminate progressBar = (ProgressBarDeterminate) mView.findViewById(R.id.track_progress);
+        final TextView progressLabel = (TextView) mView.findViewById(R.id.track_progress_text);
+        String progressText = String.format("%d:%02d", progress / (60 * 1000), (progress / 1000) % 60);
+        String durationText = String.format("%d:%02d", duration / (60 * 1000), (duration / 1000) % 60);
+
+        progressLabel.setText(progressText+ "/" + durationText);
+        progressBar.setMax(duration);
+        progressBar.setProgress(progress);
+
+    }
+
+    @Override
+    public void onQueueChanged(List<QueueupTrack> queue) {
+        Log.d(Queueup.LOG_TAG, "Queueup changed, but not doing anything YET");
     }
 
     public static class TrackListAdapter extends BaseAdapter {
@@ -286,12 +339,9 @@ public class PlaylistFragment extends Fragment implements View.OnClickListener {
         }
     }
 
-    public void toast(final String message) {
-        getActivity().runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                Toast.makeText(getActivity(), message, Toast.LENGTH_SHORT).show();
-            }
-        });
+    @Override
+    public String getPlaylistId() {
+        return mPlaylistId;
     }
+
 }
