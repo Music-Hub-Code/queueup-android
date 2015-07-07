@@ -1,4 +1,4 @@
-package org.louiswilliams.queueupplayer;
+package org.louiswilliams.queueupplayer.fragment;
 
 import android.app.Activity;
 import android.app.Fragment;
@@ -13,14 +13,18 @@ import android.widget.BaseAdapter;
 import android.widget.GridView;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.gc.materialdesign.views.ProgressBarDeterminate;
-import com.spotify.sdk.android.player.Player;
 import com.squareup.picasso.Picasso;
+
+import org.louiswilliams.queueupplayer.R;
+import org.louiswilliams.queueupplayer.activity.MainActivity;
 
 import java.util.List;
 
+import queueup.PlaylistListener;
 import queueup.Queueup;
 import queueup.QueueupClient;
 import queueup.objects.QueueupPlaylist;
@@ -28,11 +32,10 @@ import queueup.objects.QueueupStateChange;
 import queueup.objects.QueueupTrack;
 import queueup.objects.SpotifyTrack;
 
-public class PlaylistListFragment extends Fragment implements PlaylistListener{
+public class PlaylistListFragment extends Fragment implements PlaylistListener {
 
     private GridView playlistGrid;
     private List<QueueupPlaylist> mPlaylists;
-    private QueueupClient client;
     private MainActivity mActivity;
     private View mView;
 
@@ -43,18 +46,13 @@ public class PlaylistListFragment extends Fragment implements PlaylistListener{
         super.onAttach(activity);
     }
 
-    @Override
-    public void onActivityCreated(Bundle savedInstanceState){
-        populateList();
-
-        super.onActivityCreated(savedInstanceState);
-    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        populateList();
+
         mView = inflater.inflate(R.layout.fragment_playlist_list, container, false);
 
-        client = mActivity.getQueueupClient();
         playlistGrid = (GridView) mView.findViewById(R.id.playlist_grid);
 
         playlistGrid.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -64,6 +62,14 @@ public class PlaylistListFragment extends Fragment implements PlaylistListener{
                 Log.d(Queueup.LOG_TAG, "Using playlist ID: " + playlist.id);
 
                 mActivity.showPlaylistFragment(playlist.id);
+            }
+        });
+
+        ImageButton addPlaylistButton = (ImageButton) mView.findViewById(R.id.add_playlist_button);
+        addPlaylistButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showCreatePlaylistDialog();
             }
         });
 
@@ -99,16 +105,19 @@ public class PlaylistListFragment extends Fragment implements PlaylistListener{
 
     private void populateList() {
         Log.d(Queueup.LOG_TAG, "populating list...");
-        client.playlistGetList(new Queueup.CallReceiver<List<QueueupPlaylist>>() {
+        QueueupClient.playlistGetList(new Queueup.CallReceiver<List<QueueupPlaylist>>() {
             @Override
             public void onResult(List<QueueupPlaylist> playlists) {
                 Log.d(Queueup.LOG_TAG, "Playlist all success");
                 mPlaylists = playlists;
 
                 final PlaylistGridAdapter adapter = new PlaylistGridAdapter(mActivity, mPlaylists, R.layout.playlist_item);
+                final ProgressBar progress = (ProgressBar) mView.findViewById(R.id.loading_progress_bar);
+
                 mActivity.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
+                        progress.setVisibility(View.GONE);
                         playlistGrid.setAdapter(adapter);
                     }
                 });
@@ -117,9 +126,34 @@ public class PlaylistListFragment extends Fragment implements PlaylistListener{
 
             @Override
             public void onException(Exception e) {
+                mActivity.toast(e.getMessage());
                 Log.e(Queueup.LOG_TAG, "Failed to get playlist list: " + e.getMessage());
             }
         });
+    }
+
+    public void showCreatePlaylistDialog() {
+        if (mActivity.isLoggedIn()) {
+            PlaylistNameFragment playlistNameFragment = new PlaylistNameFragment();
+
+            playlistNameFragment.setDialogTitle("New Playlist");
+            playlistNameFragment.setPlaylistNameListener(new PlaylistNameFragment.PlaylistNameListener() {
+                @Override
+                public void onPlaylistCreate(PlaylistNameFragment dialogFragment) {
+                    mActivity.doCreatePlaylist(dialogFragment.getPlaylistName());
+                }
+
+                @Override
+                public void onCancel() {
+                }
+            });
+
+            playlistNameFragment.show(getFragmentManager(), "create_playlist");
+        } else {
+            mActivity.toast("You need to log in first");
+            mActivity.doLogin();
+        }
+
     }
 
     public void setupPlayerBar(View bar) {
@@ -151,25 +185,11 @@ public class PlaylistListFragment extends Fragment implements PlaylistListener{
         skipButton.setOnClickListener(skipButtonListener);
 
         /* Populate visual content */
+
         if (currentState != null) {
             updatePlayButton(currentState.playing);
 
-            final ImageView albumArt = (ImageView) bar.findViewById(R.id.playlist_image);
-            final TextView trackName = (TextView) bar.findViewById(R.id.playlist_current_track);
-            final TextView trackArist = (TextView) bar.findViewById(R.id.playlist_current_artist);
-
-            mActivity.runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    List<String> imageUrls = currentState.current.album.imageUrls;
-                    Picasso.with(mActivity).load(imageUrls.get(imageUrls.size() - 1)).into(albumArt);
-
-                    trackName.setText(currentState.current.name);
-                    trackArist.setText(currentState.current.artists.get(0).name);
-                    trackName.setSelected(true);
-                    trackArist.setSelected(true);
-                }
-            });
+            updateTrackViews(currentState.current);
         }
 
         /* Tell the activity we are now the active listener */
@@ -182,6 +202,27 @@ public class PlaylistListFragment extends Fragment implements PlaylistListener{
             }
         });
         Log.d(Queueup.LOG_TAG, "PLAYLIST LIST is now listener");
+    }
+
+    public void updateTrackViews(final SpotifyTrack track) {
+        final ImageView albumArt = (ImageView) mView.findViewById(R.id.playlist_image);
+        final TextView trackName = (TextView) mView.findViewById(R.id.playlist_current_track);
+        final TextView trackArist = (TextView) mView.findViewById(R.id.playlist_current_artist);
+
+        mActivity.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                List<String> imageUrls = track.album.imageUrls;
+                Picasso.with(mActivity).load(imageUrls.get(imageUrls.size() - 1)).into(albumArt);
+
+                trackName.setText(track.name);
+                trackArist.setText(track.artists.get(0).name);
+                trackName.setSelected(true);
+                trackArist.setSelected(true);
+            }
+        });
+
+
     }
 
     private void updatePlayButton(final boolean playing) {
@@ -205,14 +246,6 @@ public class PlaylistListFragment extends Fragment implements PlaylistListener{
     private void updateTrackPlaying(boolean playing) {
         mActivity.getPlaylistPlayer().updateTrackPlaying(playing);
 
-        Player player = mActivity.getSpotifyPlayer();
-        if (player != null) {
-            if (playing) {
-                player.resume();
-            } else {
-                player.pause();
-            }
-        }
         updatePlayButton(playing);
     }
 
@@ -223,7 +256,7 @@ public class PlaylistListFragment extends Fragment implements PlaylistListener{
 
     @Override
     public void onTrackChanged(SpotifyTrack track) {
-
+        updateTrackViews(track);
     }
 
     @Override
@@ -283,23 +316,25 @@ public class PlaylistListFragment extends Fragment implements PlaylistListener{
             QueueupPlaylist playlist = mPlaylists.get(position);
 
             if (convertView == null) {
-                View v = LayoutInflater.from(mContext).inflate(mResource, parent, false);
-                playlistItem = v;
-
-                TextView title = (TextView) playlistItem.findViewById(R.id.playlist_list_item_title);
-                title.setText(playlist.name.toUpperCase());
-
-                if (playlist.current != null && playlist.current.album != null && playlist.current.album.imageUrls != null) {
-                    List<String> imageUrls = playlist.current.album.imageUrls;
-                    if (imageUrls.size() > 0) {
-                        ImageView image = (ImageView) v.findViewById(R.id.playlist_list_item_image);
-                        Picasso.with(mContext).load(imageUrls.get(0)).into(image);
-                    }
-                }
+                playlistItem = LayoutInflater.from(mContext).inflate(mResource, parent, false);
             } else {
                 playlistItem = convertView;
             }
 
+            TextView title = (TextView) playlistItem.findViewById(R.id.playlist_list_item_title);
+            title.setText(playlist.name.toUpperCase());
+
+            if (playlist.current != null && playlist.current.album != null && playlist.current.album.imageUrls != null) {
+                List<String> imageUrls = playlist.current.album.imageUrls;
+                if (imageUrls.size() > 0) {
+                    ImageView image = (ImageView) playlistItem.findViewById(R.id.playlist_list_item_image);
+                    Picasso.with(mContext).load(imageUrls.get(0)).into(image);
+                }
+            } else {
+                ImageView image = (ImageView) playlistItem.findViewById(R.id.playlist_list_item_image);
+                image.setImageDrawable(mContext.getResources().getDrawable(R.drawable.background_opaque_dark));
+                Log.d(Queueup.LOG_TAG, "Current playlist is null...");
+            }
 
             return playlistItem;
         }

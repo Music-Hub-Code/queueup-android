@@ -3,6 +3,7 @@ package queueup;
 import android.util.Log;
 
 import com.github.nkzawa.emitter.Emitter;
+import com.spotify.sdk.android.player.Player;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -15,9 +16,10 @@ import queueup.objects.QueueupStateChange;
 public class PlaylistPlayer extends PlaylistClient {
 
     private QueueupStateChange currentState;
+    private Player mSpotifyPlayer;
 
-    public PlaylistPlayer(String clientId, String email, Queueup.CallReceiver<PlaylistClient> receiver) {
-        super(clientId, email, receiver);
+    public PlaylistPlayer(String clientToken, String userId, Queueup.CallReceiver<PlaylistClient> receiver) {
+        super(clientToken, userId, receiver);
     }
 
     public void subscribe(String playlistId, boolean force, final StateChangeListener listener) {
@@ -64,6 +66,13 @@ public class PlaylistPlayer extends PlaylistClient {
     }
 
     public void updateTrackPlaying(boolean playing) {
+        if (mSpotifyPlayer != null) {
+            if (playing) {
+                mSpotifyPlayer.resume();
+            } else {
+                mSpotifyPlayer.pause();
+            }
+        }
         if (isConnected()) {
             JSONObject obj = new JSONObject();
             try {
@@ -79,6 +88,18 @@ public class PlaylistPlayer extends PlaylistClient {
         if (isConnected()) {
             mSocket.emit("track_finished");
         }
+    }
+
+    public void attachSpotifyPlayer(Player spotifyPlayer) {
+        mSpotifyPlayer = spotifyPlayer;
+    }
+
+    public void detachSpotifyPlayer() {
+        mSpotifyPlayer = null;
+    }
+
+    public Player getSpotifyPlayer() {
+        return mSpotifyPlayer;
     }
 
     public void updateTrackProgress(int progress, int duration) {

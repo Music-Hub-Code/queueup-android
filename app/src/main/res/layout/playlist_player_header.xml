@@ -19,6 +19,7 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:paddingBottom="8dp"
         android:orientation="vertical"
         android:gravity="center_horizontal"
         >
@@ -62,8 +63,7 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
                 android:background="@color/link_text_material_light"
-                android:text="Play here"
-                android:layout_marginBottom="8dp"
+                android:text="Play with Spotify"
                 />
         </FrameLayout>
     </LinearLayout>

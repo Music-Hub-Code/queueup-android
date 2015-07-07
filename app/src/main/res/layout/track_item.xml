@@ -7,7 +7,7 @@
     android:elevation="4dp"
     android:orientation="horizontal"
     android:translationX="-2dp"
-    android:background="@drawable/grid_item_rect"
+    android:background="@color/primary_material_dark"
     android:id="@+id/track_list_item"
     android:layout_marginLeft="16dp"
     android:layout_marginRight="16dp"
@@ -39,6 +39,8 @@
             android:layout_height="wrap_content"
             android:textSize="16sp"
             android:id="@+id/track_list_item_name"
+            android:singleLine="true"
+            android:ellipsize="marquee"
             android:gravity="left"
             />
         <TextView
@@ -47,6 +49,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textSize="14sp"
+            android:singleLine="true"
+            android:ellipsize="marquee"
             android:id="@+id/track_list_item_artist"
             android:gravity="left"
             />

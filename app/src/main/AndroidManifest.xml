@@ -15,51 +15,26 @@
             android:value="@string/facebook_app_id" />
 
         <activity
-            android:name=".LoginActivity"
-            android:theme="@android:style/Theme.Material.NoActionBar"
-            android:label="@string/title_activity_login" >
+            android:name=".activity.MainActivity"
+            android:launchMode="singleTop"
+            android:configChanges="orientation|screenSize"
+            >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-
-        </activity>
-
-        <activity
-            android:name=".MainActivity"
-            android:launchMode="singleInstance"
-            android:configChanges="orientation|screenSize"
-            >
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-
                 <data android:host="callback" android:scheme="queueup" />
             </intent-filter>
         </activity>
 
-
         <activity
-            android:name=".QueueActivity"
-            android:label="@string/title_activity_queue"
-            android:parentActivityName=".MainActivity" >
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value="org.louiswilliams.queueupplayer.MainActivity" />
-        </activity>
-        <activity
-            android:name=".PlayerActivity"
-            android:label="@string/title_activity_player"
-            android:launchMode="singleTask"
-            android:parentActivityName=".PlaylistListFragment" >
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value=".PlaylistListFragment" />
-        </activity>
-        <activity
-            android:name=".PlaylistListFragment"
-            android:label="@string/title_activity_playlist_chooser">
+            android:name=".activity.LoginActivity"
+            android:theme="@android:style/Theme.Material.Dialog.NoActionBar"
+            android:label="@string/title_activity_login" >
         </activity>
 
         <activity

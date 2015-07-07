@@ -14,6 +14,7 @@ import queueup.Queueup;
 public class QueueupPlaylist extends QueueupObject {
     public String name;
     public String adminId;
+    public String adminName;
     public SpotifyTrack current;
     public List<QueueupTrack> tracks;
     public boolean playing;
@@ -25,6 +26,7 @@ public class QueueupPlaylist extends QueueupObject {
         try {
             name = obj.optString("name");
             adminId = obj.optString("admin");
+            adminName = obj.optString("admin_name");
             playing = obj.optBoolean("play", false);
             JSONObject currentJson = obj.optJSONObject("current");
             if (currentJson != null ) {

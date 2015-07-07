@@ -22,7 +22,6 @@ public class QueueupStateChange {
 
 
     public QueueupStateChange(JSONObject obj) {
-        tracks = new ArrayList<QueueupTrack>();
         try {
             trigger = obj.optString("trigger");
             playing = obj.optBoolean("play");
@@ -33,6 +32,8 @@ public class QueueupStateChange {
 
             JSONArray jsonTracks = obj.optJSONArray("queue");
             if (jsonTracks != null) {
+                tracks = new ArrayList<QueueupTrack>();
+
                 for (int i = 0; i < jsonTracks.length(); i++) {
                     JSONObject track = (JSONObject) jsonTracks.get(i);
                     tracks.add(new QueueupTrack(track));

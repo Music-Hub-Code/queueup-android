@@ -1,4 +1,4 @@
-package org.louiswilliams.queueupplayer;
+package org.louiswilliams.queueupplayer.activity;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -14,9 +14,8 @@ import com.facebook.FacebookSdk;
 import com.facebook.login.LoginManager;
 import com.facebook.login.LoginResult;
 import com.facebook.login.widget.LoginButton;
-import com.github.nkzawa.socketio.client.Socket;
 
-import java.util.logging.Level;
+import org.louiswilliams.queueupplayer.R;
 
 import queueup.Queueup;
 import queueup.QueueupClient;
@@ -24,34 +23,32 @@ import queueup.objects.QueueupCredential;
 
 public class LoginActivity extends Activity {
 
-    private static final String STORE_NAME = "authStore";
+    public static final int QUEUEUP_LOGIN_REQUEST_CODE = 2222;
+    public static final int RESULT_LOGIN_FAILURE = 2;
+    public static final String EXTRA_LOGIN_EXCEPTION = "EXTRA_LOGIN_EXCEPTION";
+    public static final String EXTRA_DO_LOGIN = "EXTRA_DO_LOGIN";
+
     private CallbackManager callbackManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        AndroidLoggingHandler.reset(new AndroidLoggingHandler());
-        java.util.logging.Logger.getLogger(Socket.class.getName()).setLevel(Level.FINEST);
-
         FacebookSdk.sdkInitialize(getApplicationContext());
         callbackManager = CallbackManager.Factory.create();
 
+        Intent intent = getIntent();
 
-        SharedPreferences prefs =  getSharedPreferences(STORE_NAME, 0);
+        /* If we are told to go ahead and do a login, bypassing displaying anything. */
+        if (!intent.getBooleanExtra(EXTRA_DO_LOGIN, false)) {
 
-        if (prefs.getString("clientToken", null) != null && prefs.getString("userId", null) != null) {
-            Log.d(Queueup.LOG_TAG, "Client already logged in...");
-            goToMain();
-        } else if (AccessToken.getCurrentAccessToken() != null) {
-            Log.d(Queueup.LOG_TAG, "Client already had access token...");
-            doLogin(AccessToken.getCurrentAccessToken());
+            setContentView(R.layout.activity_login);
+
+            LoginButton loginButton = (LoginButton) findViewById(R.id.login_button);
+            loginButton.setReadPermissions("email");
         }
 
-        setContentView(R.layout.activity_login);
 
-        LoginButton loginButton = (LoginButton) findViewById(R.id.login_button);
-        loginButton.setReadPermissions("email");
 
         LoginManager.getInstance().registerCallback(callbackManager, new FacebookCallback<LoginResult>() {
             @Override
@@ -64,39 +61,61 @@ public class LoginActivity extends Activity {
             @Override
             public void onCancel() {
                 Log.d(Queueup.LOG_TAG, "Cancelled FB Login");
+
+                finishAsCancelled();
             }
 
             @Override
             public void onError(FacebookException exception) {
                 Log.e(Queueup.LOG_TAG, exception.getMessage());
+
+                finishWithException(exception);
             }
         });
     }
 
-    private void goToMain() {
-        Intent mainIntent = new Intent(getBaseContext(), MainActivity.class);
-        startActivity(mainIntent);
-        finish();
-    }
 
     private void doLogin(final AccessToken accessToken) {
         QueueupClient.loginFacebook(accessToken.getToken(), new Queueup.CallReceiver<QueueupCredential>() {
 
             @Override
             public void onResult(QueueupCredential result) {
-                final SharedPreferences prefs = getSharedPreferences(STORE_NAME, 0);
+                final SharedPreferences prefs = getSharedPreferences(Queueup.STORE_NAME, 0);
 
-                prefs.edit().putString("clientToken", result.clientToken).commit();
-                prefs.edit().putString("userId", result.userId).commit();
+                prefs.edit()
+                        .putString(Queueup.STORE_CLIENT_TOKEN, result.clientToken)
+                        .putString(Queueup.STORE_USER_ID, result.userId)
+                        .putString(Queueup.STORE_FACEBOOK_ID, accessToken.getUserId())
+                        .commit();
 
-                goToMain();
+                finishAsOk();
             }
 
             @Override
             public void onException(Exception e) {
                 Log.e(Queueup.LOG_TAG, "Problem logging in with Facebook: " + e.getMessage());
+
+                finishWithException(e);
             }
         });
+    }
+
+    private void finishWithException(Exception exception) {
+        Intent i = new Intent();
+        i.putExtra(EXTRA_LOGIN_EXCEPTION, exception);
+
+        setResult(RESULT_LOGIN_FAILURE, i);
+        finish();
+    }
+
+    private void finishAsCancelled() {
+        setResult(RESULT_CANCELED);
+        finish();
+    }
+
+    private void finishAsOk() {
+        setResult(RESULT_OK);
+        finish();
     }
 
     @Override

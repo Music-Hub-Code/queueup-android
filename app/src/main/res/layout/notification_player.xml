@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:background="@drawable/white_rect_ripple"
+    android:layout_width="match_parent"
+    android:layout_height="64dp"
+    android:padding="5dp"
+    android:orientation="horizontal"
+    android:clipToPadding="false"
+    >
+
+    <ImageView
+        android:id="@+id/playlist_image"
+        android:layout_width="54dp"
+        android:layout_height="54dp"
+        android:scaleType="fitCenter"
+        android:background="@color/primary_dark_material_dark"
+        />
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:paddingLeft="6dp"
+        android:layout_marginTop="3dp"
+        android:layout_weight="1"
+        android:orientation="vertical"
+
+        >
+        <TextView
+            android:id="@+id/playlist_current_track"
+            android:textColor="@color/primary_material_dark"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="15sp"
+            android:gravity="left"
+            android:layout_gravity="center|top"
+            android:text="No track"
+            android:singleLine="true"
+            android:ellipsize="marquee"
+            android:marqueeRepeatLimit="marquee_forever"
+            />
+        <TextView
+            android:id="@+id/playlist_current_artist"
+            android:textColor="@color/primary_dark_material_light"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="13sp"
+            android:gravity="left"
+            android:layout_gravity="center|top"
+            android:singleLine="true"
+            android:ellipsize="end"
+            />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:clipToPadding="false">
+
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <ImageButton
+                android:layout_gravity="center_vertical"
+                android:id="@+id/play_button"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:paddingLeft="0dp"
+                android:paddingRight="0dp"
+                android:src="@drawable/ic_action_play_arrow_36"
+                android:background="@drawable/dark_white_oval_ripple"
+                >
+
+            </ImageButton>
+
+            <ImageButton
+                android:layout_gravity="center_vertical"
+                android:id="@+id/skip_button"
+                android:paddingLeft="0dp"
+                android:paddingRight="4dp"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:src="@drawable/ic_action_skip_next_36"
+                android:background="@drawable/dark_white_oval_ripple"
+
+                android:layout_marginLeft="12dp"
+                >
+
+            </ImageButton>
+
+            <ImageButton
+                android:id="@+id/stop_playback_button"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:src="@drawable/ic_action_clear_36"
+                android:background="@drawable/dark_white_oval_ripple"
+                android:scaleType="centerInside"
+                android:padding="2dp"
+                />
+
+        </LinearLayout>
+
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="right"
+            >
+
+            <TextView
+                android:gravity="start"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/primary_dark_material_light"
+                android:textSize="11sp"
+                android:paddingTop="2dp"
+                android:paddingRight="6dp"
+                android:id="@+id/track_progress_text"
+                android:text="0:00/0:00"/>
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+
+
+
+</LinearLayout>

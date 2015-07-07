@@ -1,4 +1,4 @@
-package org.louiswilliams.queueupplayer;
+package queueup;
 
 import java.util.List;
 

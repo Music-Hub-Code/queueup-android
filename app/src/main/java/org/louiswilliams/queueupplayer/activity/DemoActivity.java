@@ -17,7 +17,7 @@
  * under the License.
  */
 
-package org.louiswilliams.queueupplayer;
+package org.louiswilliams.queueupplayer.activity;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -47,6 +47,8 @@ import com.spotify.sdk.android.player.PlayerNotificationCallback;
 import com.spotify.sdk.android.player.PlayerState;
 import com.spotify.sdk.android.player.PlayerStateCallback;
 import com.spotify.sdk.android.player.Spotify;
+
+import org.louiswilliams.queueupplayer.R;
 
 import java.util.Arrays;
 import java.util.List;
