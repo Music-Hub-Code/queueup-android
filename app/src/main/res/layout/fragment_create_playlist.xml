@@ -8,8 +8,8 @@
 
     <EditText
         android:id="@+id/playlist_name_box"
-        android:textSize="18dp"
-        android:hint="Playlist Name"
+        android:textSize="18sp"
+        android:hint="@string/playlist_name_hint"
         android:singleLine="true"
         android:padding="16dp"
         android:background="@color/primary_material_dark"

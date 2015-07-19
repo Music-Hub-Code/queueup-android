@@ -1,8 +1,5 @@
 package org.louiswilliams.queueupplayer.queueup;
 
-/**
- * Created by Louis on 5/23/2015.
- */
 public class Queueup {
     public static final String LOG_TAG = "QUEUEUP";
     public static final String QUEUEUP_HOST = "dev.qup.louiswilliams.org";

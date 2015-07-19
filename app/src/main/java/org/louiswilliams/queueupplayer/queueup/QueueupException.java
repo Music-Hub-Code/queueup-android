@@ -2,9 +2,6 @@ package org.louiswilliams.queueupplayer.queueup;
 
 import org.json.JSONObject;
 
-/**
- * Created by Louis on 5/25/2015.
- */
 public class QueueupException extends Exception {
 
     public QueueupException(Throwable throwable) {

@@ -4,7 +4,6 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:gravity="center_horizontal"
-    android:elevation="4dp"
     android:translationX="-2dp"
     android:background="@drawable/grid_item_rect"
     android:orientation="vertical"
@@ -37,13 +36,12 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textSize="18sp"
-            android:fontFeatureSettings="bold"
             android:id="@+id/playlist_list_item_title"
             android:ellipsize="end"
             android:singleLine="true"
             android:gravity="center"
             android:layout_centerInParent="true"
-            android:text="Playlist"
+            android:text="@string/playlist"
             />
 
         <LinearLayout
@@ -70,7 +68,7 @@
                 android:gravity="center"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Queueup User"
+                android:text="@string/queueup_user_placeholder"
 
                 />
         </LinearLayout>

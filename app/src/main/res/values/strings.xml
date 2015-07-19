@@ -13,4 +13,20 @@
 
     <string name="drawer_open">Open</string>
     <string name="drawer_close">Close</string>
+    <string name="or">or</string>
+    <string name="email_address">email address</string>
+    <string name="queueup_login">QueueUp Login</string>
+    <string name="sign_in">Sign In</string>
+    <string name="register">Register</string>
+    <string name="logout">Logout</string>
+    <string name="log_in">Log In</string>
+    <string name="playlist_name_hint">Playlist Name</string>
+    <string name="add_track">Add Track</string>
+    <string name="no_progress">0:00/0:00</string>
+    <string name="no_track">No track</string>
+    <string name="playlist">Playlist</string>
+    <string name="queueup_user_placeholder">Queueup User</string>
+    <string name="play_with_spotify">Play with Spotify</string>
+    <string name="no_votes">0</string>
+    <string name="search_tracks">Search tracks</string>
 </resources>

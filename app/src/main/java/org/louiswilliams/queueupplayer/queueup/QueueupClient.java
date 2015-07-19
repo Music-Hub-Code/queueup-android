@@ -25,9 +25,6 @@ import org.louiswilliams.queueupplayer.queueup.objects.QueueupApiCredential;
 import org.louiswilliams.queueupplayer.queueup.objects.QueueupPlaylist;
 import org.louiswilliams.queueupplayer.queueup.objects.SpotifyTrack;
 
-/**
- * Created by Louis on 5/23/2015.
- */
 public class QueueupClient {
 
     private String clientToken, userId;
@@ -290,7 +287,7 @@ public class QueueupClient {
             searchGetRequest = null;
         }
 
-        String encodedQuery = "";
+        String encodedQuery;
 
         try {
             encodedQuery = URLEncoder.encode(query, "UTF-8");
@@ -301,7 +298,7 @@ public class QueueupClient {
         searchGetRequest = sendGet("/search/tracks/" + encodedQuery + "/" + offset, new Queueup.CallReceiver<JSONObject>() {
             @Override
             public void onResult(JSONObject result) {
-                List<SpotifyTrack> resultsList = new ArrayList<SpotifyTrack>();
+                List<SpotifyTrack> resultsList = new ArrayList<>();
                 try {
                     JSONArray tracks = result.getJSONArray("tracks");
                     for (int i = 0; i < tracks.length(); i++) {
@@ -394,7 +391,6 @@ public class QueueupClient {
                 } catch (IOException e) {
                     Log.e(Queueup.LOG_TAG, "Http execution error: " + e.getMessage());
                     receiver.onException(e);
-                    return;
                 }
             }
         }).start();

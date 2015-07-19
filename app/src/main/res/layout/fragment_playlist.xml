@@ -12,7 +12,9 @@
         android:dividerHeight="10dp"
         android:divider="#00000000"
         android:id="@+id/track_list"
+        android:paddingStart="18dp"
         android:paddingLeft="18dp"
+        android:paddingEnd="14dp"
         android:paddingRight="14dp"
         android:clipToPadding="false"
         >
@@ -21,16 +23,18 @@
 
 
     <ImageButton
+        android:contentDescription="@string/add_track"
         android:id="@+id/add_track_button"
         android:layout_width="56dp"
         android:layout_height="56dp"
         android:background="@drawable/white_oval_ripple"
         android:src="@drawable/ic_action_add"
-        android:elevation="4dp"
         android:translationX="-2dp"
-        android:layout_gravity="bottom|right"
+        android:layout_gravity="bottom|end"
         android:layout_alignParentBottom="true"
+        android:layout_alignParentEnd="true"
         android:layout_alignParentRight="true"
+        android:layout_marginEnd="20dp"
         android:layout_marginRight="20dp"
         android:layout_marginBottom="20dp"
         >

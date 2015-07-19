@@ -14,14 +14,13 @@
 
         <ImageView
             android:id="@+id/drawer_user_image"
-            android:layout_gravity="left"
+            android:layout_gravity="start"
             android:background="@color/primary_material_dark"
             android:layout_width="60dp"
             android:layout_height="60dp" />
 
         <TextView
             android:id="@+id/drawer_user_name"
-            android:text="Louis Williams"
             android:textSize="18sp"
             android:padding="18dp"
             android:layout_width="0dp"
@@ -34,7 +33,7 @@
         android:id="@+id/drawer_logout_button"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Logout"
+        android:text="@string/logout"
         android:background="@color/accent_material_dark"
         />
 

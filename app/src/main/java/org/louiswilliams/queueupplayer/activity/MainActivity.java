@@ -85,8 +85,8 @@ public class MainActivity
 
         CLIENT_ID = getString(R.string.spotify_client_id);
 
-        AndroidLoggingHandler.reset(new AndroidLoggingHandler());
-        java.util.logging.Logger.getLogger(Socket.class.getName()).setLevel(Level.FINEST);
+//        AndroidLoggingHandler.reset(new AndroidLoggingHandler());
+//        java.util.logging.Logger.getLogger(Socket.class.getName()).setLevel(Level.FINEST);
 
 
         getFragmentManager().addOnBackStackChangedListener(this);
@@ -302,7 +302,7 @@ public class MainActivity
             Log.d(Queueup.LOG_TAG, "Unsubscribing from preview player");
             mPlaylistPlayer.removeAllPlaylistListeners();
             if (mSpotifyPlayer != null) {
-                mSpotifyPlayer.stopReceivingPlaybackNotificactions();
+                mSpotifyPlayer.stopReceivingPlaybackNotifications();
             }
             mPlaylistPlayer.disconnect();
             mPlaylistPlayer = null;
@@ -402,7 +402,7 @@ public class MainActivity
     public void stopPlayback() {
 //        if (mSpotifyPlayer != null) {
 //            mSpotifyPlayer.getPlayer().pause();
-//            mSpotifyPlayer.stopReceivingPlaybackNotificactions();
+//            mSpotifyPlayer.stopReceivingPlaybackNotifications();
 //        }
 //
 //        mPlaylistPlayer.removeAllPlaylistListeners();
@@ -557,7 +557,7 @@ public class MainActivity
                 mPlayerNotification.cancel();
         }
         if (mSpotifyPlayer != null) {
-            mSpotifyPlayer.stopReceivingPlaybackNotificactions();
+            mSpotifyPlayer.stopReceivingPlaybackNotifications();
             Spotify.destroyPlayer(this);
         }
         if (mPlaylistPlayer != null) {

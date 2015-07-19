@@ -15,9 +15,6 @@ import org.louiswilliams.queueupplayer.queueup.objects.QueueupStateChange;
 import org.louiswilliams.queueupplayer.queueup.objects.QueueupTrack;
 import org.louiswilliams.queueupplayer.queueup.objects.SpotifyTrack;
 
-/**
- * Created by Louis on 7/12/2015.
- */
 public class SpotifyPlayer implements PlaylistListener, PlayerNotificationCallback {
 
     private static final int PROGRESS_INTERVAL = 1000;
@@ -148,7 +145,7 @@ public class SpotifyPlayer implements PlaylistListener, PlayerNotificationCallba
         mPlayer.addPlayerNotificationCallback(this);
     }
 
-    public void stopReceivingPlaybackNotificactions() {
+    public void stopReceivingPlaybackNotifications() {
         stopProgressUpdater();
         mPlayer.removePlayerNotificationCallback(this);
     }

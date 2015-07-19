@@ -11,9 +11,6 @@ import org.louiswilliams.queueupplayer.R;
 
 import java.util.List;
 
-/**
- * Created by Louis on 6/29/2015.
- */
 public class DrawerListAdapter extends BaseAdapter {
 
     List<String> mListItems;

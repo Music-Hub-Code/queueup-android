@@ -43,9 +43,7 @@ import org.louiswilliams.queueupplayer.queueup.objects.QueueupStateChange;
 import org.louiswilliams.queueupplayer.queueup.objects.QueueupTrack;
 import org.louiswilliams.queueupplayer.queueup.objects.SpotifyTrack;
 
-/**
- * Created by Louis on 5/25/2015.
- */
+
 public class PlaylistFragment extends Fragment implements PlaylistListener {
 
     private String mPlaylistId;
@@ -492,7 +490,6 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
     public class TrackListAdapter extends BaseAdapter {
 
         private Context mContext;
-        private String mPlaylistId;
         private List<QueueupTrack> mTrackList;
         private int mResource;
 
