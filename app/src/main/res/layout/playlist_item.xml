@@ -43,6 +43,37 @@
             android:singleLine="true"
             android:gravity="center"
             android:layout_centerInParent="true"
+            android:text="Playlist"
             />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentLeft="true"
+            android:padding="6dp"
+
+            >
+
+            <ImageView
+                android:id="@+id/playlist_list_item_admin_icon"
+                android:layout_marginTop="2dp"
+                android:src="@drawable/dark_white_oval_ripple"
+                android:layout_width="14dp"
+                android:layout_height="14dp"
+                android:layout_marginRight="6dp"/>
+            <TextView
+                android:id="@+id/playlist_list_item_admin"
+                android:textSize="12sp"
+                android:textColor="@color/primary_material_light"
+                android:gravity="center"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Queueup User"
+
+                />
+        </LinearLayout>
+
     </RelativeLayout>
 </org.louiswilliams.queueupplayer.widget.SquareRelativeLayout>

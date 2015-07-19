@@ -24,13 +24,12 @@ import org.louiswilliams.queueupplayer.activity.MainActivity;
 
 import java.util.List;
 
-import queueup.PlaylistListener;
-import queueup.Queueup;
-import queueup.QueueupClient;
-import queueup.objects.QueueupPlaylist;
-import queueup.objects.QueueupStateChange;
-import queueup.objects.QueueupTrack;
-import queueup.objects.SpotifyTrack;
+import org.louiswilliams.queueupplayer.queueup.PlaylistListener;
+import org.louiswilliams.queueupplayer.queueup.Queueup;
+import org.louiswilliams.queueupplayer.queueup.objects.QueueupPlaylist;
+import org.louiswilliams.queueupplayer.queueup.objects.QueueupStateChange;
+import org.louiswilliams.queueupplayer.queueup.objects.QueueupTrack;
+import org.louiswilliams.queueupplayer.queueup.objects.SpotifyTrack;
 
 public class PlaylistListFragment extends Fragment implements PlaylistListener {
 
@@ -98,14 +97,17 @@ public class PlaylistListFragment extends Fragment implements PlaylistListener {
 
     @Override
     public void onDestroyView() {
-        mActivity.setPlaylistListener(null);
+        if (mActivity.getPlaylistPlayer() != null) {
+            mActivity.getPlaylistPlayer().removePlaylistListener(PlaylistListFragment.this);
+        }
 
         super.onDestroyView();
     }
 
     private void populateList() {
         Log.d(Queueup.LOG_TAG, "populating list...");
-        QueueupClient.playlistGetList(new Queueup.CallReceiver<List<QueueupPlaylist>>() {
+
+        mActivity.getQueueupClient().playlistGetList(new Queueup.CallReceiver<List<QueueupPlaylist>>() {
             @Override
             public void onResult(List<QueueupPlaylist> playlists) {
                 Log.d(Queueup.LOG_TAG, "Playlist all success");
@@ -193,7 +195,7 @@ public class PlaylistListFragment extends Fragment implements PlaylistListener {
         }
 
         /* Tell the activity we are now the active listener */
-        mActivity.setPlaylistListener(this);
+        mActivity.getPlaylistPlayer().addPlaylistListener(PlaylistListFragment.this);
 
         bar.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -201,7 +203,6 @@ public class PlaylistListFragment extends Fragment implements PlaylistListener {
                 mActivity.showPlaylistFragment(getPlaylistId());
             }
         });
-        Log.d(Queueup.LOG_TAG, "PLAYLIST LIST is now listener");
     }
 
     public void updateTrackViews(final SpotifyTrack track) {
@@ -246,7 +247,7 @@ public class PlaylistListFragment extends Fragment implements PlaylistListener {
     private void updateTrackPlaying(boolean playing) {
         mActivity.getPlaylistPlayer().updateTrackPlaying(playing);
 
-        updatePlayButton(playing);
+//        updatePlayButton(playing);
     }
 
     @Override
@@ -276,6 +277,11 @@ public class PlaylistListFragment extends Fragment implements PlaylistListener {
     public void onQueueChanged(List<QueueupTrack> queue) {
         Log.d(Queueup.LOG_TAG, "Queueup changed, not necessary to update views right now");
 
+    }
+
+    @Override
+    public void onPlayerReady() {
+        /* TODO: Implement */
     }
 
     @Override
@@ -322,7 +328,17 @@ public class PlaylistListFragment extends Fragment implements PlaylistListener {
             }
 
             TextView title = (TextView) playlistItem.findViewById(R.id.playlist_list_item_title);
+            TextView adminName = (TextView) playlistItem.findViewById(R.id.playlist_list_item_admin);
+            ImageView adminIcon = (ImageView) playlistItem.findViewById(R.id.playlist_list_item_admin_icon);
+
             title.setText(playlist.name.toUpperCase());
+            if (!playlist.adminName.isEmpty()) {
+                adminName.setText(playlist.adminName);
+                adminIcon.setImageDrawable(getResources().getDrawable(R.mipmap.ic_facebook));
+            } else {
+                adminName.setText("Spotify User");
+                adminIcon.setImageDrawable(getResources().getDrawable(R.mipmap.ic_spotify));
+            }
 
             if (playlist.current != null && playlist.current.album != null && playlist.current.album.imageUrls != null) {
                 List<String> imageUrls = playlist.current.album.imageUrls;
@@ -332,7 +348,7 @@ public class PlaylistListFragment extends Fragment implements PlaylistListener {
                 }
             } else {
                 ImageView image = (ImageView) playlistItem.findViewById(R.id.playlist_list_item_image);
-                image.setImageDrawable(mContext.getResources().getDrawable(R.drawable.background_opaque_dark));
+                image.setImageDrawable(mContext.getResources().getDrawable(R.drawable.background_opaque_gray));
                 Log.d(Queueup.LOG_TAG, "Current playlist is null...");
             }
 

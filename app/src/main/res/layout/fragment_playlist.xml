@@ -2,11 +2,11 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:paddingTop="14dp"
     android:paddingBottom="0dp">
 
 
     <ListView
+        android:paddingTop="14dp"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:dividerHeight="10dp"
@@ -26,7 +26,7 @@
         android:layout_height="56dp"
         android:background="@drawable/white_oval_ripple"
         android:src="@drawable/ic_action_add"
-        android:elevation="8dp"
+        android:elevation="4dp"
         android:translationX="-2dp"
         android:layout_gravity="bottom|right"
         android:layout_alignParentBottom="true"
@@ -37,9 +37,17 @@
 
     </ImageButton>
 
-    <ProgressBar
+    <RelativeLayout
         android:id="@+id/loading_progress_bar"
-        android:layout_centerInParent="true"
-        android:layout_width="64dp"
-        android:layout_height="64dp" />
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/background_opaque_dark"
+        >
+
+        <ProgressBar
+            android:layout_centerInParent="true"
+            android:layout_width="64dp"
+            android:layout_height="64dp" />
+    </RelativeLayout>
+
 </RelativeLayout>

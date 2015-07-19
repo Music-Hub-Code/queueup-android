@@ -34,9 +34,6 @@ import com.spotify.sdk.android.authentication.AuthenticationRequest;
 import com.spotify.sdk.android.authentication.AuthenticationResponse;
 import com.spotify.sdk.android.player.Config;
 import com.spotify.sdk.android.player.Player;
-import com.spotify.sdk.android.player.PlayerNotificationCallback;
-import com.spotify.sdk.android.player.PlayerState;
-import com.spotify.sdk.android.player.PlayerStateCallback;
 import com.spotify.sdk.android.player.Spotify;
 import com.squareup.picasso.Picasso;
 
@@ -48,25 +45,20 @@ import org.louiswilliams.queueupplayer.fragment.PlaylistListFragment;
 import org.louiswilliams.queueupplayer.widget.PlayerNotification;
 
 import java.util.Arrays;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.logging.Level;
 
-import queueup.PlaylistClient;
-import queueup.PlaylistListener;
-import queueup.PlaylistPlayer;
-import queueup.Queueup;
-import queueup.QueueupClient;
-import queueup.objects.QueueupPlaylist;
-import queueup.objects.QueueupStateChange;
-import queueup.objects.SpotifyTrack;
+import org.louiswilliams.queueupplayer.queueup.PlaylistClient;
+import org.louiswilliams.queueupplayer.queueup.PlaylistPlayer;
+import org.louiswilliams.queueupplayer.queueup.Queueup;
+import org.louiswilliams.queueupplayer.queueup.QueueupClient;
+import org.louiswilliams.queueupplayer.queueup.objects.QueueupPlaylist;
+import org.louiswilliams.queueupplayer.queueup.SpotifyPlayer;
 
 
 public class MainActivity
         extends Activity
         implements
-            FragmentManager.OnBackStackChangedListener,
-            PlayerNotificationCallback {
+            FragmentManager.OnBackStackChangedListener {
 
     private String[] navigationTitles = {"Hot Playlists","Me"};
     private DrawerLayout mDrawerLayout;
@@ -77,11 +69,9 @@ public class MainActivity
     private String mUserId;
     private String mClientToken;
     private String mFacebookId;
-    private Timer mProgressTimer;
     private boolean showNewTrackOnPlaylistLoad;
-    private PlaylistListener mPlaylistListener;
     private PlaylistPlayer mPlaylistPlayer;
-    private Player mPlayer;
+    private SpotifyPlayer mSpotifyPlayer;
     private String CLIENT_ID;
     private PlayerNotification mPlayerNotification;
 
@@ -109,6 +99,8 @@ public class MainActivity
 
         if (isLoggedIn()) {
             mQueueupClient = new QueueupClient(mClientToken, mUserId);
+        } else {
+            mQueueupClient = new QueueupClient(null, null);
         }
 
         if (savedInstanceState == null) {
@@ -258,10 +250,6 @@ public class MainActivity
     }
 
 
-    public void setPlaylistListener(PlaylistListener listener) {
-        mPlaylistListener = listener;
-    }
-
     public String getCurrentUserId() {
         return mUserId;
     }
@@ -278,72 +266,6 @@ public class MainActivity
 
     public PlaylistPlayer subscribeToPlaylist(final String playlistId) {
 
-        /* Listen to updates from the server about the playlist */
-        final PlaylistClient.StateChangeListener stateChangeListener = new PlaylistClient.StateChangeListener() {
-            @Override
-            public void onStateChange(final QueueupStateChange state) {
-                Log.d(Queueup.LOG_TAG, "State change: " + state);
-
-                if (mPlayer!= null) {
-
-                    mPlayer.getPlayerState(new PlayerStateCallback() {
-                        @Override
-                        public void onPlayerState(PlayerState playerState) {
-
-                            /* New track */
-                            if (!playerState.trackUri.equals(state.current.uri)) {
-                                Log.d(Queueup.LOG_TAG, "Changing tracks...");
-                                mPlayer.play(state.current.uri);
-
-                                if (currentFragmentIsListening()) {
-                                    mPlaylistListener.onTrackChanged(state.current);
-                                }
-
-                                showPlayerNotification(state.playing, state.current);
-                            }
-
-                            /* If the playing state is not what it currently is (changed) */
-                            if (playerState.playing && !state.playing) {
-                                Log.d(Queueup.LOG_TAG, "Pausing...");
-                                mPlayer.pause();
-
-                                if (currentFragmentIsListening()) {
-                                    mPlaylistListener.onPlayingChanged(false);
-                                }
-
-                                showPlayerNotification(state.playing, state.current);
-
-                            } else if (!playerState.playing && state.playing) {
-                                Log.d(Queueup.LOG_TAG, "Resuming...");
-                                mPlayer.resume();
-
-                                if (currentFragmentIsListening()) {
-                                    mPlaylistListener.onPlayingChanged(true);
-                                }
-
-                                showPlayerNotification(state.playing, state.current);
-                            }
-
-                            /* New queue */
-                            if (state.tracks != null) {
-                                if (currentFragmentIsListening()) {
-                                    mPlaylistListener.onQueueChanged(state.tracks);
-                                }
-                            }
-
-                        }
-                    });
-                }
-
-            }
-
-            @Override
-            public void onError(String message) {
-                toast(message);
-                Log.e(Queueup.LOG_TAG, message);
-            }
-        };
-
         unsubscribeFromCurrentPlaylist();
 
         /* Initial authentication to get the player */
@@ -353,8 +275,16 @@ public class MainActivity
                 Log.d(Queueup.LOG_TAG, "AUTH SUCCESS");
                 PlaylistPlayer player  = (PlaylistPlayer) result;
 
+                /* Attach the notification listener... */
+                mPlaylistPlayer.addPlaylistListener(getPlayerNotification());
+
+
+                /* Start log into spotify sequence */
+                spotifyLogin();
+
                 /* Perform the subscription */
-                player.subscribe(playlistId, true, stateChangeListener);
+                player.subscribe(playlistId, true);
+
             }
 
             @Override
@@ -367,28 +297,48 @@ public class MainActivity
         return mPlaylistPlayer;
     }
 
-    public boolean currentFragmentIsListening() {
-        return (mPlaylistListener != null && mPlaylistPlayer.getPlaylistId().equals(mPlaylistListener.getPlaylistId()));
-    }
-
     public void unsubscribeFromCurrentPlaylist() {
         if (mPlaylistPlayer != null) {
+            Log.d(Queueup.LOG_TAG, "Unsubscribing from preview player");
+            mPlaylistPlayer.removeAllPlaylistListeners();
+            if (mSpotifyPlayer != null) {
+                mSpotifyPlayer.stopReceivingPlaybackNotificactions();
+            }
             mPlaylistPlayer.disconnect();
+            mPlaylistPlayer = null;
         }
     }
+
 
     public QueueupClient getQueueupClient() {
         return mQueueupClient;
     }
 
     public void spotifyLogin() {
-        AuthenticationRequest.Builder builder = new AuthenticationRequest.Builder(CLIENT_ID,
-                AuthenticationResponse.Type.TOKEN,
-                REDIRECT_URI);
-        builder.setScopes(new String[]{"user-read-private", "streaming"});
-        AuthenticationRequest request = builder.build();
 
-        AuthenticationClient.openLoginInBrowser(this, request);
+        /* If we want to skip logging in again... */
+        if (mSpotifyPlayer != null && mSpotifyPlayer.getPlayer().isLoggedIn()) {
+            Log.d(Queueup.LOG_TAG, "Not re-logging in, no need");
+
+            /* Make sure we create the player on the main thread */
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    beginPlayback();
+                }
+            });
+
+        } else {
+
+            AuthenticationRequest.Builder builder = new AuthenticationRequest.Builder(CLIENT_ID,
+                    AuthenticationResponse.Type.TOKEN,
+                    REDIRECT_URI);
+            builder.setScopes(new String[]{"user-read-private", "streaming"});
+            AuthenticationRequest request = builder.build();
+
+            AuthenticationClient.openLoginInBrowser(this, request);
+        }
+
     }
 
     @Override
@@ -411,67 +361,55 @@ public class MainActivity
 
     public void initPlayer(String accessToken) {
         Config playerConfig = new Config(this, accessToken, CLIENT_ID);
-        mPlayer = Spotify.getPlayer(playerConfig, this, new Player.InitializationObserver() {
 
-            @Override
-            public void onInitialized(Player player) {
-                Log.d(LOG_TAG, "Init Player");
-                player.addPlayerNotificationCallback(MainActivity.this);
 
-                SpotifyTrack current = mPlaylistPlayer.getCurrentState().current;
-                if (current != null) {
-                    player.play(current.uri);
+        /* Don't get another player if there's already one initialized */
+        if (mSpotifyPlayer != null &&  mSpotifyPlayer.getPlayer().isInitialized()) {
+            beginPlayback();
+        } else {
+
+
+            Player player = Spotify.getPlayer(playerConfig, this, new Player.InitializationObserver() {
+
+                @Override
+                public void onInitialized(Player player) {
+                    beginPlayback();
                 }
 
-                if (!mPlaylistPlayer.getCurrentState().playing) {
-                    player.pause();
+                @Override
+                public void onError(Throwable throwable) {
+                    Log.e(LOG_TAG, "Could not initialize: " + throwable.getMessage());
                 }
-            }
+            });
 
-            @Override
-            public void onError(Throwable throwable) {
-                Log.e(LOG_TAG, "Could not initialize: " + throwable.getMessage());
-            }
-        });
-    }
-
-    public Player getSpotifyPlayer() {
-        return mPlayer;
-    }
-
-    public void startProgressUpdater() {
-        stopProgressUpdater();
-        mProgressTimer = new Timer();
-
-        mProgressTimer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                mPlayer.getPlayerState(new PlayerStateCallback() {
-                    @Override
-                    public void onPlayerState(PlayerState playerState) {
-                        int duration = playerState.durationInMs;
-                        int progress = playerState.positionInMs;
-
-                        Log.d(Queueup.LOG_TAG, "Progress: " + progress + "/" + duration);
-
-                        mPlaylistPlayer.updateTrackProgress(progress, duration);
-                        if (mPlaylistListener != null) {
-                            mPlaylistListener.onTrackProgress(progress, duration);
-                        }
-                        if (mPlayerNotification != null) {
-                            mPlayerNotification.updateProgress(progress,duration);
-                        }
-
-                    }
-                });
-            }
-        }, 0, 1000);
-    }
-
-    public void stopProgressUpdater() {
-        if (mProgressTimer != null) {
-            mProgressTimer.cancel();
+            /* Construct our player wrapper */
+            mSpotifyPlayer = new SpotifyPlayer(mPlaylistPlayer, player);
         }
+    }
+
+
+    public void beginPlayback() {
+        Log.d(LOG_TAG, "Init Player");
+
+        /* Attach the player listener */
+        mSpotifyPlayer.startReceivingPlaybackNotifications();
+        mPlaylistPlayer.addPlaylistListener(mSpotifyPlayer);
+        mPlaylistPlayer.updatePlaybackReady();
+
+    }
+
+    /* Just recreate the activity, which resets everything to a clean slate */
+    public void stopPlayback() {
+//        if (mSpotifyPlayer != null) {
+//            mSpotifyPlayer.getPlayer().pause();
+//            mSpotifyPlayer.stopReceivingPlaybackNotificactions();
+//        }
+//
+//        mPlaylistPlayer.removeAllPlaylistListeners();
+//
+//        unsubscribeFromCurrentPlaylist();
+
+        recreate();
     }
 
     public void displayHomeUp() {
@@ -509,12 +447,13 @@ public class MainActivity
 
     }
 
-    public void showPlayerNotification(boolean playing, SpotifyTrack track) {
+    public PlayerNotification getPlayerNotification() {
         if (mPlayerNotification == null) {
             mPlayerNotification = new PlayerNotification(this);
         }
-        mPlayerNotification.show(playing, track);
+        return mPlayerNotification;
     }
+
 
     public void doLogin() {
         Intent loginIntent = new Intent(getBaseContext(), LoginActivity.class);
@@ -614,11 +553,15 @@ public class MainActivity
 
     @Override
     protected void onDestroy() {
-        if (mPlayer != null) {
-            stopProgressUpdater();
+        if (mPlayerNotification != null) {
+                mPlayerNotification.cancel();
+        }
+        if (mSpotifyPlayer != null) {
+            mSpotifyPlayer.stopReceivingPlaybackNotificactions();
             Spotify.destroyPlayer(this);
         }
         if (mPlaylistPlayer != null) {
+            mPlaylistPlayer.removeAllPlaylistListeners();
             mPlaylistPlayer.disconnect();
         }
 
@@ -650,27 +593,6 @@ public class MainActivity
     public void onBackStackChanged() {
         displayHomeUp();
     }
-
-    /* PlayerNotificationCallback */
-
-    @Override
-    public void onPlaybackEvent(EventType eventType, PlayerState playerState) {
-        if (eventType == EventType.END_OF_CONTEXT) {
-            if (mPlaylistPlayer != null) {
-                mPlaylistPlayer.updateTrackDone();
-            }
-        } else if (eventType == EventType.PAUSE) {
-            stopProgressUpdater();
-        } else if (eventType == EventType.PLAY) {
-            startProgressUpdater();
-        }
-    }
-
-    @Override
-    public void onPlaybackError(ErrorType errorType, String s) {
-        toast(s);
-    }
-
     public void toast(final String message) {
         runOnUiThread(new Runnable() {
             @Override

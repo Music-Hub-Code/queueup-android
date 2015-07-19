@@ -1,65 +1,73 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
+<RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/playlist_controls"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
     android:layout_marginTop="-12dp"
-    android:orientation="vertical">
-
-
-    <TextView
-        android:id="@+id/track_progress_text"
-        android:layout_gravity="right"
-        android:layout_marginBottom="2dp"
-        android:layout_marginRight="16dp"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textColor="@color/primary_dark_material_light"
-        android:textSize="12sp"
-        android:text="0:00/0:00"/>
-
-
-    <com.gc.materialdesign.views.ProgressBarDeterminate
-        android:id="@+id/track_progress"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginLeft="16dp"
-        android:layout_marginRight="16dp"
-        />
+    android:id="@+id/playlist_controls"
+    android:layout_height="wrap_content"
+    android:layout_width="match_parent"
+    >
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:padding="0dp"
-        android:clipToPadding="false"
-        android:gravity="center_horizontal"
-        >
+        android:orientation="vertical">
 
 
-        <ImageButton
-            android:layout_gravity="center_horizontal"
-            android:id="@+id/play_button"
-            android:layout_width="56dp"
-            android:layout_height="56dp"
-            android:src="@drawable/ic_action_play_arrow_36"
-            android:background="@drawable/dark_white_oval_ripple"
+        <TextView
+            android:id="@+id/track_progress_text"
+            android:layout_gravity="right"
+            android:layout_marginBottom="2dp"
+            android:layout_marginRight="16dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/primary_dark_material_light"
+            android:textSize="12sp"
+            android:text="0:00/0:00"/>
+
+
+        <com.gc.materialdesign.views.ProgressBarDeterminate
+            android:id="@+id/track_progress"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="16dp"
+            android:layout_marginRight="16dp"
+            />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="0dp"
+            android:clipToPadding="false"
+            android:gravity="center_horizontal"
             >
 
-        </ImageButton>
 
-        <ImageButton
-            android:layout_gravity="center_horizontal"
-            android:id="@+id/skip_button"
-            android:layout_width="56dp"
-            android:layout_height="56dp"
-            android:src="@drawable/ic_action_skip_next_36"
-            android:background="@drawable/dark_white_oval_ripple"
+            <ImageButton
+                android:layout_gravity="center_horizontal"
+                android:id="@+id/play_button"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:src="@drawable/ic_action_play_arrow_36"
+                android:background="@drawable/dark_white_oval_ripple"
+                >
 
-            android:layout_marginLeft="12dp"
-            >
+            </ImageButton>
 
-        </ImageButton>
+            <ImageButton
+                android:layout_gravity="center_horizontal"
+                android:id="@+id/skip_button"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:src="@drawable/ic_action_skip_next_36"
+                android:background="@drawable/dark_white_oval_ripple"
+
+                android:layout_marginLeft="12dp"
+                >
+
+            </ImageButton>
+        </LinearLayout>
     </LinearLayout>
-</LinearLayout>
+
+
+</RelativeLayout>

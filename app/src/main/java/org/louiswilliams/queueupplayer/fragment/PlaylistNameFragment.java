@@ -13,7 +13,7 @@ import android.widget.EditText;
 import org.louiswilliams.queueupplayer.R;
 import org.louiswilliams.queueupplayer.activity.MainActivity;
 
-import queueup.Queueup;
+import org.louiswilliams.queueupplayer.queueup.Queueup;
 
 public class PlaylistNameFragment extends DialogFragment {
 

@@ -6,12 +6,14 @@ import android.app.Fragment;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.os.Bundle;
+import android.os.Looper;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
@@ -21,7 +23,6 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.gc.materialdesign.views.ButtonFlat;
@@ -33,13 +34,14 @@ import org.louiswilliams.queueupplayer.activity.MainActivity;
 
 import java.util.List;
 
-import queueup.PlaylistListener;
-import queueup.Queueup;
-import queueup.QueueupClient;
-import queueup.objects.QueueupPlaylist;
-import queueup.objects.QueueupStateChange;
-import queueup.objects.QueueupTrack;
-import queueup.objects.SpotifyTrack;
+import org.louiswilliams.queueupplayer.queueup.PlaylistListener;
+import org.louiswilliams.queueupplayer.queueup.PlaylistPlayer;
+import org.louiswilliams.queueupplayer.queueup.Queueup;
+import org.louiswilliams.queueupplayer.queueup.QueueupClient;
+import org.louiswilliams.queueupplayer.queueup.objects.QueueupPlaylist;
+import org.louiswilliams.queueupplayer.queueup.objects.QueueupStateChange;
+import org.louiswilliams.queueupplayer.queueup.objects.QueueupTrack;
+import org.louiswilliams.queueupplayer.queueup.objects.SpotifyTrack;
 
 /**
  * Created by Louis on 5/25/2015.
@@ -78,7 +80,7 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
         mQueueupClient = mActivity.getQueueupClient();
 
         /* Get the playlist data to initially populate the view */
-        QueueupClient.playlistGet(mPlaylistId, new Queueup.CallReceiver<QueueupPlaylist>() {
+        mQueueupClient.playlistGet(mPlaylistId, new Queueup.CallReceiver<QueueupPlaylist>() {
             @Override
             public void onResult(QueueupPlaylist result) {
                 Log.d(Queueup.LOG_TAG, result.toString());
@@ -127,7 +129,9 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
     @Override
     public void onDestroyView() {
         /* Make sure the activity knows that there is no playlist listener anymore  */
-        mActivity.setPlaylistListener(null);
+        if (mActivity.getPlaylistPlayer() != null) {
+            mActivity.getPlaylistPlayer().removePlaylistListener(this);
+        }
 
         super.onDestroyView();
     }
@@ -140,9 +144,8 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
         mTrackListAdapter = new TrackListAdapter(mActivity, tracks, R.layout.track_item);
         mTrackList = (ListView) mView.findViewById(R.id.track_list);
 
-        final View playlistHeader;
+        final View playlistHeader, playlistFooter;
         final ImageButton addTrackButton = (ImageButton) mView.findViewById(R.id.add_track_button);
-        final ProgressBar progressBar = (ProgressBar) mView.findViewById(R.id.loading_progress_bar);
 
         addTrackButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -155,10 +158,13 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
 
 
         playlistHeader = mActivity.getLayoutInflater().inflate(R.layout.playlist_player_header, null);
+        playlistFooter = mActivity.getLayoutInflater().inflate(R.layout.playlist_footer, null);
 
         /* If the current playlist playlist is this one, show the controls */
-        if (mActivity.getPlaylistPlayer() != null && mActivity.getPlaylistPlayer().getPlaylistId().equals(mPlaylistId)) {
+        if (currentPlaylistIsPlaying()) {
             showPlaylistControls(playlistHeader, playlist.playing);
+            setProgressBar(View.GONE);
+            mActivity.getPlaylistPlayer().addPlaylistListener(PlaylistFragment.this);
 
         } else {
 
@@ -172,15 +178,16 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
                     @Override
                     public void onClick(View v) {
 
+                        /* Show the progress bar */
+                        setProgressBar(View.VISIBLE);
+
                         /* Prevent the button from being pressed again*/
                         playHereButton.setOnClickListener(null);
 
-                        /* Log into spotify */
-                        mActivity.spotifyLogin();
                         /* Tell the activity to subscribe to this playlist and launch the player */
-                        mActivity.subscribeToPlaylist(mPlaylistId);
+                        PlaylistPlayer playlistPlayer = mActivity.subscribeToPlaylist(mPlaylistId);
 
-                        mActivity.showPlayerNotification(playlist.playing, playlist.current);
+                        playlistPlayer.addPlaylistListener(PlaylistFragment.this);
 
                         /* Insert the playlist controls */
                         showPlaylistControls(playlistHeader, playlist.playing);
@@ -218,6 +225,7 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
             @Override
             public void run() {
 
+                mActivity.setTitle(playlist.name);
 
                 if (playlist.current != null) {
 
@@ -234,6 +242,7 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
                 }
 
                 mTrackList.addHeaderView(playlistHeader, null, false);
+                mTrackList.addFooterView(playlistFooter, null, false);
                 mTrackList.setAdapter(mTrackListAdapter);
                 mTrackList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                     @Override
@@ -242,16 +251,35 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
                     }
                 });
 
-                progressBar.setVisibility(View.GONE);
+                setProgressBar(View.GONE);
 
                 /* If the fragment was created after a track was added, scroll down to the bottom */
                 maybeShowNewTrack();
 
-                mActivity.setTitle(playlist.name);
             }
         });
 
     }
+
+
+    public void setProgressBar(final int visibility) {
+        final View controlsProgress = mView.findViewById(R.id.loading_progress_bar);
+
+        /* Check to see what thread we're on */
+        if (Looper.myLooper() != Looper.getMainLooper()) {
+            mActivity.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    controlsProgress.setVisibility(visibility);
+
+                }
+            });
+        } else {
+            controlsProgress.setVisibility(visibility);
+        }
+
+    }
+
 
     public void showPlaylistControls(View parent, boolean playing) {
         View playlistControls = mActivity.getLayoutInflater().inflate(R.layout.playlist_controls, null);
@@ -270,7 +298,8 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
                 /* Just invert the current playing status */
                 QueueupStateChange current =  mActivity.getPlaylistPlayer().getCurrentState();
 
-                boolean updateToPlaying = !current.playing;
+                /* Unless it's null, which means we should just play anyways */
+                boolean updateToPlaying = (current == null || !current.playing);
                 updateTrackPlaying(updateToPlaying);
             }
         };
@@ -289,8 +318,6 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
         /* Initialize the play button */
         updatePlayButton(playButton, playing);
 
-        /* Tell the activity that we are now listening to playlist updates */
-        mActivity.setPlaylistListener(PlaylistFragment.this);
     }
 
     private  void updatePlayButton(final ImageButton button, final boolean playing) {
@@ -313,8 +340,6 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
     private void updateTrackPlaying(boolean playing) {
         mActivity.getPlaylistPlayer().updateTrackPlaying(playing);
 
-        ImageButton button = (ImageButton)  mView.findViewById(R.id.play_button);
-        updatePlayButton(button, playing);
     }
 
     private void updateCurrentTrack(final SpotifyTrack current) {
@@ -345,7 +370,8 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
             }
 
             @Override
-            public void onCancel() {}
+            public void onCancel() {
+            }
         });
 
         playlistNameFragment.show(getFragmentManager(), "create_playlist");
@@ -404,9 +430,13 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
         });
     }
 
+    public boolean currentPlaylistIsPlaying() {
+        return (mActivity.getPlaylistPlayer() != null && mActivity.getPlaylistPlayer().getPlaylistId().equals(mPlaylistId));
+    }
+
     @Override
     public void onPlayingChanged(boolean playing) {
-        ImageButton button =  (ImageButton)  mView.findViewById(R.id.play_button);
+        ImageButton button = (ImageButton)  mView.findViewById(R.id.play_button);
         updatePlayButton(button, playing);
 
     }
@@ -423,15 +453,22 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
         String progressText = String.format("%d:%02d", progress / (60 * 1000), (progress / 1000) % 60);
         String durationText = String.format("%d:%02d", duration / (60 * 1000), (duration / 1000) % 60);
 
-        progressLabel.setText(progressText+ "/" + durationText);
-        progressBar.setMax(duration);
-        progressBar.setProgress(progress);
+        if (progressBar != null && progressLabel != null) {
+            progressLabel.setText(progressText+ "/" + durationText);
+            progressBar.setMax(duration);
+            progressBar.setProgress(progress);
+        }
 
     }
 
     @Override
-    public void onQueueChanged(List<QueueupTrack> queue) {
+    public void onQueueChanged(final List<QueueupTrack> queue) {
         mTrackListAdapter.updateTrackList(queue);
+    }
+
+    @Override
+    public void onPlayerReady() {
+        setProgressBar(View.GONE);
     }
 
 
@@ -441,9 +478,21 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
         }
     }
 
-    public static class TrackListAdapter extends BaseAdapter {
+    public boolean isUserAdmin(String userId) {
+        return (mQueueupClient.getUserId() != null && mQueueupClient.getUserId().equals(userId));
+
+    }
+
+    @Override
+    public String getPlaylistId() {
+        return mPlaylistId;
+    }
+
+
+    public class TrackListAdapter extends BaseAdapter {
 
         private Context mContext;
+        private String mPlaylistId;
         private List<QueueupTrack> mTrackList;
         private int mResource;
 
@@ -455,7 +504,14 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
 
         public void updateTrackList(List<QueueupTrack> list) {
             mTrackList = list;
-            notifyDataSetChanged();
+
+            /* Calls are going to be from different asynchronous threads, so to be safe, run on main thread */
+            mActivity.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    notifyDataSetChanged();
+                }
+            });
         }
 
         @Override
@@ -476,7 +532,7 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
             View trackView;
-            QueueupTrack track = mTrackList.get(position);
+            final QueueupTrack track = mTrackList.get(position);
 
             if (convertView == null) {
                 trackView = LayoutInflater.from(mContext).inflate(mResource, parent, false);
@@ -486,11 +542,32 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
 
             }
 
+            /* Titles */
             TextView title = (TextView) trackView.findViewById(R.id.track_list_item_name);
             TextView artist = (TextView) trackView.findViewById(R.id.track_list_item_artist);
 
             title.setText(track.track.name);
             artist.setText(track.track.artists.get(0).name);
+
+            /* Voting views */
+            View votes = trackView.findViewById(R.id.track_votes);
+            TextView votesCount = (TextView) votes.findViewById(R.id.track_votes_count);
+            ImageView votesImage = (ImageView) votes.findViewById(R.id.track_votes_image);
+
+            votesCount.setText(String.valueOf(track.votes));
+
+            votes.setBackgroundResource(R.drawable.background_transparent);
+
+            boolean userIsVoter = track.voters.contains(mActivity.getCurrentUserId());
+
+            if (userIsVoter) {
+                votesImage.setImageResource(R.drawable.ic_action_keyboard_arrow_up_white_36);
+            } else {
+                votesImage.setImageResource(R.drawable.ic_action_keyboard_arrow_up_grey_36);
+            }
+
+            /* Call out to vote */
+            votes.setOnTouchListener(new OnVoteTouchListener(track.id, userIsVoter));
 
             List<String> imageUrls = track.track.album.imageUrls;
             ImageView image = (ImageView) trackView.findViewById(R.id.track_list_item_image);
@@ -501,14 +578,53 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
         }
     }
 
-    public boolean isUserAdmin(String userId) {
-        return (mQueueupClient != null && mQueueupClient.getUserId().equals(userId));
+    private class OnVoteTouchListener implements View.OnTouchListener {
 
-    }
+        private String trackId;
+        private boolean currentVote;
 
-    @Override
-    public String getPlaylistId() {
-        return mPlaylistId;
+        public OnVoteTouchListener(String trackId, boolean currentVote){
+            this.trackId = trackId;
+            this.currentVote = currentVote;
+        }
+
+        @Override
+        public boolean onTouch(final View view, final MotionEvent event) {
+            final QueueupClient client = mActivity.getQueueupClient();
+
+            final ImageView imageView = (ImageView) view.findViewById(R.id.track_votes_image);
+
+            /* Set the background and icon to indicate a press */
+            if (event.getAction() == MotionEvent.ACTION_DOWN) {
+                mActivity.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        view.setBackgroundColor(getResources().getColor(R.color.primary_dark_material_light));
+                        imageView.setImageDrawable(mActivity.getResources().getDrawable(R.drawable.ic_action_keyboard_arrow_up_36));
+                    }
+                });
+
+                /* Send request to update vote */
+                client.playlistVoteOnTrack(mPlaylistId, trackId, !currentVote, new Queueup.CallReceiver<QueueupPlaylist>() {
+                    @Override
+                    public void onResult(final QueueupPlaylist result) {
+                        mTrackListAdapter.updateTrackList(result.tracks);
+                    }
+
+                    @Override
+                    public void onException(Exception e) {
+                        mActivity.toast(e.getMessage());
+                    }
+                });
+                return true;
+            /* Reset the button */
+            } else if (event.getAction() == MotionEvent.ACTION_UP) {
+                view.setBackground(getResources().getDrawable(R.drawable.background_transparent));
+                imageView.setImageDrawable(mActivity.getResources().getDrawable(R.drawable.ic_action_keyboard_arrow_up_grey_36));
+                return true;
+            }
+            return false;
+        }
     }
 
 }

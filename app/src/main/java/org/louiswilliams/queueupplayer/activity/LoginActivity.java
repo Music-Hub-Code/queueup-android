@@ -17,9 +17,9 @@ import com.facebook.login.widget.LoginButton;
 
 import org.louiswilliams.queueupplayer.R;
 
-import queueup.Queueup;
-import queueup.QueueupClient;
-import queueup.objects.QueueupCredential;
+import org.louiswilliams.queueupplayer.queueup.Queueup;
+import org.louiswilliams.queueupplayer.queueup.QueueupClient;
+import org.louiswilliams.queueupplayer.queueup.objects.QueueupApiCredential;
 
 public class LoginActivity extends Activity {
 
@@ -76,10 +76,10 @@ public class LoginActivity extends Activity {
 
 
     private void doLogin(final AccessToken accessToken) {
-        QueueupClient.loginFacebook(accessToken.getToken(), new Queueup.CallReceiver<QueueupCredential>() {
+        QueueupClient.loginFacebook(accessToken.getToken(), new Queueup.CallReceiver<QueueupApiCredential>() {
 
             @Override
-            public void onResult(QueueupCredential result) {
+            public void onResult(QueueupApiCredential result) {
                 final SharedPreferences prefs = getSharedPreferences(Queueup.STORE_NAME, 0);
 
                 prefs.edit()

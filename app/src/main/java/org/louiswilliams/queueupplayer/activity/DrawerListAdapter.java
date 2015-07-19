@@ -5,16 +5,11 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
-import android.widget.ImageView;
 import android.widget.TextView;
-
-import com.squareup.picasso.Picasso;
 
 import org.louiswilliams.queueupplayer.R;
 
 import java.util.List;
-
-import queueup.objects.QueueupTrack;
 
 /**
  * Created by Louis on 6/29/2015.

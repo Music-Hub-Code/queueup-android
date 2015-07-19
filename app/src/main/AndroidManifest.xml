@@ -33,13 +33,13 @@
 
         <activity
             android:name=".activity.LoginActivity"
-            android:theme="@android:style/Theme.Material.Dialog.NoActionBar"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar"
             android:label="@string/title_activity_login" >
         </activity>
 
         <activity
             android:name="com.spotify.sdk.android.authentication.LoginActivity"
-            android:theme="@android:style/Theme.Material.NoActionBar.TranslucentDecor" >
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar" >
         </activity>
 
         <activity

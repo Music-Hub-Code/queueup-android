@@ -10,7 +10,6 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
@@ -30,9 +29,9 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import queueup.Queueup;
-import queueup.QueueupClient;
-import queueup.objects.SpotifyTrack;
+import org.louiswilliams.queueupplayer.queueup.Queueup;
+import org.louiswilliams.queueupplayer.queueup.QueueupClient;
+import org.louiswilliams.queueupplayer.queueup.objects.SpotifyTrack;
 
 
 public class AddTrackFragment extends Fragment {
@@ -293,16 +292,19 @@ public class AddTrackFragment extends Fragment {
 
             TextView title = (TextView) trackView.findViewById(R.id.track_list_item_name);
             TextView artist = (TextView) trackView.findViewById(R.id.track_list_item_artist);
+            ImageView image = (ImageView) trackView.findViewById(R.id.track_list_item_image);
 
             title.setText(track.name);
             artist.setText(track.artists.get(0).name);
 
             List<String> imageUrls = track.album.imageUrls;
-            ImageView image = (ImageView) trackView.findViewById(R.id.track_list_item_image);
 
             if (imageUrls.size() > 0) {
                 Picasso.with(mContext).load(imageUrls.get(0)).into(image);
             }
+
+            /* Hide votes */
+            trackView.findViewById(R.id.track_votes).setVisibility(View.GONE);
 
             return trackView;
         }
