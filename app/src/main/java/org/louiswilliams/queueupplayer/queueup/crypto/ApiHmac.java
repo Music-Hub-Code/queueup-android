@@ -13,9 +13,6 @@ import java.util.Date;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
-/**
- * Created by Louis on 7/10/2015.
- */
 public class ApiHmac {
 
     public static final String HMAC_SHA1_ALGORITHM = "HmacSHA1";
