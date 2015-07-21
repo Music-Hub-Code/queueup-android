@@ -1,6 +1,5 @@
 package org.louiswilliams.queueupplayer.activity;
 
-import android.app.Activity;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
@@ -12,6 +11,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
@@ -28,7 +28,6 @@ import com.facebook.FacebookSdk;
 import com.facebook.Profile;
 import com.facebook.login.LoginManager;
 import com.gc.materialdesign.views.ButtonFlat;
-import com.github.nkzawa.socketio.client.Socket;
 import com.spotify.sdk.android.authentication.AuthenticationClient;
 import com.spotify.sdk.android.authentication.AuthenticationRequest;
 import com.spotify.sdk.android.authentication.AuthenticationResponse;
@@ -37,26 +36,22 @@ import com.spotify.sdk.android.player.Player;
 import com.spotify.sdk.android.player.Spotify;
 import com.squareup.picasso.Picasso;
 
-import org.louiswilliams.queueupplayer.AndroidLoggingHandler;
 import org.louiswilliams.queueupplayer.R;
 import org.louiswilliams.queueupplayer.fragment.AddTrackFragment;
 import org.louiswilliams.queueupplayer.fragment.PlaylistFragment;
 import org.louiswilliams.queueupplayer.fragment.PlaylistListFragment;
-import org.louiswilliams.queueupplayer.widget.PlayerNotification;
-
-import java.util.Arrays;
-import java.util.logging.Level;
-
 import org.louiswilliams.queueupplayer.queueup.PlaylistClient;
 import org.louiswilliams.queueupplayer.queueup.PlaylistPlayer;
 import org.louiswilliams.queueupplayer.queueup.Queueup;
 import org.louiswilliams.queueupplayer.queueup.QueueupClient;
-import org.louiswilliams.queueupplayer.queueup.objects.QueueupPlaylist;
 import org.louiswilliams.queueupplayer.queueup.SpotifyPlayer;
+import org.louiswilliams.queueupplayer.queueup.objects.QueueupPlaylist;
+import org.louiswilliams.queueupplayer.widget.PlayerNotification;
 
+import java.util.Arrays;
 
 public class MainActivity
-        extends Activity
+        extends AppCompatActivity
         implements
             FragmentManager.OnBackStackChangedListener {
 
@@ -181,8 +176,8 @@ public class MainActivity
 
         mDrawerLayout.setDrawerListener(mDrawerToggle);
 
-        getActionBar().setDisplayHomeAsUpEnabled(true);
-        getActionBar().setHomeButtonEnabled(true);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setHomeButtonEnabled(true);
 
         displayHomeUp();
 

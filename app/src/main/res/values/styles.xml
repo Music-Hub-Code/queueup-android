@@ -1,7 +1,7 @@
 <resources>
 
     <!-- Base application theme. -->
-    <style name="AppTheme" parent="android:Theme.Material">
+    <style name="AppTheme" parent="Base.V21.Theme.AppCompat">
 
         <item name="colorPrimary">@color/primary_material_dark</item>
 
