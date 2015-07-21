@@ -14,6 +14,7 @@ import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -62,10 +63,8 @@ public class AddTrackFragment extends Fragment {
 
 
         mTrackListAdapter = new TrackSearchListAdapter(mActivity, new ArrayList<SpotifyTrack>(), R.layout.track_item);
-        View searchHeader = mActivity.getLayoutInflater().inflate(R.layout.track_search_header, null);
         View searchFooter = mActivity.getLayoutInflater().inflate(R.layout.track_search_footer, null);
 
-        mTrackListView.addHeaderView(searchHeader, null, false);
         mTrackListView.addFooterView(searchFooter, null, false);
         mTrackListView.setAdapter(mTrackListAdapter);
 
@@ -98,7 +97,6 @@ public class AddTrackFragment extends Fragment {
         });
 
         mSearchBox = (EditText) mView.findViewById(R.id.track_search_box);
-
         mSearchBox.requestFocus();
         mActivity.showKeyboard();
 
@@ -118,6 +116,15 @@ public class AddTrackFragment extends Fragment {
 
             }
         });
+
+        ImageButton searchClear = (ImageButton) mView.findViewById(R.id.track_search_clear);
+        searchClear.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                mSearchBox.setText(null);
+            }
+        });
+
         return mView;
     }
 
@@ -269,7 +276,7 @@ public class AddTrackFragment extends Fragment {
 
         @Override
         public Object getItem(int position) {
-            return mTrackList.get(position - 1);
+            return mTrackList.get(position);
         }
 
         @Override

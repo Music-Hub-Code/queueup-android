@@ -118,7 +118,6 @@ public class MainActivity
         mDrawerAdapter = new DrawerListAdapter(this, R.layout.drawer_list_item, Arrays.asList(navigationTitles));
         mDrawerAdapter.setSelection(0);
 
-        mDrawerList.setAdapter(mDrawerAdapter);
         mDrawerList.setOnItemClickListener(new ListView.OnItemClickListener() {
 
             @Override
@@ -159,6 +158,7 @@ public class MainActivity
 
 
         mDrawerList.addHeaderView(headerView, null, false);
+        mDrawerList.setAdapter(mDrawerAdapter);
 
         mDrawerToggle = new ActionBarDrawerToggle(this, mDrawerLayout, R.string.drawer_open, R.string.drawer_close) {
 
