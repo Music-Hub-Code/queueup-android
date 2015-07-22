@@ -2,7 +2,6 @@ package org.louiswilliams.queueupplayer.activity;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 
@@ -19,6 +18,7 @@ import org.louiswilliams.queueupplayer.R;
 
 import org.louiswilliams.queueupplayer.queueup.Queueup;
 import org.louiswilliams.queueupplayer.queueup.QueueupClient;
+import org.louiswilliams.queueupplayer.queueup.QueueupStore;
 import org.louiswilliams.queueupplayer.queueup.objects.QueueupApiCredential;
 
 public class LoginActivity extends Activity {
@@ -29,10 +29,13 @@ public class LoginActivity extends Activity {
     public static final String EXTRA_DO_LOGIN = "EXTRA_DO_LOGIN";
 
     private CallbackManager callbackManager;
+    private QueueupStore mStore;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        mStore = QueueupStore.with(this);
 
         FacebookSdk.sdkInitialize(getApplicationContext());
         callbackManager = CallbackManager.Factory.create();
@@ -80,13 +83,10 @@ public class LoginActivity extends Activity {
 
             @Override
             public void onResult(QueueupApiCredential result) {
-                final SharedPreferences prefs = getSharedPreferences(Queueup.STORE_NAME, 0);
 
-                prefs.edit()
-                        .putString(Queueup.STORE_CLIENT_TOKEN, result.clientToken)
-                        .putString(Queueup.STORE_USER_ID, result.userId)
-                        .putString(Queueup.STORE_FACEBOOK_ID, accessToken.getUserId())
-                        .commit();
+                mStore.put(QueueupStore.CLIENT_TOKEN, result.clientToken);
+                mStore.put(QueueupStore.USER_ID, result.userId);
+                mStore.put(QueueupStore.FACEBOOK_ID, accessToken.getUserId());
 
                 finishAsOk();
             }

@@ -4,10 +4,12 @@ import android.app.Activity;
 import android.app.Fragment;
 import android.content.Context;
 import android.os.Bundle;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.GridView;
@@ -31,12 +33,12 @@ import org.louiswilliams.queueupplayer.queueup.objects.QueueupStateChange;
 import org.louiswilliams.queueupplayer.queueup.objects.QueueupTrack;
 import org.louiswilliams.queueupplayer.queueup.objects.SpotifyTrack;
 
-public class PlaylistListFragment extends Fragment implements PlaylistListener {
+public class PlaylistListFragment extends Fragment implements PlaylistListener, SwipeRefreshLayout.OnRefreshListener {
 
     private GridView playlistGrid;
     private List<QueueupPlaylist> mPlaylists;
     private MainActivity mActivity;
-    private View mView;
+    private SwipeRefreshLayout mView;
 
     @Override
     public void onAttach(Activity activity) {
@@ -50,10 +52,10 @@ public class PlaylistListFragment extends Fragment implements PlaylistListener {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         populateList();
 
-        mView = inflater.inflate(R.layout.fragment_playlist_list, container, false);
+        mView = (SwipeRefreshLayout) inflater.inflate(R.layout.fragment_playlist_list, container, false);
+        mView.setOnRefreshListener(this);
 
         playlistGrid = (GridView) mView.findViewById(R.id.playlist_grid);
-
         playlistGrid.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -61,6 +63,18 @@ public class PlaylistListFragment extends Fragment implements PlaylistListener {
                 Log.d(Queueup.LOG_TAG, "Using playlist ID: " + playlist.id);
 
                 mActivity.showPlaylistFragment(playlist.id);
+            }
+        });
+
+        /* Enable the swipe to refresh only if the first item is showing and at the top  */
+        playlistGrid.setOnScrollListener(new AbsListView.OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(AbsListView absListView, int i) {}
+
+            @Override
+            public void onScroll(AbsListView absListView, int firstVisible, int visibleItems, int totalItems) {
+                int topPosition = (playlistGrid.getChildCount() == 0) ? 0 : playlistGrid.getChildAt(0).getTop();
+                mView.setEnabled(firstVisible == 0 && topPosition >= 0);
             }
         });
 
@@ -287,6 +301,12 @@ public class PlaylistListFragment extends Fragment implements PlaylistListener {
     @Override
     public String getPlaylistId() {
         return mActivity.getPlaylistPlayer().getPlaylistId();
+    }
+
+    @Override
+    public void onRefresh() {
+        populateList();
+        mView.setRefreshing(false);
     }
 
     class PlaylistGridAdapter extends BaseAdapter {

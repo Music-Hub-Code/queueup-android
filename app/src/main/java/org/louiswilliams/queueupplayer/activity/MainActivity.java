@@ -44,6 +44,7 @@ import org.louiswilliams.queueupplayer.queueup.PlaylistClient;
 import org.louiswilliams.queueupplayer.queueup.PlaylistPlayer;
 import org.louiswilliams.queueupplayer.queueup.Queueup;
 import org.louiswilliams.queueupplayer.queueup.QueueupClient;
+import org.louiswilliams.queueupplayer.queueup.QueueupStore;
 import org.louiswilliams.queueupplayer.queueup.SpotifyPlayer;
 import org.louiswilliams.queueupplayer.queueup.objects.QueueupPlaylist;
 import org.louiswilliams.queueupplayer.widget.PlayerNotification;
@@ -61,6 +62,7 @@ public class MainActivity
     private DrawerListAdapter mDrawerAdapter;
     private ActionBarDrawerToggle mDrawerToggle;
     private QueueupClient mQueueupClient;
+    private QueueupStore mStore;
     private String mUserId;
     private String mClientToken;
     private String mFacebookId;
@@ -71,7 +73,6 @@ public class MainActivity
     private PlayerNotification mPlayerNotification;
 
     private static final String REDIRECT_URI = "queueup://callback";
-    private static final String STORE_NAME = Queueup.STORE_NAME;
     private static final String LOG_TAG = Queueup.LOG_TAG;
 
     @Override
@@ -83,14 +84,13 @@ public class MainActivity
 //        AndroidLoggingHandler.reset(new AndroidLoggingHandler());
 //        java.util.logging.Logger.getLogger(Socket.class.getName()).setLevel(Level.FINEST);
 
-
         getFragmentManager().addOnBackStackChangedListener(this);
 
+        mStore = QueueupStore.with(this);
 
-        SharedPreferences prefs = getSharedPreferences(STORE_NAME, 0);
-        mClientToken = prefs.getString(Queueup.STORE_CLIENT_TOKEN, null);
-        mUserId = prefs.getString(Queueup.STORE_USER_ID, null);
-        mFacebookId = prefs.getString(Queueup.STORE_FACEBOOK_ID, null);
+        mClientToken = mStore.get(QueueupStore.CLIENT_TOKEN);
+        mUserId = mStore.get(QueueupStore.USER_ID);
+        mFacebookId = mStore.get(QueueupStore.FACEBOOK_ID);
 
         if (isLoggedIn()) {
             mQueueupClient = new QueueupClient(mClientToken, mUserId);
@@ -233,11 +233,12 @@ public class MainActivity
         FragmentTransaction transaction = getFragmentManager().beginTransaction();
 
         Fragment current = getFragmentManager().findFragmentById(R.id.content_frame);
-        transaction.remove(current);
-        transaction.replace(R.id.content_frame, current);
+        transaction.detach(current);
+        transaction.attach(current);
         transaction.commit();
     }
 
+    /* Not used at the moment */
     public void onAddTrackFinshed(final boolean trackAdded) {
         showNewTrackOnPlaylistLoad = trackAdded;
         FragmentManager fm = getFragmentManager();
@@ -247,6 +248,10 @@ public class MainActivity
 
     public String getCurrentUserId() {
         return mUserId;
+    }
+
+    public Fragment getCurrentFragment() {
+        return getFragmentManager().findFragmentById(R.id.content_frame);
     }
 
     public PlaylistPlayer getPlaylistPlayer() {
@@ -458,8 +463,7 @@ public class MainActivity
     }
 
     public void doLogout() {
-        SharedPreferences prefs = getSharedPreferences(STORE_NAME, 0);
-        prefs.edit().clear().commit();
+        mStore.clear();
 
         LoginManager.getInstance().logOut();
 
@@ -588,6 +592,16 @@ public class MainActivity
     public void onBackStackChanged() {
         displayHomeUp();
     }
+
+    @Override
+    public void onBackPressed() {
+        if (getFragmentManager().getBackStackEntryCount() == 0) {
+            this.finish();
+        } else {
+            getFragmentManager().popBackStack();
+        }
+    }
+
     public void toast(final String message) {
         runOnUiThread(new Runnable() {
             @Override
@@ -596,4 +610,5 @@ public class MainActivity
             }
         });
     }
+
 }

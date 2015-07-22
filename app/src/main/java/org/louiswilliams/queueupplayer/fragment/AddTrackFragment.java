@@ -14,6 +14,7 @@ import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.EditText;
+import android.widget.HeaderViewListAdapter;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ListView;
@@ -76,9 +77,10 @@ public class AddTrackFragment extends Fragment {
 
             @Override
             public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
-                /* Adjust the numbers because the headers and footers throw off the counts by 2*/
-                int visibleAdj = visibleItemCount - 2;
-                int totalAdj = totalItemCount - 2;
+                /* Adjust the numbers because the footer throws off the counts by 1 */
+//                ((HeaderViewListAdapter) mTrackListAdapter).getHeadersCount();
+                int visibleAdj = visibleItemCount - 1;
+                int totalAdj = totalItemCount - 1;
 
                 if (totalAdj != 0 && firstVisibleItem + visibleAdj == totalAdj) {
                     loadMoreItems();
@@ -100,6 +102,9 @@ public class AddTrackFragment extends Fragment {
         mSearchBox.requestFocus();
         mActivity.showKeyboard();
 
+        final ImageButton searchClear = (ImageButton) mView.findViewById(R.id.track_search_clear);
+
+
         mSearchBox.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
@@ -109,6 +114,13 @@ public class AddTrackFragment extends Fragment {
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 searchTracks(s.toString());
+
+                /* Toggle display of clear button */
+                if (s.length() == 0) {
+                    searchClear.setVisibility(View.GONE);
+                } else if (searchClear.getVisibility() == View.GONE) {
+                    searchClear.setVisibility(View.VISIBLE);
+                }
             }
 
             @Override
@@ -117,7 +129,6 @@ public class AddTrackFragment extends Fragment {
             }
         });
 
-        ImageButton searchClear = (ImageButton) mView.findViewById(R.id.track_search_clear);
         searchClear.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -140,13 +151,8 @@ public class AddTrackFragment extends Fragment {
         QueueupClient.playlistAddTrack(mPlaylistId, track.id, new Queueup.CallReceiver<JSONObject>() {
             @Override
             public void onResult(JSONObject result) {
-                mActivity.runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        mActivity.onAddTrackFinshed(true);
-
-                    }
-                });
+                // Instead of exiting the fragment, just show a confirmation
+                mActivity.toast("Track added");
             }
 
             @Override
@@ -207,6 +213,7 @@ public class AddTrackFragment extends Fragment {
 
         if (query.length() == 0) {
             footerText.setText("");
+            return;
         } else {
             footerText.setText("Searching...");
         }
