@@ -21,6 +21,9 @@ public class PlaylistClient {
     protected Socket mSocket;
     protected String mSubscription;
 
+    protected int currentProgress;
+    protected int currentDuration;
+
     public PlaylistClient(String clientToken, String userId, final Queueup.CallReceiver<PlaylistClient> authReceiver) {
         mClientToken = clientToken;
         mUserId = userId;
@@ -133,6 +136,14 @@ public class PlaylistClient {
 
     public String getPlaylistId() {
         return mSubscription;
+    }
+
+    public int getCurrentProgress() {
+        return currentProgress;
+    }
+
+    public int getCurrentDuration() {
+        return currentDuration;
     }
 
     public void disconnect() {

@@ -1,4 +1,4 @@
-package org.louiswilliams.queueupplayer.queueup.crypto;
+package org.louiswilliams.queueupplayer.queueup.api;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.binary.Hex;

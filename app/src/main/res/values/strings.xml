@@ -29,4 +29,10 @@
     <string name="play_with_spotify">Play with Spotify</string>
     <string name="no_votes">0</string>
     <string name="search_tracks">Search tracks</string>
+    <string name="playlist_rename">Rename</string>
+    <string name="playlist_delete">Delete</string>
+    <string name="playlist_invite">Invite Friends</string>
+    <string name="title_activity_invite_contacts">InviteContactsActivity</string>
+
+    <string name="hello_world">Hello world!</string>
 </resources>

@@ -17,7 +17,7 @@ import com.facebook.login.widget.LoginButton;
 import org.louiswilliams.queueupplayer.R;
 
 import org.louiswilliams.queueupplayer.queueup.Queueup;
-import org.louiswilliams.queueupplayer.queueup.QueueupClient;
+import org.louiswilliams.queueupplayer.queueup.api.QueueupClient;
 import org.louiswilliams.queueupplayer.queueup.QueueupStore;
 import org.louiswilliams.queueupplayer.queueup.objects.QueueupApiCredential;
 
@@ -49,6 +49,7 @@ public class LoginActivity extends Activity {
 
             LoginButton loginButton = (LoginButton) findViewById(R.id.login_button);
             loginButton.setReadPermissions("email");
+            loginButton.setReadPermissions("user_friends");
         }
 
 
@@ -84,9 +85,9 @@ public class LoginActivity extends Activity {
             @Override
             public void onResult(QueueupApiCredential result) {
 
-                mStore.put(QueueupStore.CLIENT_TOKEN, result.clientToken);
-                mStore.put(QueueupStore.USER_ID, result.userId);
-                mStore.put(QueueupStore.FACEBOOK_ID, accessToken.getUserId());
+                mStore.putString(QueueupStore.CLIENT_TOKEN, result.clientToken);
+                mStore.putString(QueueupStore.USER_ID, result.userId);
+                mStore.putString(QueueupStore.FACEBOOK_ID, accessToken.getUserId());
 
                 finishAsOk();
             }

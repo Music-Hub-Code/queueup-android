@@ -1,5 +1,6 @@
 package org.louiswilliams.queueupplayer.queueup;
 
+import android.drm.DrmStore;
 import android.util.Log;
 
 import com.github.nkzawa.emitter.Emitter;
@@ -12,16 +13,17 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 import org.louiswilliams.queueupplayer.queueup.objects.QueueupStateChange;
 
-/**
- * Created by Louis on 6/1/2015.
- */
 public class PlaylistPlayer extends PlaylistClient {
 
     private QueueupStateChange currentState;
     private Queue<PlaylistListener> playlistListeners;
+    private PlaybackReceiver playbackReceiver;
 
-    public PlaylistPlayer(String clientToken, String userId, Queueup.CallReceiver<PlaylistClient> receiver) {
+    public PlaylistPlayer(String clientToken, String userId, Queueup.CallReceiver<PlaylistClient> receiver, PlaybackReceiver playbackReceiver) {
         super(clientToken, userId, receiver);
+
+        /* The playback receiver receives events about the end of playback on the server side */
+        this.playbackReceiver = playbackReceiver;
 
         /* We need a thread-safe data structure, because the application can be iterating while simultaneously remove or adding a listener */
         playlistListeners = new ConcurrentLinkedQueue<>();
@@ -113,6 +115,9 @@ public class PlaylistPlayer extends PlaylistClient {
 
     public void updateTrackProgress(int progress, int duration) {
 
+        this.currentProgress = progress;
+        this.currentDuration = duration;
+
         for (PlaylistListener listener : playlistListeners) {
             listener.onTrackProgress(progress, duration);
         }
@@ -140,9 +145,16 @@ public class PlaylistPlayer extends PlaylistClient {
         public void onStateChange(final QueueupStateChange state) {
             Log.d(Queueup.LOG_TAG, "State change: " + state);
 
+            /* This signals end of playback */
+            if (state.current == null) {
+                playbackReceiver.onPlaybackEnd();
+                return;
+            }
 
             /* New track */
-            if (currentState == null || currentState.current == null || !currentState.current.uri.equals(state.current.uri)) {
+            if (currentState == null ||
+                    currentState.current == null ||
+                    !currentState.current.uri.equals(state.current.uri)) {
                 Log.d(Queueup.LOG_TAG, "Changing tracks...");
 
                 /* Update every listener */
@@ -180,5 +192,4 @@ public class PlaylistPlayer extends PlaylistClient {
             Log.e(Queueup.LOG_TAG, message);
         }
     };
-
 }

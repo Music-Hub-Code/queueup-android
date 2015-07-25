@@ -9,46 +9,53 @@
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
-
         <meta-data
             android:name="com.facebook.sdk.ApplicationId"
             android:value="@string/facebook_app_id" />
 
         <activity
             android:name=".activity.MainActivity"
-            android:launchMode="singleTop"
             android:configChanges="orientation|screenSize"
-            >
+            android:launchMode="singleTop" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
+
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:host="callback" android:scheme="queueup" />
+
+                <data
+                    android:host="callback"
+                    android:scheme="queueup" />
             </intent-filter>
         </activity>
-
         <activity
             android:name=".activity.LoginActivity"
-            android:theme="@style/Theme.AppCompat.Light.NoActionBar"
-            android:label="@string/title_activity_login" >
+            android:label="@string/title_activity_login"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar" >
         </activity>
-
         <activity
             android:name="com.spotify.sdk.android.authentication.LoginActivity"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar" >
         </activity>
-
         <activity
             android:name="com.facebook.FacebookActivity"
             android:configChanges="keyboard|keyboardHidden|screenLayout|screenSize|orientation"
-            android:theme="@android:style/Theme.Translucent.NoTitleBar"
-            android:label="@string/app_name">
+            android:label="@string/app_name"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" >
         </activity>
-
+        <activity
+            android:name=".activity.InviteContactsActivity"
+            android:label="@string/title_activity_invite_contacts"
+            android:parentActivityName=".activity.MainActivity" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="org.louiswilliams.queueupplayer.activity.MainActivity" />
+        </activity>
     </application>
 
 </manifest>

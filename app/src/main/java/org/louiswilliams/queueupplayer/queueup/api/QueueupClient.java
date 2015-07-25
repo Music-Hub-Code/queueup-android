@@ -1,4 +1,4 @@
-package org.louiswilliams.queueupplayer.queueup;
+package org.louiswilliams.queueupplayer.queueup.api;
 
 import android.util.Log;
 
@@ -20,7 +20,12 @@ import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.louiswilliams.queueupplayer.queueup.crypto.ApiHmac;
+import org.louiswilliams.queueupplayer.queueup.PlaybackReceiver;
+import org.louiswilliams.queueupplayer.queueup.PlaylistClient;
+import org.louiswilliams.queueupplayer.queueup.PlaylistPlayer;
+import org.louiswilliams.queueupplayer.queueup.Queueup;
+import org.louiswilliams.queueupplayer.queueup.QueueupException;
+import org.louiswilliams.queueupplayer.queueup.api.ApiHmac;
 import org.louiswilliams.queueupplayer.queueup.objects.QueueupApiCredential;
 import org.louiswilliams.queueupplayer.queueup.objects.QueueupPlaylist;
 import org.louiswilliams.queueupplayer.queueup.objects.SpotifyTrack;
@@ -374,7 +379,7 @@ public class QueueupClient {
                                 receiver.onResult(json);
                             } else {
 
-                                /* Attempt to get the error message */
+                                /* Attempt to getString the error message */
                                 JSONObject error = json.optJSONObject("error");
                                 String message = "Error: ";
                                 if (error != null) {
@@ -428,11 +433,11 @@ public class QueueupClient {
         return playlistClient;
     }
 
-    public PlaylistPlayer getPlaylistPlayer(Queueup.CallReceiver<PlaylistClient> receiver) {
+    public PlaylistPlayer getPlaylistPlayer(Queueup.CallReceiver<PlaylistClient> receiver, PlaybackReceiver playbackReceiver) {
         if (playlistClient != null) {
             playlistClient.disconnect();
         }
-        PlaylistPlayer player = new PlaylistPlayer(clientToken, userId, receiver);
+        PlaylistPlayer player = new PlaylistPlayer(clientToken, userId, receiver, playbackReceiver);
         playlistClient = player;
         return player;
     }

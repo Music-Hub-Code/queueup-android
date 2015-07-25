@@ -1,13 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     >
 
-    <item android:id="@+id/action_playlist_rename" android:title="Rename"
-        android:icon="@drawable/ic_action_create_white"
-        android:showAsAction="ifRoom"
-        />
-    <item android:id="@+id/action_playlist_delete" android:title="Delete"
-        android:icon="@drawable/ic_action_delete_white"
-        android:showAsAction="ifRoom"
+    <item android:id="@+id/action_playlist_invite" android:title="@string/playlist_invite"
+        android:icon="@drawable/ic_action_group_add_white"
+        app:showAsAction="ifRoom"
         />
 </menu>

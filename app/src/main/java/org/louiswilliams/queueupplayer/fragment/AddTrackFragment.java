@@ -14,7 +14,6 @@ import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.EditText;
-import android.widget.HeaderViewListAdapter;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ListView;
@@ -32,7 +31,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import org.louiswilliams.queueupplayer.queueup.Queueup;
-import org.louiswilliams.queueupplayer.queueup.QueueupClient;
+import org.louiswilliams.queueupplayer.queueup.api.QueueupClient;
 import org.louiswilliams.queueupplayer.queueup.objects.SpotifyTrack;
 
 
@@ -166,7 +165,7 @@ public class AddTrackFragment extends Fragment {
 
         Log.d(Queueup.LOG_TAG, "Loading more items");
 
-        /* Essentially place a lock so this doesn't get called when already loading*/
+        /* Essentially place a lock so this doesn't getString called when already loading*/
         if (!loadingMoreItems) {
             loadingMoreItems = true;
 

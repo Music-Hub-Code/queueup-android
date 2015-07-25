@@ -37,7 +37,7 @@ import java.util.List;
 import org.louiswilliams.queueupplayer.queueup.PlaylistListener;
 import org.louiswilliams.queueupplayer.queueup.PlaylistPlayer;
 import org.louiswilliams.queueupplayer.queueup.Queueup;
-import org.louiswilliams.queueupplayer.queueup.QueueupClient;
+import org.louiswilliams.queueupplayer.queueup.api.QueueupClient;
 import org.louiswilliams.queueupplayer.queueup.objects.QueueupPlaylist;
 import org.louiswilliams.queueupplayer.queueup.objects.QueueupStateChange;
 import org.louiswilliams.queueupplayer.queueup.objects.QueueupTrack;
@@ -105,6 +105,8 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
     @Override
     public void onCreateOptionsMenu (Menu menu, MenuInflater menuInflater) {
         if (mThisPlaylist != null && isUserAdmin(mThisPlaylist.adminId)) {
+            menuInflater.inflate(R.menu.menu_playlist_admin, menu);
+        } else {
             menuInflater.inflate(R.menu.menu_playlist, menu);
         }
         super.onCreateOptionsMenu(menu, menuInflater);
@@ -118,6 +120,9 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
                 return true;
             case R.id.action_playlist_delete:
                 showDeleteDialog();
+                return true;
+            case R.id.action_playlist_invite:
+                // TODO: INVITE FRAGMENT
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
@@ -171,30 +176,43 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
             /* If the user is the admin of the current playlist, give the option to play, otherwise say who owns it */
             if (isAdmin) {
 
-                /* Listen to the "play here" button */
-                View.OnClickListener playHereListener = new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
+                /* Don't allow playing unless there's a current track */
+                if (playlist.current == null) {
+
+                    playHereButton.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+                            mActivity.toast("Add tracks to play!");
+                        }
+                    });
+                } else {
+
+
+                    /* Listen to the "play here" button */
+                    View.OnClickListener playHereListener = new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
 
                         /* Show the progress bar */
-                        setProgressBar(View.VISIBLE);
+                            setProgressBar(View.VISIBLE);
 
                         /* Prevent the button from being pressed again*/
-                        playHereButton.setOnClickListener(null);
+                            playHereButton.setOnClickListener(null);
 
                         /* Tell the activity to subscribe to this playlist and launch the player */
-                        PlaylistPlayer playlistPlayer = mActivity.subscribeToPlaylist(mPlaylistId);
+                            PlaylistPlayer playlistPlayer = mActivity.subscribeToPlaylist(mPlaylistId);
 
-                        playlistPlayer.addPlaylistListener(PlaylistFragment.this);
+                            playlistPlayer.addPlaylistListener(PlaylistFragment.this);
 
                         /* Insert the playlist controls */
-                        showPlaylistControls(playlistHeader, playlist.playing);
+                            showPlaylistControls(playlistHeader, playlist.playing);
 
 
-                    }
-                };
+                        }
+                    };
 
-                playHereButton.setOnClickListener(playHereListener);
+                    playHereButton.setOnClickListener(playHereListener);
+                }
 
             } else {
                 ViewGroup parent = (ViewGroup) playHereButton.getParent();
@@ -249,7 +267,13 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
                     }
                 });
 
+
+                if (currentPlaylistIsPlaying()) {
+                    onTrackProgress(mActivity.getPlaylistPlayer().getCurrentProgress(), mActivity.getPlaylistPlayer().getCurrentDuration());
+                }
+
                 setProgressBar(View.GONE);
+
 
                 /* If the fragment was created after a track was added, scroll down to the bottom */
                 maybeShowNewTrack();

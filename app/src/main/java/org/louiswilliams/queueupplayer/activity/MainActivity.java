@@ -5,7 +5,6 @@ import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Bundle;
@@ -40,12 +39,14 @@ import org.louiswilliams.queueupplayer.R;
 import org.louiswilliams.queueupplayer.fragment.AddTrackFragment;
 import org.louiswilliams.queueupplayer.fragment.PlaylistFragment;
 import org.louiswilliams.queueupplayer.fragment.PlaylistListFragment;
+import org.louiswilliams.queueupplayer.queueup.PlaybackReceiver;
 import org.louiswilliams.queueupplayer.queueup.PlaylistClient;
 import org.louiswilliams.queueupplayer.queueup.PlaylistPlayer;
 import org.louiswilliams.queueupplayer.queueup.Queueup;
-import org.louiswilliams.queueupplayer.queueup.QueueupClient;
+import org.louiswilliams.queueupplayer.queueup.api.QueueupClient;
 import org.louiswilliams.queueupplayer.queueup.QueueupStore;
 import org.louiswilliams.queueupplayer.queueup.SpotifyPlayer;
+import org.louiswilliams.queueupplayer.queueup.api.SpotifyTokenManager;
 import org.louiswilliams.queueupplayer.queueup.objects.QueueupPlaylist;
 import org.louiswilliams.queueupplayer.widget.PlayerNotification;
 
@@ -56,13 +57,14 @@ public class MainActivity
         implements
             FragmentManager.OnBackStackChangedListener {
 
-    private String[] navigationTitles = {"Hot Playlists","Me"};
+    private String[] navigationTitles = {"Trending Playlists"};
     private DrawerLayout mDrawerLayout;
     private ListView mDrawerList;
     private DrawerListAdapter mDrawerAdapter;
     private ActionBarDrawerToggle mDrawerToggle;
     private QueueupClient mQueueupClient;
     private QueueupStore mStore;
+    private SpotifyTokenManager mSpotifyTokenManager;
     private String mUserId;
     private String mClientToken;
     private String mFacebookId;
@@ -87,10 +89,11 @@ public class MainActivity
         getFragmentManager().addOnBackStackChangedListener(this);
 
         mStore = QueueupStore.with(this);
+        mSpotifyTokenManager = SpotifyTokenManager.with(mStore);
 
-        mClientToken = mStore.get(QueueupStore.CLIENT_TOKEN);
-        mUserId = mStore.get(QueueupStore.USER_ID);
-        mFacebookId = mStore.get(QueueupStore.FACEBOOK_ID);
+        mClientToken = mStore.getString(QueueupStore.CLIENT_TOKEN);
+        mUserId = mStore.getString(QueueupStore.USER_ID);
+        mFacebookId = mStore.getString(QueueupStore.FACEBOOK_ID);
 
         if (isLoggedIn()) {
             mQueueupClient = new QueueupClient(mClientToken, mUserId);
@@ -268,12 +271,12 @@ public class MainActivity
 
         unsubscribeFromCurrentPlaylist();
 
-        /* Initial authentication to get the player */
+        /* Initial authentication to getString the player */
         mPlaylistPlayer = mQueueupClient.getPlaylistPlayer(new Queueup.CallReceiver<PlaylistClient>() {
             @Override
             public void onResult(PlaylistClient result) {
                 Log.d(Queueup.LOG_TAG, "AUTH SUCCESS");
-                PlaylistPlayer player  = (PlaylistPlayer) result;
+                PlaylistPlayer player = (PlaylistPlayer) result;
 
                 /* Attach the notification listener... */
                 mPlaylistPlayer.addPlaylistListener(getPlayerNotification());
@@ -291,6 +294,17 @@ public class MainActivity
             public void onException(Exception e) {
                 toast(e.getMessage());
                 Log.e(Queueup.LOG_TAG, "AUTH PROBLEM: " + e.getMessage());
+            }
+        }, new PlaybackReceiver() {
+            @Override
+            public void onPlaybackEnd() {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        stopPlayback();
+
+                    }
+                });
             }
         });
 
@@ -330,13 +344,45 @@ public class MainActivity
 
         } else {
 
-            AuthenticationRequest.Builder builder = new AuthenticationRequest.Builder(CLIENT_ID,
-                    AuthenticationResponse.Type.TOKEN,
-                    REDIRECT_URI);
-            builder.setScopes(new String[]{"user-read-private", "streaming"});
-            AuthenticationRequest request = builder.build();
+            /* If we have an access token*/
+            if (mSpotifyTokenManager.haveAccessToken()) {
 
-            AuthenticationClient.openLoginInBrowser(this, request);
+                /* And it hasn't expired */
+                if (mSpotifyTokenManager.haveValidAccessToken()) {
+
+                    /* Initialize with the valid access token... */
+                    initPlayer(mSpotifyTokenManager.getAccessToken());
+                } else {
+
+                    /* Refresh an expired token */
+                    mSpotifyTokenManager.refreshToken(new Queueup.CallReceiver<String>() {
+                        @Override
+                        public void onResult(String result) {
+                            initPlayer(result);
+                        }
+
+                        @Override
+                        public void onException(Exception e) {
+                            e.printStackTrace();
+                            Log.e(Queueup.LOG_TAG, "Error refreshing token: " + e.getMessage());
+                            toast("Error refreshing token");
+                        }
+                    });
+                }
+            } else {
+
+                /* Build a request to log in through the browser...*/
+                AuthenticationRequest.Builder builder = new AuthenticationRequest.Builder(
+                        CLIENT_ID,
+                        AuthenticationResponse.Type.CODE,
+                        REDIRECT_URI);
+                builder.setScopes(new String[]{"user-read-private", "streaming"});
+                AuthenticationRequest request = builder.build();
+
+                AuthenticationClient.openLoginInBrowser(this, request);
+
+                /* To be seen again... in onNewIntent */
+            }
         }
 
     }
@@ -347,13 +393,29 @@ public class MainActivity
 
         Uri uri = intent.getData();
         if (uri != null) {
-            AuthenticationResponse response =AuthenticationResponse.fromUri(uri);
+            AuthenticationResponse response = AuthenticationResponse.fromUri(uri);
             switch (response.getType()) {
-                case TOKEN:
-                    initPlayer(response.getAccessToken());
-                    break;
+                case CODE:
+
+                    /* Swap out the token for a code */
+                    mSpotifyTokenManager.swapCodeForToken(response.getCode(), new Queueup.CallReceiver<String>() {
+
+                        @Override
+                        public void onResult(String result) {
+                            initPlayer(result);
+                        }
+
+                        @Override
+                        public void onException(Exception e) {
+                            e.printStackTrace();
+                            Log.e(Queueup.LOG_TAG, "Error swapping code for token:" + e.getMessage());
+                            toast("Error swapping code for token");
+                        }
+                    });
                 case ERROR:
-                    Log.e(Queueup.LOG_TAG, "Login Error");
+                    if (response.getError() != null) {
+                        Log.e(Queueup.LOG_TAG, "Login Error: " + response.getError());
+                    }
                     break;
             }
         }
@@ -363,7 +425,7 @@ public class MainActivity
         Config playerConfig = new Config(this, accessToken, CLIENT_ID);
 
 
-        /* Don't get another player if there's already one initialized */
+        /* Don't getString another player if there's already one initialized */
         if (mSpotifyPlayer != null &&  mSpotifyPlayer.getPlayer().isInitialized()) {
             beginPlayback();
         } else {
@@ -395,6 +457,7 @@ public class MainActivity
         mSpotifyPlayer.startReceivingPlaybackNotifications();
         mPlaylistPlayer.addPlaylistListener(mSpotifyPlayer);
         mPlaylistPlayer.updatePlaybackReady();
+        mPlaylistPlayer.updateTrackPlaying(true);
 
     }
 

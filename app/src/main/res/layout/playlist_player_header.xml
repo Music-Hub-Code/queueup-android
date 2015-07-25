@@ -5,6 +5,7 @@
     android:orientation="vertical"
     android:background="@color/background_material_light"
     android:translationX="-2dp"
+    android:elevation="2dp"
     >
 
 

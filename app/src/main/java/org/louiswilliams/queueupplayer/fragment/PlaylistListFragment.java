@@ -27,6 +27,7 @@ import org.louiswilliams.queueupplayer.activity.MainActivity;
 import java.util.List;
 
 import org.louiswilliams.queueupplayer.queueup.PlaylistListener;
+import org.louiswilliams.queueupplayer.queueup.PlaylistPlayer;
 import org.louiswilliams.queueupplayer.queueup.Queueup;
 import org.louiswilliams.queueupplayer.queueup.objects.QueueupPlaylist;
 import org.louiswilliams.queueupplayer.queueup.objects.QueueupStateChange;
@@ -143,7 +144,7 @@ public class PlaylistListFragment extends Fragment implements PlaylistListener, 
             @Override
             public void onException(Exception e) {
                 mActivity.toast(e.getMessage());
-                Log.e(Queueup.LOG_TAG, "Failed to get playlist list: " + e.getMessage());
+                Log.e(Queueup.LOG_TAG, "Failed to getString playlist list: " + e.getMessage());
             }
         });
     }
@@ -174,7 +175,8 @@ public class PlaylistListFragment extends Fragment implements PlaylistListener, 
 
     public void setupPlayerBar(View bar) {
 
-        final QueueupStateChange currentState = mActivity.getPlaylistPlayer().getCurrentState();
+        PlaylistPlayer playlistPlayer = mActivity.getPlaylistPlayer();
+        final QueueupStateChange currentState = playlistPlayer.getCurrentState();
 
         /* Set up buttons and listeners */
         ImageButton playButton = (ImageButton) bar.findViewById(R.id.play_button);
@@ -206,6 +208,8 @@ public class PlaylistListFragment extends Fragment implements PlaylistListener, 
             updatePlayButton(currentState.playing);
 
             updateTrackViews(currentState.current);
+
+            onTrackProgress(playlistPlayer.getCurrentProgress(), playlistPlayer.getCurrentDuration());
         }
 
         /* Tell the activity we are now the active listener */

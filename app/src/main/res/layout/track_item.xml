@@ -6,6 +6,7 @@
     android:gravity="center_horizontal"
     android:orientation="horizontal"
     android:translationX="-2dp"
+    android:elevation="2dp"
     android:background="@color/primary_material_dark"
     android:id="@+id/track_list_item"
     android:layout_marginLeft="16dp"

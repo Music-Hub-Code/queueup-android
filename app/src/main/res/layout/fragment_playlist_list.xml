@@ -43,6 +43,7 @@
                 android:background="@drawable/white_oval_ripple"
                 android:src="@drawable/ic_action_create"
                 android:translationX="-2dp"
+                android:elevation="4dp"
                 android:layout_gravity="bottom|end"
                 android:layout_alignParentBottom="true"
                 android:layout_alignParentRight="true"
