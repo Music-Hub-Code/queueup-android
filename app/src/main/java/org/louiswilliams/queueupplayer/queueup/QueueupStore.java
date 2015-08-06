@@ -3,7 +3,7 @@ package org.louiswilliams.queueupplayer.queueup;
 import android.content.Context;
 import android.content.SharedPreferences;
 
-public class QueueupStore {
+public class QueueUpStore {
 
     public static final String STORE_NAME = "authStore";
     public static final String USER_ID = "userId";
@@ -16,12 +16,12 @@ public class QueueupStore {
 
     private SharedPreferences prefs;
 
-    public QueueupStore(Context context) {
+    public QueueUpStore(Context context) {
         prefs = context.getSharedPreferences(STORE_NAME, 0);
     }
 
-    public static QueueupStore with(Context c) {
-        return new QueueupStore(c);
+    public static QueueUpStore with(Context c) {
+        return new QueueUpStore(c);
     }
 
     public void putString(String field, String value) {

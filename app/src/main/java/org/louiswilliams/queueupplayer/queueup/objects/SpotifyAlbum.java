@@ -9,7 +9,7 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.louiswilliams.queueupplayer.queueup.Queueup;
+import org.louiswilliams.queueupplayer.queueup.QueueUp;
 
 /**
  * Created by Louis on 5/23/2015.
@@ -28,7 +28,7 @@ public class SpotifyAlbum extends SpotifyObject {
             }
 
         } catch (JSONException e) {
-            Log.e(Queueup.LOG_TAG, "JSON Error: " + e.getMessage());
+            Log.e(QueueUp.LOG_TAG, "JSON Error: " + e.getMessage());
         }
 
     }

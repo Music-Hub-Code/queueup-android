@@ -5,15 +5,15 @@ import org.json.JSONObject;
 /**
  * Created by Louis on 5/25/2015.
  */
-public class QueueupError {
+public class QueueUpError {
     private String message;
     private String jsonString;
 
-    public QueueupError(String message) {
+    public QueueUpError(String message) {
         this.message = message;
     }
 
-    public QueueupError(JSONObject error) {
+    public QueueUpError(JSONObject error) {
         this.jsonString = error.toString();
         this.message = error.optString("message");
     }

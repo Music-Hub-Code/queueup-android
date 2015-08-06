@@ -30,8 +30,8 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import org.louiswilliams.queueupplayer.queueup.Queueup;
-import org.louiswilliams.queueupplayer.queueup.api.QueueupClient;
+import org.louiswilliams.queueupplayer.queueup.QueueUp;
+import org.louiswilliams.queueupplayer.queueup.api.QueueUpClient;
 import org.louiswilliams.queueupplayer.queueup.objects.SpotifyTrack;
 
 
@@ -147,11 +147,12 @@ public class AddTrackFragment extends Fragment {
 
     public void addTrackToPlaylist(SpotifyTrack track) {
 
-        QueueupClient.playlistAddTrack(mPlaylistId, track.id, new Queueup.CallReceiver<JSONObject>() {
+        mActivity.toastTop("Track added");
+
+        QueueUpClient.playlistAddTrack(mPlaylistId, track.id, new QueueUp.CallReceiver<JSONObject>() {
             @Override
             public void onResult(JSONObject result) {
                 // Instead of exiting the fragment, just show a confirmation
-                mActivity.toast("Track added");
             }
 
             @Override
@@ -163,7 +164,7 @@ public class AddTrackFragment extends Fragment {
 
     public void loadMoreItems() {
 
-        Log.d(Queueup.LOG_TAG, "Loading more items");
+        Log.d(QueueUp.LOG_TAG, "Loading more items");
 
         /* Essentially place a lock so this doesn't getString called when already loading*/
         if (!loadingMoreItems) {
@@ -174,7 +175,7 @@ public class AddTrackFragment extends Fragment {
 
             String query = mSearchBox.getText().toString();
 
-            doSearch(query, mTrackListAdapter.getCount(), new Queueup.CallReceiver<List<SpotifyTrack>>() {
+            doSearch(query, mTrackListAdapter.getCount(), new QueueUp.CallReceiver<List<SpotifyTrack>>() {
                 @Override
                 public void onResult(final List<SpotifyTrack> results) {
                     mActivity.runOnUiThread(new Runnable() {
@@ -190,7 +191,7 @@ public class AddTrackFragment extends Fragment {
 
                 @Override
                 public void onException(Exception e) {
-                    Log.e(Queueup.LOG_TAG, "Problem loading more tracks: " + e.getMessage());
+                    Log.e(QueueUp.LOG_TAG, "Problem loading more tracks: " + e.getMessage());
                 }
             });
         }
@@ -204,7 +205,7 @@ public class AddTrackFragment extends Fragment {
 
 
         if (searchBackoffTimer != null) {
-            Log.d(Queueup.LOG_TAG, "Backing off last query");
+            Log.d(QueueUp.LOG_TAG, "Backing off last query");
             searchBackoffTimer.cancel();
         }
 
@@ -223,7 +224,7 @@ public class AddTrackFragment extends Fragment {
         searchBackoffTimer.schedule(new TimerTask() {
             @Override
             public void run() {
-                doSearch(query, 0, new Queueup.CallReceiver<List<SpotifyTrack>>() {
+                doSearch(query, 0, new QueueUp.CallReceiver<List<SpotifyTrack>>() {
                     @Override
                     public void onResult(final List<SpotifyTrack> results) {
 
@@ -231,14 +232,14 @@ public class AddTrackFragment extends Fragment {
                             @Override
                             public void run() {
                                 mTrackListAdapter.updateTrackList(results);
-                                Log.d(Queueup.LOG_TAG, results.size() +  " search results");
+                                Log.d(QueueUp.LOG_TAG, results.size() +  " search results");
                             }
                         });
                     }
 
                     @Override
                     public void onException(Exception e) {
-                        Log.e(Queueup.LOG_TAG, "Problem loading search: " + e.getMessage());
+                        Log.e(QueueUp.LOG_TAG, "Problem loading search: " + e.getMessage());
                     }
                 });
             }
@@ -247,10 +248,10 @@ public class AddTrackFragment extends Fragment {
     }
 
 
-    public void doSearch(String query, int offset, Queueup.CallReceiver<List<SpotifyTrack>> receiver) {
-        Log.d(Queueup.LOG_TAG, "Searching for " + query + " at offset " + offset);
+    public void doSearch(String query, int offset, QueueUp.CallReceiver<List<SpotifyTrack>> receiver) {
+        Log.d(QueueUp.LOG_TAG, "Searching for " + query + " at offset " + offset);
 
-        QueueupClient.searchTracks(query, offset, receiver);
+        QueueUpClient.searchTracks(query, offset, receiver);
 
     }
     public static class TrackSearchListAdapter extends BaseAdapter {

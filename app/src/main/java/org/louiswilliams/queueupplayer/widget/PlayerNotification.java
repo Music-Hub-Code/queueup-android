@@ -20,8 +20,8 @@ import java.util.List;
 
 import org.louiswilliams.queueupplayer.queueup.PlaylistListener;
 import org.louiswilliams.queueupplayer.queueup.PlaylistPlayer;
-import org.louiswilliams.queueupplayer.queueup.Queueup;
-import org.louiswilliams.queueupplayer.queueup.objects.QueueupTrack;
+import org.louiswilliams.queueupplayer.queueup.QueueUp;
+import org.louiswilliams.queueupplayer.queueup.objects.QueueUpTrack;
 import org.louiswilliams.queueupplayer.queueup.objects.SpotifyTrack;
 
 public class PlayerNotification extends Notification implements PlaylistListener {
@@ -43,7 +43,7 @@ public class PlayerNotification extends Notification implements PlaylistListener
     public PlayerNotification(Activity context) {
         super();
 
-        Log.d(Queueup.LOG_TAG, "Creating notification for the first time...");
+        Log.d(QueueUp.LOG_TAG, "Creating notification for the first time...");
 
         mActivity = context;
         mNotificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
@@ -84,7 +84,7 @@ public class PlayerNotification extends Notification implements PlaylistListener
             mActivity.unregisterReceiver(skipReceiver);
             mActivity.unregisterReceiver(stopReceiver);
         } catch (IllegalArgumentException e) {
-            Log.w(Queueup.LOG_TAG, e.getMessage());
+            Log.w(QueueUp.LOG_TAG, e.getMessage());
         }
 
         mNotificationManager.cancel(NOTIFICATION_ID);
@@ -138,7 +138,7 @@ public class PlayerNotification extends Notification implements PlaylistListener
     }
 
     @Override
-    public void onQueueChanged(List<QueueupTrack> tracks) {   }
+    public void onQueueChanged(List<QueueUpTrack> tracks) {   }
 
     @Override
     public void onPlayerReady() {}
@@ -152,14 +152,14 @@ public class PlayerNotification extends Notification implements PlaylistListener
 
         @Override
         public void onReceive(Context context, Intent intent) {
-            Log.d(Queueup.LOG_TAG, "Play button pressed");
+            Log.d(QueueUp.LOG_TAG, "Play button pressed");
             if (context instanceof MainActivity) {
                 PlaylistPlayer player = ((MainActivity) context).getPlaylistPlayer();
 
                 boolean playing = player.getCurrentState().playing;
                 player.updateTrackPlaying(!playing);
             } else {
-                Log.e(Queueup.LOG_TAG, "Received context isn't an instance of Main activity...");
+                Log.e(QueueUp.LOG_TAG, "Received context isn't an instance of Main activity...");
             }
         }
     }
@@ -168,14 +168,14 @@ public class PlayerNotification extends Notification implements PlaylistListener
 
         @Override
         public void onReceive(Context context, Intent intent) {
-            Log.d(Queueup.LOG_TAG, "Skip button pressed");
+            Log.d(QueueUp.LOG_TAG, "Skip button pressed");
             if (context instanceof MainActivity) {
 
                 PlaylistPlayer player = ((MainActivity) context).getPlaylistPlayer();
 
                 player.updateTrackDone();
             } else {
-                Log.e(Queueup.LOG_TAG, "Received context isn't an instance of Main activity...");
+                Log.e(QueueUp.LOG_TAG, "Received context isn't an instance of Main activity...");
             }
         }
     }
@@ -186,7 +186,7 @@ public class PlayerNotification extends Notification implements PlaylistListener
         public void onReceive(Context context, Intent intent) {
 
             cancel();
-            Log.d(Queueup.LOG_TAG, "Stop pressed");
+            Log.d(QueueUp.LOG_TAG, "Stop pressed");
             if (context instanceof  MainActivity) {
                 ((MainActivity) context).stopPlayback();
             }

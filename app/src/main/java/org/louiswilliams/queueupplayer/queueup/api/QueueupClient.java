@@ -23,38 +23,36 @@ import java.util.List;
 import org.louiswilliams.queueupplayer.queueup.PlaybackReceiver;
 import org.louiswilliams.queueupplayer.queueup.PlaylistClient;
 import org.louiswilliams.queueupplayer.queueup.PlaylistPlayer;
-import org.louiswilliams.queueupplayer.queueup.Queueup;
-import org.louiswilliams.queueupplayer.queueup.QueueupException;
-import org.louiswilliams.queueupplayer.queueup.api.ApiHmac;
-import org.louiswilliams.queueupplayer.queueup.objects.QueueupApiCredential;
-import org.louiswilliams.queueupplayer.queueup.objects.QueueupPlaylist;
+import org.louiswilliams.queueupplayer.queueup.QueueUp;
+import org.louiswilliams.queueupplayer.queueup.QueueUpException;
+import org.louiswilliams.queueupplayer.queueup.objects.QueueUpApiCredential;
+import org.louiswilliams.queueupplayer.queueup.objects.QueueUpPlaylist;
 import org.louiswilliams.queueupplayer.queueup.objects.SpotifyTrack;
 
-public class QueueupClient {
+public class QueueUpClient {
 
     private String clientToken, userId;
     private PlaylistClient playlistClient;
     private static HttpGet searchGetRequest;
-//    private PlaylistPlayer playlistPlayer;
 
 
 
-    public QueueupClient(String clientToken, String userId) {
+    public QueueUpClient(String clientToken, String userId) {
         this.clientToken = clientToken;
         this.userId = userId;
     }
 
 
-    public static void login(JSONObject json, final Queueup.CallReceiver<QueueupApiCredential> receiver){
-        sendPost("/auth/login", json, new Queueup.CallReceiver<JSONObject>() {
+    public static void login(JSONObject json, final QueueUp.CallReceiver<QueueUpApiCredential> receiver){
+        sendPost("/auth/login", json, new QueueUp.CallReceiver<JSONObject>() {
             @Override
             public void onResult(JSONObject result) {
                 try {
                     String clientToken = result.getString("client_token");
                     String userId = result.getString("user_id");
-                    receiver.onResult(new QueueupApiCredential(userId, clientToken));
+                    receiver.onResult(new QueueUpApiCredential(userId, clientToken));
                 } catch (JSONException e) {
-                    receiver.onException(new QueueupException(e));
+                    receiver.onException(new QueueUpException(e));
                 }
             }
 
@@ -66,7 +64,7 @@ public class QueueupClient {
 
     }
 
-    public static void register(String email, String password, String name, final Queueup.CallReceiver<QueueupApiCredential> receiver){
+    public static void register(String email, String password, String name, final QueueUp.CallReceiver<QueueUpApiCredential> receiver){
         JSONObject json = new JSONObject();
 
         try {
@@ -74,19 +72,19 @@ public class QueueupClient {
             json.put("password", password);
             json.put("name", name);
         } catch (JSONException e) {
-            receiver.onException(new QueueupException("Error sending JSON: " + e.getMessage()));
+            receiver.onException(new QueueUpException("Error sending JSON: " + e.getMessage()));
             return;
         }
 
-        sendPost("/auth/register", json, new Queueup.CallReceiver<JSONObject>() {
+        sendPost("/auth/register", json, new QueueUp.CallReceiver<JSONObject>() {
             @Override
             public void onResult(JSONObject result) {
                 try {
                     String userId = result.getString("user_id");
                     String clientToken = result.getString("client_token");
-                    receiver.onResult(new QueueupApiCredential(userId, clientToken));
+                    receiver.onResult(new QueueUpApiCredential(userId, clientToken));
                 } catch (JSONException e) {
-                    receiver.onException(new QueueupException(e));
+                    receiver.onException(new QueueUpException(e));
                 }
             }
 
@@ -97,50 +95,50 @@ public class QueueupClient {
         });
     }
 
-    public static void loginEmail(String email, String password, Queueup.CallReceiver<QueueupApiCredential> receiver) {
+    public static void loginEmail(String email, String password, QueueUp.CallReceiver<QueueUpApiCredential> receiver) {
         JSONObject json = new JSONObject();
 
         try {
             json.put("email", email);
             json.put("password", password);
         } catch (JSONException e) {
-            receiver.onException(new QueueupException("Error sending JSON: " + e.getMessage()));
+            receiver.onException(new QueueUpException("Error sending JSON: " + e.getMessage()));
             return;
         }
 
         login(json, receiver);
     }
 
-    public static void loginFacebook (String accessToken, Queueup.CallReceiver<QueueupApiCredential> receiver) {
+    public static void loginFacebook (String accessToken, QueueUp.CallReceiver<QueueUpApiCredential> receiver) {
         JSONObject json = new JSONObject();
 
         try {
             json.put("facebook_access_token", accessToken);
         } catch (JSONException e) {
-            receiver.onException(new QueueupException("Error sending JSON: " + e.getMessage()));
+            receiver.onException(new QueueUpException("Error sending JSON: " + e.getMessage()));
             return;
         }
 
         login(json, receiver);
     }
 
-    public void playlistGetList(final Queueup.CallReceiver<List<QueueupPlaylist>> receiver) {
+    public void playlistGetList(final QueueUp.CallReceiver<List<QueueUpPlaylist>> receiver) {
 
 
-        sendApiGet("/playlists", new Queueup.CallReceiver<JSONObject>() {
+        sendApiGet("/playlists", new QueueUp.CallReceiver<JSONObject>() {
             @Override
             public void onResult(JSONObject result) {
                 try {
                     JSONArray playlistsJson = result.getJSONArray("playlists");
-                    List<QueueupPlaylist> playlistList = new ArrayList<>();
+                    List<QueueUpPlaylist> playlistList = new ArrayList<>();
 
                     for (int i = 0; i < playlistsJson.length(); i++) {
-                        playlistList.add(new QueueupPlaylist(playlistsJson.getJSONObject(i)));
+                        playlistList.add(new QueueUpPlaylist(playlistsJson.getJSONObject(i)));
                     }
 
                     receiver.onResult(playlistList);
                 } catch (JSONException e) {
-                    receiver.onException(new QueueupException("Invalid JSON  received: " + e.getMessage()));
+                    receiver.onException(new QueueUpException("Invalid JSON  received: " + e.getMessage()));
                 }
             }
 
@@ -152,15 +150,15 @@ public class QueueupClient {
 
     }
 
-    public void playlistGet(String playlistId, final Queueup.CallReceiver<QueueupPlaylist> receiver) {
-        sendApiGet("/playlists/" + playlistId, new Queueup.CallReceiver<JSONObject>() {
+    public void playlistGet(String playlistId, final QueueUp.CallReceiver<QueueUpPlaylist> receiver) {
+        sendApiGet("/playlists/" + playlistId, new QueueUp.CallReceiver<JSONObject>() {
             @Override
             public void onResult(JSONObject result) {
                 try {
                     JSONObject playlistJson = result.getJSONObject("playlist");
-                    receiver.onResult(new QueueupPlaylist(playlistJson));
+                    receiver.onResult(new QueueUpPlaylist(playlistJson));
                 } catch (JSONException e) {
-                    receiver.onException(new QueueupException("Invalid JSON  received: " + e.getMessage()));
+                    receiver.onException(new QueueUpException("Invalid JSON  received: " + e.getMessage()));
                 }
             }
 
@@ -171,7 +169,7 @@ public class QueueupClient {
         });
     }
 
-    public void playlistCreate(String playlistName, final Queueup.CallReceiver<QueueupPlaylist> receiver) {
+    public void playlistCreate(String playlistName, final QueueUp.CallReceiver<QueueUpPlaylist> receiver) {
         try {
             JSONObject playlist = new JSONObject();
             playlist.put("name", playlistName);
@@ -179,12 +177,12 @@ public class QueueupClient {
             JSONObject request = new JSONObject();
             request.put("playlist", playlist);
 
-            sendApiPost("/playlists/new", request, new Queueup.CallReceiver<JSONObject>() {
+            sendApiPost("/playlists/new", request, new QueueUp.CallReceiver<JSONObject>() {
                 @Override
                 public void onResult(JSONObject result) {
                     try {
                         JSONObject playlistJSON = result.getJSONObject("playlist");
-                        QueueupPlaylist playlist = new QueueupPlaylist(playlistJSON);
+                        QueueUpPlaylist playlist = new QueueUpPlaylist(playlistJSON);
                         receiver.onResult(playlist);
                     } catch (JSONException e) {
                         receiver.onException(e);
@@ -197,19 +195,19 @@ public class QueueupClient {
                 }
             });
         } catch (JSONException e) {
-            Log.e(Queueup.LOG_TAG, "JSON error adding track: " + e.getMessage());
+            Log.e(QueueUp.LOG_TAG, "JSON error adding track: " + e.getMessage());
         }
     }
 
-    public void playlistRename(String playlistId, String newName, final Queueup.CallReceiver<QueueupPlaylist> receiver) {
+    public void playlistRename(String playlistId, String newName, final QueueUp.CallReceiver<QueueUpPlaylist> receiver) {
         try {
             JSONObject request = new JSONObject();
             request.put("name", newName);
-            sendApiPost("/playlists/" + playlistId + "/rename", request, new Queueup.CallReceiver<JSONObject>() {
+            sendApiPost("/playlists/" + playlistId + "/rename", request, new QueueUp.CallReceiver<JSONObject>() {
                 @Override
                 public void onResult(JSONObject result) {
                     try {
-                        QueueupPlaylist playlist = new QueueupPlaylist(result.getJSONObject("playlist"));
+                        QueueUpPlaylist playlist = new QueueUpPlaylist(result.getJSONObject("playlist"));
                         receiver.onResult(playlist);
                     } catch (JSONException e) {
                         receiver.onException(e);
@@ -222,21 +220,21 @@ public class QueueupClient {
                 }
             });
         } catch (JSONException e) {
-            Log.e(Queueup.LOG_TAG, "JSON error adding track: " + e.getMessage());
+            Log.e(QueueUp.LOG_TAG, "JSON error adding track: " + e.getMessage());
         }
     }
 
-    public void playlistVoteOnTrack(String playlistId, String trackId, boolean vote, final Queueup.CallReceiver<QueueupPlaylist> receiver) {
+    public void playlistVoteOnTrack(String playlistId, String trackId, boolean vote, final QueueUp.CallReceiver<QueueUpPlaylist> receiver) {
         try {
             JSONObject request = new JSONObject();
             request.put("track_id", trackId);
             request.put("vote", vote);
 
-            sendApiPost("/playlists/" + playlistId + "/vote", request, new Queueup.CallReceiver<JSONObject>() {
+            sendApiPost("/playlists/" + playlistId + "/vote", request, new QueueUp.CallReceiver<JSONObject>() {
                 @Override
                 public void onResult(JSONObject result) {
                     try {
-                        QueueupPlaylist playlist = new QueueupPlaylist(result.getJSONObject("playlist"));
+                        QueueUpPlaylist playlist = new QueueUpPlaylist(result.getJSONObject("playlist"));
                         receiver.onResult(playlist);
                     } catch (JSONException e) {
                         receiver.onException(e);
@@ -249,13 +247,13 @@ public class QueueupClient {
                 }
             });
         } catch (JSONException e) {
-            Log.e(Queueup.LOG_TAG, "JSON error adding track: " + e.getMessage());
+            Log.e(QueueUp.LOG_TAG, "JSON error adding track: " + e.getMessage());
         }
     }
 
-    public void playlistDelete(String playlistId, final Queueup.CallReceiver<Boolean> receiver) {
+    public void playlistDelete(String playlistId, final QueueUp.CallReceiver<Boolean> receiver) {
         JSONObject request = new JSONObject();
-        sendApiPost("/playlists/" + playlistId + "/delete", request, new Queueup.CallReceiver<JSONObject>() {
+        sendApiPost("/playlists/" + playlistId + "/delete", request, new QueueUp.CallReceiver<JSONObject>() {
             @Override
             public void onResult(JSONObject result) {
                 boolean success = result.optBoolean("success", false);
@@ -269,17 +267,17 @@ public class QueueupClient {
         });
     }
 
-    public static void playlistAddTrack(String playlistId, String spotifyUri, final Queueup.CallReceiver<JSONObject> receiver) {
+    public static void playlistAddTrack(String playlistId, String spotifyUri, final QueueUp.CallReceiver<JSONObject> receiver) {
         try {
             JSONObject request = new JSONObject();
             request.put("track_id", spotifyUri);
             sendPost("/playlists/" + playlistId + "/add", request, receiver);
         } catch (JSONException e) {
-            Log.e(Queueup.LOG_TAG, "JSON error adding track: " + e.getMessage());
+            Log.e(QueueUp.LOG_TAG, "JSON error adding track: " + e.getMessage());
         }
     }
 
-    public static void searchTracks(String query, int offset, final Queueup.CallReceiver<List<SpotifyTrack>> receiver) {
+    public static void searchTracks(String query, int offset, final QueueUp.CallReceiver<List<SpotifyTrack>> receiver) {
 
         /* Short circuit if the string is empty */
         if (query.length() == 0) {
@@ -300,7 +298,7 @@ public class QueueupClient {
             return;
         }
 
-        searchGetRequest = sendGet("/search/tracks/" + encodedQuery + "/" + offset, new Queueup.CallReceiver<JSONObject>() {
+        searchGetRequest = sendGet("/search/tracks/" + encodedQuery + "/" + offset, new QueueUp.CallReceiver<JSONObject>() {
             @Override
             public void onResult(JSONObject result) {
                 List<SpotifyTrack> resultsList = new ArrayList<>();
@@ -312,7 +310,7 @@ public class QueueupClient {
                     }
                     receiver.onResult(resultsList);
                 } catch (JSONException e){
-                    receiver.onException(new QueueupException("Invalid JSON received: " + e.getMessage()));
+                    receiver.onException(new QueueUpException("Invalid JSON received: " + e.getMessage()));
                 }
             }
 
@@ -323,8 +321,51 @@ public class QueueupClient {
         });
     }
 
-    private HttpGet sendApiGet(String uri, final Queueup.CallReceiver<JSONObject> receiver) {
-        HttpGet get = new HttpGet(Queueup.API_URL + uri);
+    public static void searchPlaylists(String query, final QueueUp.CallReceiver<List<QueueUpPlaylist>> receiver) {
+        /* Short circuit if the string is empty */
+        if (query.length() == 0) {
+            receiver.onResult(new ArrayList<QueueUpPlaylist>());
+            return;
+        }
+
+        if (searchGetRequest != null) {
+            searchGetRequest.abort();
+            searchGetRequest = null;
+        }
+
+        String encodedQuery;
+
+        try {
+            encodedQuery = URLEncoder.encode(query, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            return;
+        }
+
+        searchGetRequest = sendGet("/search/playlists/" + encodedQuery, new QueueUp.CallReceiver<JSONObject>() {
+            @Override
+            public void onResult(JSONObject result) {
+                List<QueueUpPlaylist> resultsList = new ArrayList<>();
+                try {
+                    JSONArray tracks = result.getJSONArray("playlists");
+                    for (int i = 0; i < tracks.length(); i++) {
+                        JSONObject playlist = tracks.getJSONObject(i);
+                        resultsList.add(new QueueUpPlaylist(playlist));
+                    }
+                    receiver.onResult(resultsList);
+                } catch (JSONException e){
+                    receiver.onException(new QueueUpException("Invalid JSON received: " + e.getMessage()));
+                }
+            }
+
+            @Override
+            public void onException(Exception e) {
+                receiver.onException(e);
+            }
+        });
+    }
+
+    private HttpGet sendApiGet(String uri, final QueueUp.CallReceiver<JSONObject> receiver) {
+        HttpGet get = new HttpGet(QueueUp.API_URL + uri);
 
         /* Use API credientials only when available */
         if (clientToken != null && userId != null) {
@@ -334,8 +375,8 @@ public class QueueupClient {
         return sendGet(get, receiver);
     }
 
-    private HttpPost sendApiPost(String uri, JSONObject json, final Queueup.CallReceiver<JSONObject> receiver) {
-        HttpPost post = new HttpPost(Queueup.API_URL + uri);
+    private HttpPost sendApiPost(String uri, JSONObject json, final QueueUp.CallReceiver<JSONObject> receiver) {
+        HttpPost post = new HttpPost(QueueUp.API_URL + uri);
 
         /* Use API credientials only when available */
         if (clientToken != null && userId != null) {
@@ -346,17 +387,17 @@ public class QueueupClient {
 
     }
 
-    private static HttpGet sendGet(String url, final Queueup.CallReceiver<JSONObject> receiver) {
-        return sendGet(new HttpGet(Queueup.API_URL + url), receiver);
+    private static HttpGet sendGet(String url, final QueueUp.CallReceiver<JSONObject> receiver) {
+        return sendGet(new HttpGet(QueueUp.API_URL + url), receiver);
     }
 
-    private static HttpGet sendGet(HttpGet get, final Queueup.CallReceiver<JSONObject> receiver) {
+    private static HttpGet sendGet(HttpGet get, final QueueUp.CallReceiver<JSONObject> receiver) {
         sendApiRequest(get, receiver);
         return get;
     }
 
 
-    private static HttpRequestBase sendApiRequest(final HttpRequestBase request, final Queueup.CallReceiver<JSONObject> receiver) {
+    private static HttpRequestBase sendApiRequest(final HttpRequestBase request, final QueueUp.CallReceiver<JSONObject> receiver) {
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -370,7 +411,7 @@ public class QueueupClient {
                             try {
                                 json = new JSONObject(EntityUtils.toString(httpResponse.getEntity()));
                             } catch (JSONException e) {
-                                Log.e(Queueup.LOG_TAG, e.getMessage());
+                                Log.e(QueueUp.LOG_TAG, e.getMessage());
                                 throw new IOException(e);
                             }
 
@@ -388,13 +429,13 @@ public class QueueupClient {
                                     message += httpResponse.getStatusLine().getStatusCode();
                                 }
 
-                                receiver.onException(new QueueupException(message));
+                                receiver.onException(new QueueUpException(message));
                             }
                             return null;
                         }
                     });
                 } catch (IOException e) {
-                    Log.e(Queueup.LOG_TAG, "Http execution error: " + e.getMessage());
+                    Log.e(QueueUp.LOG_TAG, "Http execution error: " + e.getMessage());
                     receiver.onException(e);
                 }
             }
@@ -403,19 +444,19 @@ public class QueueupClient {
         return request;
     }
 
-    private static HttpPost sendPost(String uri, JSONObject json, Queueup.CallReceiver<JSONObject> receiver) {
-        return sendPost(new HttpPost(Queueup.API_URL + uri), json, receiver);
+    private static HttpPost sendPost(String uri, JSONObject json, QueueUp.CallReceiver<JSONObject> receiver) {
+        return sendPost(new HttpPost(QueueUp.API_URL + uri), json, receiver);
     }
 
-    private static HttpPost sendPost(HttpPost post, final JSONObject json, final Queueup.CallReceiver<JSONObject> receiver ) {
+    private static HttpPost sendPost(HttpPost post, final JSONObject json, final QueueUp.CallReceiver<JSONObject> receiver ) {
 
         post.setHeader("Content-type", "application/json");
 
         try {
             post.setEntity(new StringEntity(json.toString()));
         } catch (UnsupportedEncodingException e) {
-            Log.e(Queueup.LOG_TAG, e.getMessage());
-            receiver.onException(new QueueupException(e));
+            Log.e(QueueUp.LOG_TAG, e.getMessage());
+            receiver.onException(new QueueUpException(e));
             return post;
         }
 
@@ -425,7 +466,7 @@ public class QueueupClient {
     }
 
 
-    public PlaylistClient getPlaylistClient(Queueup.CallReceiver<PlaylistClient> receiver) {
+    public PlaylistClient getPlaylistClient(QueueUp.CallReceiver<PlaylistClient> receiver) {
         if (playlistClient != null) {
             playlistClient.disconnect();
         }
@@ -433,7 +474,7 @@ public class QueueupClient {
         return playlistClient;
     }
 
-    public PlaylistPlayer getPlaylistPlayer(Queueup.CallReceiver<PlaylistClient> receiver, PlaybackReceiver playbackReceiver) {
+    public PlaylistPlayer getPlaylistPlayer(QueueUp.CallReceiver<PlaylistClient> receiver, PlaybackReceiver playbackReceiver) {
         if (playlistClient != null) {
             playlistClient.disconnect();
         }

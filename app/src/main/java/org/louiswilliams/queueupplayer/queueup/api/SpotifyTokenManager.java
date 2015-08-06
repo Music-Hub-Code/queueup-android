@@ -2,20 +2,16 @@ package org.louiswilliams.queueupplayer.queueup.api;
 
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.louiswilliams.queueupplayer.queueup.Queueup;
-import org.louiswilliams.queueupplayer.queueup.QueueupException;
-import org.louiswilliams.queueupplayer.queueup.QueueupStore;
+import org.louiswilliams.queueupplayer.queueup.QueueUp;
+import org.louiswilliams.queueupplayer.queueup.QueueUpException;
+import org.louiswilliams.queueupplayer.queueup.QueueUpStore;
 
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.DataOutputStream;
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -23,16 +19,16 @@ import java.net.URL;
 
 public class SpotifyTokenManager{
 
-    private static final String SWAP_URL = Queueup.API_URL + "/spotify/swap";
-    private static final String REFRESH_URL = Queueup.API_URL + "/spotify/refresh";
+    private static final String SWAP_URL = QueueUp.API_URL + "/spotify/swap";
+    private static final String REFRESH_URL = QueueUp.API_URL + "/spotify/refresh";
 
-    private QueueupStore store;
+    private QueueUpStore store;
 
-    public SpotifyTokenManager(QueueupStore store) {
+    public SpotifyTokenManager(QueueUpStore store) {
         this.store = store;
     }
 
-    public static SpotifyTokenManager with(QueueupStore store) {
+    public static SpotifyTokenManager with(QueueUpStore store) {
         return new SpotifyTokenManager(store);
     }
 
@@ -53,7 +49,7 @@ public class SpotifyTokenManager{
     }
 
     /* Exchange an authentication code for an access token and refresh token */
-    public void swapCodeForToken(final String code, final Queueup.CallReceiver<String> receiver) {
+    public void swapCodeForToken(final String code, final QueueUp.CallReceiver<String> receiver) {
         final URL swapUrl;
         try {
             swapUrl = new URL(SWAP_URL);
@@ -89,7 +85,7 @@ public class SpotifyTokenManager{
                         receiver.onResult(accessToken);
                     } else {
 
-                        receiver.onException(new QueueupException("Bad request: " + response));
+                        receiver.onException(new QueueUpException("Bad request: " + response));
                     }
 
                     connection.disconnect();
@@ -104,7 +100,7 @@ public class SpotifyTokenManager{
     }
 
     /* Exchange a refresh token for a new access token */
-    public void refreshToken(final Queueup.CallReceiver<String> receiver) {
+    public void refreshToken(final QueueUp.CallReceiver<String> receiver) {
         final URL refreshUrl;
         try {
             refreshUrl = new URL(REFRESH_URL);
@@ -136,7 +132,7 @@ public class SpotifyTokenManager{
 
                         receiver.onResult(accessToken);
                     } else {
-                        receiver.onException(new QueueupException("Bad request: " + response));
+                        receiver.onException(new QueueUpException("Bad request: " + response));
                     }
 
                     connection.disconnect();
@@ -183,27 +179,27 @@ public class SpotifyTokenManager{
     }
 
     public String getAccessToken() {
-        return store.getString(QueueupStore.SPOTIFY_ACCESS_TOKEN);
+        return store.getString(QueueUpStore.SPOTIFY_ACCESS_TOKEN);
     }
 
     public void storeAccessToken(String token) {
-        store.putString(QueueupStore.SPOTIFY_ACCESS_TOKEN, token);
+        store.putString(QueueUpStore.SPOTIFY_ACCESS_TOKEN, token);
     }
 
     public long getTokenExpirationTime() {
-        return store.getLong(QueueupStore.SPOTIFY_TOKEN_EXPIRATION_TIME_SECONDS);
+        return store.getLong(QueueUpStore.SPOTIFY_TOKEN_EXPIRATION_TIME_SECONDS);
     }
 
     public void storeTokenExpiresIn(long expiresIn) {
-        store.putLong(QueueupStore.SPOTIFY_TOKEN_EXPIRATION_TIME_SECONDS, expiresIn + (System.currentTimeMillis() / 1000l));
+        store.putLong(QueueUpStore.SPOTIFY_TOKEN_EXPIRATION_TIME_SECONDS, expiresIn + (System.currentTimeMillis() / 1000l));
     }
 
     public String getEncryptedRefreshToken() {
-        return store.getString(QueueupStore.SPOTIFY_ENCRYPTED_REFRESH_TOKEN);
+        return store.getString(QueueUpStore.SPOTIFY_ENCRYPTED_REFRESH_TOKEN);
     }
 
     public void storeEncryptedRefreshToken(String token) {
-        store.putString(QueueupStore.SPOTIFY_ENCRYPTED_REFRESH_TOKEN, token);
+        store.putString(QueueUpStore.SPOTIFY_ENCRYPTED_REFRESH_TOKEN, token);
     }
 
 }

@@ -13,7 +13,7 @@ import android.widget.EditText;
 import org.louiswilliams.queueupplayer.R;
 import org.louiswilliams.queueupplayer.activity.MainActivity;
 
-import org.louiswilliams.queueupplayer.queueup.Queueup;
+import org.louiswilliams.queueupplayer.queueup.QueueUp;
 
 public class PlaylistNameFragment extends DialogFragment {
 
@@ -88,7 +88,7 @@ public class PlaylistNameFragment extends DialogFragment {
 
     @Override
     public void onDismiss(DialogInterface dialogInterface) {
-        Log.d(Queueup.LOG_TAG, "Dismissing...");
+        Log.d(QueueUp.LOG_TAG, "Dismissing...");
         mainActivity.hideKeyboard();
         super.onDismiss(dialogInterface);
     }

@@ -3,6 +3,7 @@ package org.louiswilliams.queueupplayer.activity;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
+import android.app.SearchManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
@@ -11,7 +12,10 @@ import android.os.Bundle;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.SearchView;
 import android.util.Log;
+import android.view.Gravity;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
@@ -39,18 +43,20 @@ import org.louiswilliams.queueupplayer.R;
 import org.louiswilliams.queueupplayer.fragment.AddTrackFragment;
 import org.louiswilliams.queueupplayer.fragment.PlaylistFragment;
 import org.louiswilliams.queueupplayer.fragment.PlaylistListFragment;
+import org.louiswilliams.queueupplayer.fragment.PlaylistSearchResultsFragment;
 import org.louiswilliams.queueupplayer.queueup.PlaybackReceiver;
 import org.louiswilliams.queueupplayer.queueup.PlaylistClient;
 import org.louiswilliams.queueupplayer.queueup.PlaylistPlayer;
-import org.louiswilliams.queueupplayer.queueup.Queueup;
-import org.louiswilliams.queueupplayer.queueup.api.QueueupClient;
-import org.louiswilliams.queueupplayer.queueup.QueueupStore;
+import org.louiswilliams.queueupplayer.queueup.QueueUp;
+import org.louiswilliams.queueupplayer.queueup.QueueUpStore;
 import org.louiswilliams.queueupplayer.queueup.SpotifyPlayer;
+import org.louiswilliams.queueupplayer.queueup.api.QueueUpClient;
 import org.louiswilliams.queueupplayer.queueup.api.SpotifyTokenManager;
-import org.louiswilliams.queueupplayer.queueup.objects.QueueupPlaylist;
+import org.louiswilliams.queueupplayer.queueup.objects.QueueUpPlaylist;
 import org.louiswilliams.queueupplayer.widget.PlayerNotification;
 
 import java.util.Arrays;
+import java.util.List;
 
 public class MainActivity
         extends AppCompatActivity
@@ -58,12 +64,13 @@ public class MainActivity
             FragmentManager.OnBackStackChangedListener {
 
     private String[] navigationTitles = {"Trending Playlists"};
+    private Menu mMenu;
     private DrawerLayout mDrawerLayout;
     private ListView mDrawerList;
     private DrawerListAdapter mDrawerAdapter;
     private ActionBarDrawerToggle mDrawerToggle;
-    private QueueupClient mQueueupClient;
-    private QueueupStore mStore;
+    private QueueUpClient mQueueUpClient;
+    private QueueUpStore mStore;
     private SpotifyTokenManager mSpotifyTokenManager;
     private String mUserId;
     private String mClientToken;
@@ -75,7 +82,7 @@ public class MainActivity
     private PlayerNotification mPlayerNotification;
 
     private static final String REDIRECT_URI = "queueup://callback";
-    private static final String LOG_TAG = Queueup.LOG_TAG;
+    private static final String LOG_TAG = QueueUp.LOG_TAG;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -88,17 +95,17 @@ public class MainActivity
 
         getFragmentManager().addOnBackStackChangedListener(this);
 
-        mStore = QueueupStore.with(this);
+        mStore = QueueUpStore.with(this);
         mSpotifyTokenManager = SpotifyTokenManager.with(mStore);
 
-        mClientToken = mStore.getString(QueueupStore.CLIENT_TOKEN);
-        mUserId = mStore.getString(QueueupStore.USER_ID);
-        mFacebookId = mStore.getString(QueueupStore.FACEBOOK_ID);
+        mClientToken = mStore.getString(QueueUpStore.CLIENT_TOKEN);
+        mUserId = mStore.getString(QueueUpStore.USER_ID);
+        mFacebookId = mStore.getString(QueueUpStore.FACEBOOK_ID);
 
         if (isLoggedIn()) {
-            mQueueupClient = new QueueupClient(mClientToken, mUserId);
+            mQueueUpClient = new QueueUpClient(mClientToken, mUserId);
         } else {
-            mQueueupClient = new QueueupClient(null, null);
+            mQueueUpClient = new QueueUpClient(null, null);
         }
 
         if (savedInstanceState == null) {
@@ -184,10 +191,14 @@ public class MainActivity
 
         displayHomeUp();
 
-
+        handleIntent(getIntent());
     }
 
-
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        mMenu = menu;
+        return super.onCreateOptionsMenu(menu);
+    }
 
     public  void goToLogin() {
         Intent intent = new Intent(getBaseContext(), LoginActivity.class);
@@ -195,7 +206,7 @@ public class MainActivity
         finish();
     }
 
-    public void showPlaylistFragment(String playlistId) {
+    public PlaylistFragment showPlaylistFragment(String playlistId) {
 
         FragmentTransaction transaction = getFragmentManager().beginTransaction();
         Bundle bundle = new Bundle();
@@ -208,14 +219,37 @@ public class MainActivity
         transaction.addToBackStack(playlistFragment.getClass().getName());
 
         transaction.commit();
+        return playlistFragment;
     }
 
-    public  void showPlaylistListFragment() {
+    public PlaylistListFragment showPlaylistListFragment() {
         FragmentTransaction transaction = getFragmentManager().beginTransaction();
+
         PlaylistListFragment playlistListFragment = new PlaylistListFragment();
 
         transaction.replace(R.id.content_frame, playlistListFragment);
         transaction.commit();
+        return playlistListFragment;
+    }
+
+    public PlaylistSearchResultsFragment showPlaylistSearchResultsFragment(String query) {
+        FragmentTransaction transaction = getFragmentManager().beginTransaction();
+
+        Bundle bundle = new Bundle();
+        bundle.putString("query", query);
+        PlaylistSearchResultsFragment playlistListFragment = new PlaylistSearchResultsFragment();
+        playlistListFragment.setArguments(bundle);
+
+        transaction.replace(R.id.content_frame, playlistListFragment);
+
+        /* This fragment is special, we don't want more than one on the back stack */
+        Fragment current = getCurrentFragment();
+        if (current instanceof PlaylistSearchResultsFragment) {
+            getFragmentManager().popBackStackImmediate();
+        }
+        transaction.addToBackStack(playlistListFragment.getClass().getName());
+        transaction.commit();
+        return playlistListFragment;
     }
 
 
@@ -272,10 +306,10 @@ public class MainActivity
         unsubscribeFromCurrentPlaylist();
 
         /* Initial authentication to getString the player */
-        mPlaylistPlayer = mQueueupClient.getPlaylistPlayer(new Queueup.CallReceiver<PlaylistClient>() {
+        mPlaylistPlayer = mQueueUpClient.getPlaylistPlayer(new QueueUp.CallReceiver<PlaylistClient>() {
             @Override
             public void onResult(PlaylistClient result) {
-                Log.d(Queueup.LOG_TAG, "AUTH SUCCESS");
+                Log.d(QueueUp.LOG_TAG, "AUTH SUCCESS");
                 PlaylistPlayer player = (PlaylistPlayer) result;
 
                 /* Attach the notification listener... */
@@ -293,7 +327,7 @@ public class MainActivity
             @Override
             public void onException(Exception e) {
                 toast(e.getMessage());
-                Log.e(Queueup.LOG_TAG, "AUTH PROBLEM: " + e.getMessage());
+                Log.e(QueueUp.LOG_TAG, "AUTH PROBLEM: " + e.getMessage());
             }
         }, new PlaybackReceiver() {
             @Override
@@ -313,7 +347,7 @@ public class MainActivity
 
     public void unsubscribeFromCurrentPlaylist() {
         if (mPlaylistPlayer != null) {
-            Log.d(Queueup.LOG_TAG, "Unsubscribing from preview player");
+            Log.d(QueueUp.LOG_TAG, "Unsubscribing from preview player");
             mPlaylistPlayer.removeAllPlaylistListeners();
             if (mSpotifyPlayer != null) {
                 mSpotifyPlayer.stopReceivingPlaybackNotifications();
@@ -324,15 +358,15 @@ public class MainActivity
     }
 
 
-    public QueueupClient getQueueupClient() {
-        return mQueueupClient;
+    public QueueUpClient getQueueupClient() {
+        return mQueueUpClient;
     }
 
     public void spotifyLogin() {
 
         /* If we want to skip logging in again... */
         if (mSpotifyPlayer != null && mSpotifyPlayer.getPlayer().isLoggedIn()) {
-            Log.d(Queueup.LOG_TAG, "Not re-logging in, no need");
+            Log.d(QueueUp.LOG_TAG, "Not re-logging in, no need");
 
             /* Make sure we create the player on the main thread */
             runOnUiThread(new Runnable() {
@@ -355,7 +389,7 @@ public class MainActivity
                 } else {
 
                     /* Refresh an expired token */
-                    mSpotifyTokenManager.refreshToken(new Queueup.CallReceiver<String>() {
+                    mSpotifyTokenManager.refreshToken(new QueueUp.CallReceiver<String>() {
                         @Override
                         public void onResult(String result) {
                             initPlayer(result);
@@ -364,7 +398,7 @@ public class MainActivity
                         @Override
                         public void onException(Exception e) {
                             e.printStackTrace();
-                            Log.e(Queueup.LOG_TAG, "Error refreshing token: " + e.getMessage());
+                            Log.e(QueueUp.LOG_TAG, "Error refreshing token: " + e.getMessage());
                             toast("Error refreshing token");
                         }
                     });
@@ -387,38 +421,54 @@ public class MainActivity
 
     }
 
-    @Override
-    protected void onNewIntent(Intent intent) {
-        super.onNewIntent(intent);
+    private void handleIntent(Intent intent) {
 
-        Uri uri = intent.getData();
-        if (uri != null) {
-            AuthenticationResponse response = AuthenticationResponse.fromUri(uri);
-            switch (response.getType()) {
-                case CODE:
+        /* Search intent  */
+        if (Intent.ACTION_SEARCH.equals(intent.getAction())) {
+            final String query = intent.getStringExtra(SearchManager.QUERY);
 
-                    /* Swap out the token for a code */
-                    mSpotifyTokenManager.swapCodeForToken(response.getCode(), new Queueup.CallReceiver<String>() {
+            showPlaylistSearchResultsFragment(query);
 
-                        @Override
-                        public void onResult(String result) {
-                            initPlayer(result);
+
+        /* Spotify auth response intent */
+        } else if (Intent.ACTION_VIEW.equals(intent.getAction())) {
+            Uri uri = intent.getData();
+            if (uri != null) {
+                AuthenticationResponse response = AuthenticationResponse.fromUri(uri);
+                switch (response.getType()) {
+                    case CODE:
+
+                        /* Swap out the token for a code */
+                        mSpotifyTokenManager.swapCodeForToken(response.getCode(), new QueueUp.CallReceiver<String>() {
+
+                            @Override
+                            public void onResult(String result) {
+                                initPlayer(result);
+                            }
+
+                            @Override
+                            public void onException(Exception e) {
+                                e.printStackTrace();
+                                Log.e(QueueUp.LOG_TAG, "Error swapping code for token:" + e.getMessage());
+                                toast("Error swapping code for token");
+                            }
+                        });
+                    case ERROR:
+                        if (response.getError() != null) {
+                            Log.e(QueueUp.LOG_TAG, "Login Error: " + response.getError());
                         }
-
-                        @Override
-                        public void onException(Exception e) {
-                            e.printStackTrace();
-                            Log.e(Queueup.LOG_TAG, "Error swapping code for token:" + e.getMessage());
-                            toast("Error swapping code for token");
-                        }
-                    });
-                case ERROR:
-                    if (response.getError() != null) {
-                        Log.e(Queueup.LOG_TAG, "Login Error: " + response.getError());
-                    }
-                    break;
+                        break;
+                }
             }
         }
+    }
+
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        setIntent(intent);
+        handleIntent(intent);
+        super.onNewIntent(intent);
     }
 
     public void initPlayer(String accessToken) {
@@ -496,7 +546,7 @@ public class MainActivity
         Profile profile = Profile.getCurrentProfile();
         AccessToken accessToken = AccessToken.getCurrentAccessToken();
 
-        Log.d(Queueup.LOG_TAG, "Access token: " + accessToken);
+        Log.d(QueueUp.LOG_TAG, "Access token: " + accessToken);
         /* If logged in with Facebook*/
         if (profile != null) {
             Uri proPicUri = profile.getProfilePictureUri(userImage.getLayoutParams().width, userImage.getLayoutParams().height);
@@ -558,7 +608,7 @@ public class MainActivity
         if (focus != null) {
             imm.hideSoftInputFromWindow(focus.getWindowToken(), 0);
         } else{
-            Log.e(Queueup.LOG_TAG, "Cant get focus to hide keyboard!");
+            Log.e(QueueUp.LOG_TAG, "Cant get focus to hide keyboard!");
         }
 
     }
@@ -572,16 +622,16 @@ public class MainActivity
 
     /* Create a new playlist */
     public void doCreatePlaylist(String name) {
-        mQueueupClient.playlistCreate(name, new Queueup.CallReceiver<QueueupPlaylist>() {
+        mQueueUpClient.playlistCreate(name, new QueueUp.CallReceiver<QueueUpPlaylist>() {
             @Override
-            public void onResult(QueueupPlaylist result) {
+            public void onResult(QueueUpPlaylist result) {
                 toast("Created " + result.name);
                 showPlaylistFragment(result.id);
             }
 
             @Override
             public void onException(Exception e) {
-                Log.e(Queueup.LOG_TAG, "Problem creating playlist: " + e.getMessage());
+                Log.e(QueueUp.LOG_TAG, "Problem creating playlist: " + e.getMessage());
                 toast("Problem creating playlist");
             }
         });
@@ -659,7 +709,16 @@ public class MainActivity
     @Override
     public void onBackPressed() {
         if (getFragmentManager().getBackStackEntryCount() == 0) {
-            this.finish();
+
+//            MenuItem searchItem = mMenu.findItem(R.id.search_playlists);
+//            SearchView search = (SearchView) searchItem.getActionView();
+//            if (search != null && !search.isIconified()) {
+//                searchItem.collapseActionView();
+//                search.setIconified(true);
+//            } else {
+//            }
+            super.onBackPressed();
+
         } else {
             getFragmentManager().popBackStack();
         }
@@ -670,6 +729,17 @@ public class MainActivity
             @Override
             public void run() {
                 Toast.makeText(MainActivity.this, message, Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    public void toastTop(final String message) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                Toast toast = Toast.makeText(MainActivity.this, message, Toast.LENGTH_LONG);
+                toast.setGravity(Gravity.TOP|Gravity.CENTER_HORIZONTAL, 0, 10);
+                toast.show();
             }
         });
     }

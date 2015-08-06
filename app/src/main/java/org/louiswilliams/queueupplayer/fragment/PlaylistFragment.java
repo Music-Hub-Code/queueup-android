@@ -5,6 +5,7 @@ import android.app.AlertDialog;
 import android.app.Fragment;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Looper;
 import android.util.Log;
@@ -30,25 +31,26 @@ import com.gc.materialdesign.views.ProgressBarDeterminate;
 import com.squareup.picasso.Picasso;
 
 import org.louiswilliams.queueupplayer.R;
+import org.louiswilliams.queueupplayer.activity.InviteContactsActivity;
 import org.louiswilliams.queueupplayer.activity.MainActivity;
 
 import java.util.List;
 
 import org.louiswilliams.queueupplayer.queueup.PlaylistListener;
 import org.louiswilliams.queueupplayer.queueup.PlaylistPlayer;
-import org.louiswilliams.queueupplayer.queueup.Queueup;
-import org.louiswilliams.queueupplayer.queueup.api.QueueupClient;
-import org.louiswilliams.queueupplayer.queueup.objects.QueueupPlaylist;
-import org.louiswilliams.queueupplayer.queueup.objects.QueueupStateChange;
-import org.louiswilliams.queueupplayer.queueup.objects.QueueupTrack;
+import org.louiswilliams.queueupplayer.queueup.QueueUp;
+import org.louiswilliams.queueupplayer.queueup.api.QueueUpClient;
+import org.louiswilliams.queueupplayer.queueup.objects.QueueUpPlaylist;
+import org.louiswilliams.queueupplayer.queueup.objects.QueueUpStateChange;
+import org.louiswilliams.queueupplayer.queueup.objects.QueueUpTrack;
 import org.louiswilliams.queueupplayer.queueup.objects.SpotifyTrack;
 
 
 public class PlaylistFragment extends Fragment implements PlaylistListener {
 
     private String mPlaylistId;
-    private QueueupClient mQueueupClient;
-    private QueueupPlaylist mThisPlaylist;
+    private QueueUpClient mQueueUpClient;
+    private QueueUpPlaylist mThisPlaylist;
     private View mView;
     private TrackListAdapter mTrackListAdapter;
     private ListView mTrackList;
@@ -64,7 +66,7 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setHasOptionsMenu(true);
+//        setHasOptionsMenu(true);
     }
 
     @Override
@@ -72,16 +74,16 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
         mView = inflater.inflate(R.layout.fragment_playlist, container, false);
         mPlaylistId = getArguments().getString("playlist_id");
 
-        Log.d(Queueup.LOG_TAG, "Loading playlist" + mPlaylistId);
+        Log.d(QueueUp.LOG_TAG, "Loading playlist" + mPlaylistId);
 
         /* Get the client*/
-        mQueueupClient = mActivity.getQueueupClient();
+        mQueueUpClient = mActivity.getQueueupClient();
 
         /* Get the playlist data to initially populate the view */
-        mQueueupClient.playlistGet(mPlaylistId, new Queueup.CallReceiver<QueueupPlaylist>() {
+        mQueueUpClient.playlistGet(mPlaylistId, new QueueUp.CallReceiver<QueueUpPlaylist>() {
             @Override
-            public void onResult(QueueupPlaylist result) {
-                Log.d(Queueup.LOG_TAG, result.toString());
+            public void onResult(QueueUpPlaylist result) {
+                Log.d(QueueUp.LOG_TAG, result.toString());
 
                 mThisPlaylist = result;
 
@@ -93,7 +95,7 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
             @Override
             public void onException(Exception e) {
                 mActivity.toast(e.getMessage());
-                Log.e(Queueup.LOG_TAG, "Problem getting playlist: " + e.getMessage());
+                Log.e(QueueUp.LOG_TAG, "Problem getting playlist: " + e.getMessage());
             }
         });
 
@@ -104,11 +106,11 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
 
     @Override
     public void onCreateOptionsMenu (Menu menu, MenuInflater menuInflater) {
-        if (mThisPlaylist != null && isUserAdmin(mThisPlaylist.adminId)) {
-            menuInflater.inflate(R.menu.menu_playlist_admin, menu);
-        } else {
-            menuInflater.inflate(R.menu.menu_playlist, menu);
-        }
+//        if (mThisPlaylist != null && isUserAdmin(mThisPlaylist.adminId)) {
+//            menuInflater.inflate(R.menu.menu_playlist_admin, menu);
+//        } else {
+//            menuInflater.inflate(R.menu.menu_playlist, menu);
+//        }
         super.onCreateOptionsMenu(menu, menuInflater);
     }
 
@@ -122,7 +124,9 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
                 showDeleteDialog();
                 return true;
             case R.id.action_playlist_invite:
-                // TODO: INVITE FRAGMENT
+                Intent inviteIntent = new Intent(mActivity.getBaseContext(), InviteContactsActivity.class);
+
+                startActivity(inviteIntent);
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
@@ -139,8 +143,8 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
         super.onDestroyView();
     }
 
-    private void populateView(final QueueupPlaylist playlist) {
-        List<QueueupTrack> tracks = playlist.tracks;
+    private void populateView(final QueueUpPlaylist playlist) {
+        List<QueueUpTrack> tracks = playlist.tracks;
         String userId = playlist.adminId;
         final boolean isAdmin = isUserAdmin(userId);
 
@@ -153,7 +157,7 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
         addTrackButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Log.d(Queueup.LOG_TAG, "Add track");
+                Log.d(QueueUp.LOG_TAG, "Add track");
                 mActivity.showAddTrackFragment(mPlaylistId);
             }
         });
@@ -318,7 +322,7 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
             @Override
             public void onClick(View v) {
                 /* Just invert the current playing status */
-                QueueupStateChange current =  mActivity.getPlaylistPlayer().getCurrentState();
+                QueueUpStateChange current =  mActivity.getPlaylistPlayer().getCurrentState();
 
                 /* Unless it's null, which means we should just play anyways */
                 boolean updateToPlaying = (current == null || !current.playing);
@@ -355,7 +359,7 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
                 }
             });
         } else {
-            Log.d(Queueup.LOG_TAG, "NULL!");
+            Log.d(QueueUp.LOG_TAG, "NULL!");
         }
     }
 
@@ -400,17 +404,17 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
     }
 
     public void renamePlaylist(String newName) {
-        mQueueupClient.playlistRename(mPlaylistId, newName, new Queueup.CallReceiver<QueueupPlaylist>() {
+        mQueueUpClient.playlistRename(mPlaylistId, newName, new QueueUp.CallReceiver<QueueUpPlaylist>() {
 
             @Override
-            public void onResult(QueueupPlaylist result) {
+            public void onResult(QueueUpPlaylist result) {
                 /* Recreate the fragment without adding it to the back stack */
                 mActivity.reloadCurrentFragment();
             }
 
             @Override
             public void onException(Exception e) {
-                Log.e(Queueup.LOG_TAG, e.getMessage());
+                Log.e(QueueUp.LOG_TAG, e.getMessage());
                 mActivity.toast(e.getMessage());
             }
         });
@@ -431,7 +435,7 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
     }
 
     public void deletePlaylist() {
-        mQueueupClient.playlistDelete(mPlaylistId, new Queueup.CallReceiver<Boolean>() {
+        mQueueUpClient.playlistDelete(mPlaylistId, new QueueUp.CallReceiver<Boolean>() {
 
             @Override
             public void onResult(Boolean result) {
@@ -446,7 +450,7 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
 
             @Override
             public void onException(Exception e) {
-                Log.e(Queueup.LOG_TAG, e.getMessage());
+                Log.e(QueueUp.LOG_TAG, e.getMessage());
                 mActivity.toast(e.getMessage());
             }
         });
@@ -484,7 +488,7 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
     }
 
     @Override
-    public void onQueueChanged(final List<QueueupTrack> queue) {
+    public void onQueueChanged(final List<QueueUpTrack> queue) {
         mTrackListAdapter.updateTrackList(queue);
     }
 
@@ -501,7 +505,7 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
     }
 
     public boolean isUserAdmin(String userId) {
-        return (mQueueupClient.getUserId() != null && mQueueupClient.getUserId().equals(userId));
+        return (mQueueUpClient.getUserId() != null && mQueueUpClient.getUserId().equals(userId));
 
     }
 
@@ -514,16 +518,16 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
     public class TrackListAdapter extends BaseAdapter {
 
         private Context mContext;
-        private List<QueueupTrack> mTrackList;
+        private List<QueueUpTrack> mTrackList;
         private int mResource;
 
-        public TrackListAdapter(Context context, List<QueueupTrack> tracks,  int resource) {
+        public TrackListAdapter(Context context, List<QueueUpTrack> tracks,  int resource) {
             mContext = context;
             mTrackList = tracks;
             mResource = resource;
         }
 
-        public void updateTrackList(List<QueueupTrack> list) {
+        public void updateTrackList(List<QueueUpTrack> list) {
             mTrackList = list;
 
             /* Calls are going to be from different asynchronous threads, so to be safe, run on main thread */
@@ -553,7 +557,7 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
             View trackView;
-            final QueueupTrack track = mTrackList.get(position);
+            final QueueUpTrack track = mTrackList.get(position);
 
             if (convertView == null) {
                 trackView = LayoutInflater.from(mContext).inflate(mResource, parent, false);
@@ -611,7 +615,7 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
 
         @Override
         public boolean onTouch(final View view, final MotionEvent event) {
-            final QueueupClient client = mActivity.getQueueupClient();
+            final QueueUpClient client = mActivity.getQueueupClient();
 
             final ImageView imageView = (ImageView) view.findViewById(R.id.track_votes_image);
 
@@ -626,9 +630,9 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
                 });
 
                 /* Send request to update vote */
-                client.playlistVoteOnTrack(mPlaylistId, trackId, !currentVote, new Queueup.CallReceiver<QueueupPlaylist>() {
+                client.playlistVoteOnTrack(mPlaylistId, trackId, !currentVote, new QueueUp.CallReceiver<QueueUpPlaylist>() {
                     @Override
-                    public void onResult(final QueueupPlaylist result) {
+                    public void onResult(final QueueUpPlaylist result) {
                         mTrackListAdapter.updateTrackList(result.tracks);
                     }
 

@@ -35,4 +35,6 @@
     <string name="title_activity_invite_contacts">InviteContactsActivity</string>
 
     <string name="hello_world">Hello world!</string>
+    <string name="trending_playlists">Trending Playlists</string>
+    <string name="search_playlists">Search Playlists</string>
 </resources>

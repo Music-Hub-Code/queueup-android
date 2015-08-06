@@ -2,21 +2,21 @@ package org.louiswilliams.queueupplayer.queueup;
 
 import org.json.JSONObject;
 
-public class QueueupException extends Exception {
+public class QueueUpException extends Exception {
 
-    public QueueupException(Throwable throwable) {
+    public QueueUpException(Throwable throwable) {
         super(throwable);
     }
 
-    public QueueupException(String message, Throwable throwable) {
+    public QueueUpException(String message, Throwable throwable) {
         super(message, throwable);
     }
 
-    public QueueupException(String message) {
+    public QueueUpException(String message) {
         super(message);
     }
 
-    public QueueupException(JSONObject error) {
+    public QueueUpException(JSONObject error) {
         super(error.optString("message"));
     }
 }

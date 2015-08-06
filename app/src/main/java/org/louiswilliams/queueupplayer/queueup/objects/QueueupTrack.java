@@ -9,18 +9,18 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.louiswilliams.queueupplayer.queueup.Queueup;
+import org.louiswilliams.queueupplayer.queueup.QueueUp;
 
 /**
  * Created by Louis on 5/23/2015.
  */
-public class QueueupTrack extends QueueupObject {
+public class QueueUpTrack extends QueueUpObject {
     public SpotifyTrack track;
     public int votes;
     public List<String> voters;
 
 
-    public QueueupTrack(JSONObject obj) {
+    public QueueUpTrack(JSONObject obj) {
         super(obj);
         try {
             track = new SpotifyTrack(obj.getJSONObject("track"));
@@ -35,7 +35,7 @@ public class QueueupTrack extends QueueupObject {
             }
 
         } catch (JSONException e) {
-            Log.e(Queueup.LOG_TAG, "JSON Problem: " + e.getMessage());
+            Log.e(QueueUp.LOG_TAG, "JSON Problem: " + e.getMessage());
         }
     }
 }

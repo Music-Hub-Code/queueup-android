@@ -16,10 +16,10 @@ import com.facebook.login.widget.LoginButton;
 
 import org.louiswilliams.queueupplayer.R;
 
-import org.louiswilliams.queueupplayer.queueup.Queueup;
-import org.louiswilliams.queueupplayer.queueup.api.QueueupClient;
-import org.louiswilliams.queueupplayer.queueup.QueueupStore;
-import org.louiswilliams.queueupplayer.queueup.objects.QueueupApiCredential;
+import org.louiswilliams.queueupplayer.queueup.QueueUp;
+import org.louiswilliams.queueupplayer.queueup.api.QueueUpClient;
+import org.louiswilliams.queueupplayer.queueup.QueueUpStore;
+import org.louiswilliams.queueupplayer.queueup.objects.QueueUpApiCredential;
 
 public class LoginActivity extends Activity {
 
@@ -29,13 +29,13 @@ public class LoginActivity extends Activity {
     public static final String EXTRA_DO_LOGIN = "EXTRA_DO_LOGIN";
 
     private CallbackManager callbackManager;
-    private QueueupStore mStore;
+    private QueueUpStore mStore;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        mStore = QueueupStore.with(this);
+        mStore = QueueUpStore.with(this);
 
         FacebookSdk.sdkInitialize(getApplicationContext());
         callbackManager = CallbackManager.Factory.create();
@@ -57,21 +57,21 @@ public class LoginActivity extends Activity {
         LoginManager.getInstance().registerCallback(callbackManager, new FacebookCallback<LoginResult>() {
             @Override
             public void onSuccess(final LoginResult loginResult) {
-                Log.d(Queueup.LOG_TAG, "ACCESS_TOKEN:" + loginResult.getAccessToken().getToken());
+                Log.d(QueueUp.LOG_TAG, "ACCESS_TOKEN:" + loginResult.getAccessToken().getToken());
 
                 doLogin(loginResult.getAccessToken());
             }
 
             @Override
             public void onCancel() {
-                Log.d(Queueup.LOG_TAG, "Cancelled FB Login");
+                Log.d(QueueUp.LOG_TAG, "Cancelled FB Login");
 
                 finishAsCancelled();
             }
 
             @Override
             public void onError(FacebookException exception) {
-                Log.e(Queueup.LOG_TAG, exception.getMessage());
+                Log.e(QueueUp.LOG_TAG, exception.getMessage());
 
                 finishWithException(exception);
             }
@@ -80,21 +80,21 @@ public class LoginActivity extends Activity {
 
 
     private void doLogin(final AccessToken accessToken) {
-        QueueupClient.loginFacebook(accessToken.getToken(), new Queueup.CallReceiver<QueueupApiCredential>() {
+        QueueUpClient.loginFacebook(accessToken.getToken(), new QueueUp.CallReceiver<QueueUpApiCredential>() {
 
             @Override
-            public void onResult(QueueupApiCredential result) {
+            public void onResult(QueueUpApiCredential result) {
 
-                mStore.putString(QueueupStore.CLIENT_TOKEN, result.clientToken);
-                mStore.putString(QueueupStore.USER_ID, result.userId);
-                mStore.putString(QueueupStore.FACEBOOK_ID, accessToken.getUserId());
+                mStore.putString(QueueUpStore.CLIENT_TOKEN, result.clientToken);
+                mStore.putString(QueueUpStore.USER_ID, result.userId);
+                mStore.putString(QueueUpStore.FACEBOOK_ID, accessToken.getUserId());
 
                 finishAsOk();
             }
 
             @Override
             public void onException(Exception e) {
-                Log.e(Queueup.LOG_TAG, "Problem logging in with Facebook: " + e.getMessage());
+                Log.e(QueueUp.LOG_TAG, "Problem logging in with Facebook: " + e.getMessage());
 
                 finishWithException(e);
             }

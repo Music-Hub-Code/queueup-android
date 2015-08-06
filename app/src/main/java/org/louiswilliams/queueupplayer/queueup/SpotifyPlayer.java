@@ -11,8 +11,8 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import org.louiswilliams.queueupplayer.queueup.objects.QueueupStateChange;
-import org.louiswilliams.queueupplayer.queueup.objects.QueueupTrack;
+import org.louiswilliams.queueupplayer.queueup.objects.QueueUpStateChange;
+import org.louiswilliams.queueupplayer.queueup.objects.QueueUpTrack;
 import org.louiswilliams.queueupplayer.queueup.objects.SpotifyTrack;
 
 public class SpotifyPlayer implements PlaylistListener, PlayerNotificationCallback {
@@ -56,7 +56,7 @@ public class SpotifyPlayer implements PlaylistListener, PlayerNotificationCallba
     }
 
     @Override
-    public void onQueueChanged(List<QueueupTrack> tracks) {
+    public void onQueueChanged(List<QueueUpTrack> tracks) {
 
     }
 
@@ -67,7 +67,7 @@ public class SpotifyPlayer implements PlaylistListener, PlayerNotificationCallba
 
     @Override
     public void onPlayerReady() {
-        final QueueupStateChange state = mPlaylistPlayer.getCurrentState();
+        final QueueUpStateChange state = mPlaylistPlayer.getCurrentState();
 
         if (state != null && state.current != null) {
 
@@ -76,7 +76,7 @@ public class SpotifyPlayer implements PlaylistListener, PlayerNotificationCallba
                 public void onPlayerState(PlayerState playerState) {
 
                     if (!playerState.trackUri.equals(state.current.uri)) {
-                        Log.d(Queueup.LOG_TAG, "Different tracks, so playing");
+                        Log.d(QueueUp.LOG_TAG, "Different tracks, so playing");
                         mPlayer.play(state.current.uri);
                     }
 
@@ -98,7 +98,7 @@ public class SpotifyPlayer implements PlaylistListener, PlayerNotificationCallba
 
     @Override
     public void onPlaybackEvent(PlayerNotificationCallback.EventType eventType, PlayerState playerState) {
-        Log.d(Queueup.LOG_TAG, "EVENT: " + eventType);
+        Log.d(QueueUp.LOG_TAG, "EVENT: " + eventType);
         if (eventType == PlayerNotificationCallback.EventType.END_OF_CONTEXT) {
             mPlaylistPlayer.updateTrackDone();
         } else if (eventType == PlayerNotificationCallback.EventType.PAUSE) {
@@ -110,7 +110,7 @@ public class SpotifyPlayer implements PlaylistListener, PlayerNotificationCallba
 
     @Override
     public void onPlaybackError(PlayerNotificationCallback.ErrorType errorType, String s) {
-        Log.e(Queueup.LOG_TAG, s);
+        Log.e(QueueUp.LOG_TAG, s);
     }
 
     public void startProgressUpdater() {

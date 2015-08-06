@@ -1,6 +1,5 @@
 package org.louiswilliams.queueupplayer.queueup;
 
-import android.drm.DrmStore;
 import android.util.Log;
 
 import com.github.nkzawa.emitter.Emitter;
@@ -11,15 +10,15 @@ import org.json.JSONObject;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-import org.louiswilliams.queueupplayer.queueup.objects.QueueupStateChange;
+import org.louiswilliams.queueupplayer.queueup.objects.QueueUpStateChange;
 
 public class PlaylistPlayer extends PlaylistClient {
 
-    private QueueupStateChange currentState;
+    private QueueUpStateChange currentState;
     private Queue<PlaylistListener> playlistListeners;
     private PlaybackReceiver playbackReceiver;
 
-    public PlaylistPlayer(String clientToken, String userId, Queueup.CallReceiver<PlaylistClient> receiver, PlaybackReceiver playbackReceiver) {
+    public PlaylistPlayer(String clientToken, String userId, QueueUp.CallReceiver<PlaylistClient> receiver, PlaybackReceiver playbackReceiver) {
         super(clientToken, userId, receiver);
 
         /* The playback receiver receives events about the end of playback on the server side */
@@ -41,7 +40,7 @@ public class PlaylistPlayer extends PlaylistClient {
                 mSocket.on("state_change", new Emitter.Listener() {
                     @Override
                     public void call(Object... args) {
-                        QueueupStateChange state = new QueueupStateChange((JSONObject) args[0]);
+                        QueueUpStateChange state = new QueueUpStateChange((JSONObject) args[0]);
                         stateChangeListener.onStateChange(state);
                         currentState = state;
                     }
@@ -68,7 +67,7 @@ public class PlaylistPlayer extends PlaylistClient {
     }
 
     public void updatePlaybackReady() {
-        Log.d(Queueup.LOG_TAG, "Playback ready");
+        Log.d(QueueUp.LOG_TAG, "Playback ready");
 
         for(PlaylistListener listener : playlistListeners) {
             listener.onPlayerReady();
@@ -77,7 +76,7 @@ public class PlaylistPlayer extends PlaylistClient {
 
     public void updateTrackPlaying(boolean playing) {
 
-        Log.d(Queueup.LOG_TAG, "Player playing: " + playing);
+        Log.d(QueueUp.LOG_TAG, "Player playing: " + playing);
         for (PlaylistListener listener : playlistListeners) {
             listener.onPlayingChanged(playing);
         }
@@ -88,13 +87,13 @@ public class PlaylistPlayer extends PlaylistClient {
                 obj.put("playing", playing);
                 mSocket.emit("track_play_pause", obj);
             } catch (JSONException e) {
-                Log.e(Queueup.LOG_TAG, e.getMessage());
+                Log.e(QueueUp.LOG_TAG, e.getMessage());
             }
         }
     }
 
     public void updateTrackDone() {
-        Log.d(Queueup.LOG_TAG, "Track done");
+        Log.d(QueueUp.LOG_TAG, "Track done");
 
         if (isConnected()) {
             mSocket.emit("track_finished");
@@ -129,21 +128,21 @@ public class PlaylistPlayer extends PlaylistClient {
                 obj.put("duration", duration);
                 mSocket.emit("track_progress", obj);
             } catch (JSONException e) {
-                Log.e(Queueup.LOG_TAG, e.getMessage());
+                Log.e(QueueUp.LOG_TAG, e.getMessage());
             }
         }
 
     }
 
-    public QueueupStateChange getCurrentState() {
+    public QueueUpStateChange getCurrentState() {
         return currentState;
     }
 
     /* Listen to updates from the server about the playlist */
     private PlaylistClient.StateChangeListener stateChangeListener = new PlaylistClient.StateChangeListener() {
         @Override
-        public void onStateChange(final QueueupStateChange state) {
-            Log.d(Queueup.LOG_TAG, "State change: " + state);
+        public void onStateChange(final QueueUpStateChange state) {
+            Log.d(QueueUp.LOG_TAG, "State change: " + state);
 
             /* This signals end of playback */
             if (state.current == null) {
@@ -155,7 +154,7 @@ public class PlaylistPlayer extends PlaylistClient {
             if (currentState == null ||
                     currentState.current == null ||
                     !currentState.current.uri.equals(state.current.uri)) {
-                Log.d(Queueup.LOG_TAG, "Changing tracks...");
+                Log.d(QueueUp.LOG_TAG, "Changing tracks...");
 
                 /* Update every listener */
                 for (PlaylistListener listener : playlistListeners) {
@@ -189,7 +188,7 @@ public class PlaylistPlayer extends PlaylistClient {
 
         @Override
         public void onError(String message) {
-            Log.e(Queueup.LOG_TAG, message);
+            Log.e(QueueUp.LOG_TAG, message);
         }
     };
 }

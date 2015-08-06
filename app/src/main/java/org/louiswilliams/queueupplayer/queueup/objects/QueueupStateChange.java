@@ -9,19 +9,19 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.louiswilliams.queueupplayer.queueup.Queueup;
+import org.louiswilliams.queueupplayer.queueup.QueueUp;
 
 /**
  * Created by Louis on 6/1/2015.
  */
-public class QueueupStateChange {
+public class QueueUpStateChange {
     public String trigger;
     public SpotifyTrack current;
-    public List<QueueupTrack> tracks;
+    public List<QueueUpTrack> tracks;
     public boolean playing;
 
 
-    public QueueupStateChange(JSONObject obj) {
+    public QueueUpStateChange(JSONObject obj) {
         try {
             trigger = obj.optString("trigger");
             playing = obj.optBoolean("play");
@@ -32,15 +32,15 @@ public class QueueupStateChange {
 
             JSONArray jsonTracks = obj.optJSONArray("queue");
             if (jsonTracks != null) {
-                tracks = new ArrayList<QueueupTrack>();
+                tracks = new ArrayList<QueueUpTrack>();
 
                 for (int i = 0; i < jsonTracks.length(); i++) {
                     JSONObject track = (JSONObject) jsonTracks.get(i);
-                    tracks.add(new QueueupTrack(track));
+                    tracks.add(new QueueUpTrack(track));
                 }
             }
         } catch (JSONException e) {
-            Log.e(Queueup.LOG_TAG, "JSON Error: " + e.getMessage());
+            Log.e(QueueUp.LOG_TAG, "JSON Error: " + e.getMessage());
         }
     }
 

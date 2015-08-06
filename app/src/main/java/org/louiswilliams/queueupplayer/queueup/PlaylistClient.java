@@ -11,11 +11,11 @@ import org.json.JSONObject;
 
 import java.net.URISyntaxException;
 
-import org.louiswilliams.queueupplayer.queueup.objects.QueueupStateChange;
+import org.louiswilliams.queueupplayer.queueup.objects.QueueUpStateChange;
 
 public class PlaylistClient {
 
-    private static final String SOCKET_URL = Queueup.SOCKET_URL;
+    private static final String SOCKET_URL = QueueUp.SOCKET_URL;
     protected String mClientToken;
     protected String mUserId;
     protected Socket mSocket;
@@ -24,7 +24,7 @@ public class PlaylistClient {
     protected int currentProgress;
     protected int currentDuration;
 
-    public PlaylistClient(String clientToken, String userId, final Queueup.CallReceiver<PlaylistClient> authReceiver) {
+    public PlaylistClient(String clientToken, String userId, final QueueUp.CallReceiver<PlaylistClient> authReceiver) {
         mClientToken = clientToken;
         mUserId = userId;
 
@@ -36,7 +36,7 @@ public class PlaylistClient {
                 public void call(Object... args) {
                     mSubscription = null;
 
-                    Log.d(Queueup.LOG_TAG, "CONNECTED");
+                    Log.d(QueueUp.LOG_TAG, "CONNECTED");
                     String event = "auth";
 
                     mSocket.once("auth_response", new Emitter.Listener() {
@@ -49,7 +49,7 @@ public class PlaylistClient {
                                 if (error == null) {
                                     authReceiver.onResult(PlaylistClient.this);
                                 } else {
-                                    authReceiver.onException(new QueueupException("Error authenticating: " + error));
+                                    authReceiver.onException(new QueueUpException("Error authenticating: " + error));
                                     mSocket.off();
                                     mSocket.disconnect();
                                 }
@@ -64,7 +64,7 @@ public class PlaylistClient {
                         JSONObject obj = new JSONObject();
                         obj.put("client_token", mClientToken);
                         obj.put("user_id", mUserId);
-                        Log.d(Queueup.LOG_TAG, "Emitting 'auth'");
+                        Log.d(QueueUp.LOG_TAG, "Emitting 'auth'");
                         mSocket.emit(event, obj);
                     } catch(JSONException e) {
                         authReceiver.onException(e);
@@ -108,14 +108,14 @@ public class PlaylistClient {
                 mSocket.on("state_change", new Emitter.Listener() {
                     @Override
                     public void call(Object... args) {
-                        QueueupStateChange state = new QueueupStateChange((JSONObject) args[0]);
+                        QueueUpStateChange state = new QueueUpStateChange((JSONObject) args[0]);
                         receiver.onStateChange(state);
                     }
                 });
 
                 mSocket.emit("client_subscribe", params);
             } catch (JSONException e) {
-                Log.e(Queueup.LOG_TAG, e.getMessage());
+                Log.e(QueueUp.LOG_TAG, e.getMessage());
             }
         }
     }
@@ -155,7 +155,7 @@ public class PlaylistClient {
     }
 
     public interface StateChangeListener {
-        void onStateChange(QueueupStateChange state);
+        void onStateChange(QueueUpStateChange state);
         void onError(String message);
     }
 }

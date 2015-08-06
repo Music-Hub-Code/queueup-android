@@ -9,7 +9,7 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.louiswilliams.queueupplayer.queueup.Queueup;
+import org.louiswilliams.queueupplayer.queueup.QueueUp;
 
 /**
  * Created by Louis on 5/23/2015.
@@ -32,7 +32,7 @@ public class SpotifyTrack extends SpotifyObject {
                 artists.add(new SpotifyArtist(artist));
             }
         } catch (JSONException e) {
-            Log.e(Queueup.LOG_TAG, "JSON problem: " + e.getMessage());
+            Log.e(QueueUp.LOG_TAG, "JSON problem: " + e.getMessage());
         }
     }
 

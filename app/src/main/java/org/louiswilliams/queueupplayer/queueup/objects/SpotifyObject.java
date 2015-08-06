@@ -5,7 +5,7 @@ import android.util.Log;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import org.louiswilliams.queueupplayer.queueup.Queueup;
+import org.louiswilliams.queueupplayer.queueup.QueueUp;
 
 /**
  * Created by Louis on 5/23/2015.
@@ -22,7 +22,7 @@ public abstract class SpotifyObject {
             uri = obj.getString("uri");
             name = obj.getString("name");
         } catch (JSONException e) {
-            Log.e(Queueup.LOG_TAG, "JSON problem: " + e.getMessage());
+            Log.e(QueueUp.LOG_TAG, "JSON problem: " + e.getMessage());
         }
     }
 
