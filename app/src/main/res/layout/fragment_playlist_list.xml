@@ -83,7 +83,7 @@
                     android:id="@+id/playlist_image"
                     android:layout_width="50dp"
                     android:layout_height="50dp"
-                    android:scaleType="fitCenter"
+                    android:scaleType="centerCrop"
                     android:translationX="-2dp"
                     android:background="@color/primary_dark_material_dark"
                     />

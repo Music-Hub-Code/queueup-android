@@ -22,7 +22,7 @@ public class QueueUpPlaylist extends QueueUpObject {
 
     public QueueUpPlaylist(JSONObject obj) {
         super(obj);
-        tracks = new ArrayList<QueueUpTrack>();
+        tracks = new ArrayList<>();
         try {
             name = obj.optString("name");
             adminId = obj.optString("admin");

@@ -27,6 +27,7 @@ import org.louiswilliams.queueupplayer.queueup.QueueUp;
 import org.louiswilliams.queueupplayer.queueup.QueueUpException;
 import org.louiswilliams.queueupplayer.queueup.objects.QueueUpApiCredential;
 import org.louiswilliams.queueupplayer.queueup.objects.QueueUpPlaylist;
+import org.louiswilliams.queueupplayer.queueup.objects.QueueUpUser;
 import org.louiswilliams.queueupplayer.queueup.objects.SpotifyTrack;
 
 public class QueueUpClient {
@@ -64,13 +65,13 @@ public class QueueUpClient {
 
     }
 
-    public static void register(String email, String password, String name, final QueueUp.CallReceiver<QueueUpApiCredential> receiver){
+    public static void register(String name, String email, String password, final QueueUp.CallReceiver<QueueUpApiCredential> receiver){
         JSONObject json = new JSONObject();
 
         try {
+            json.put("name", name);
             json.put("email", email);
             json.put("password", password);
-            json.put("name", name);
         } catch (JSONException e) {
             receiver.onException(new QueueUpException("Error sending JSON: " + e.getMessage()));
             return;
@@ -275,6 +276,25 @@ public class QueueUpClient {
         } catch (JSONException e) {
             Log.e(QueueUp.LOG_TAG, "JSON error adding track: " + e.getMessage());
         }
+    }
+
+    public void userGet(String userId, final QueueUp.CallReceiver<QueueUpUser> receiver) {
+        sendApiGet("/users/" + userId, new QueueUp.CallReceiver<JSONObject>() {
+            @Override
+            public void onResult(JSONObject result) {
+                Log.d(QueueUp.LOG_TAG, result.toString());
+                try {
+                    receiver.onResult(new QueueUpUser(result.getJSONObject("user")));
+                } catch (JSONException e) {
+                    receiver.onException(new QueueUpException("Invalid JSON  received: " + e.getMessage()));
+                }
+            }
+
+            @Override
+            public void onException(Exception e) {
+                receiver.onException(e);
+            }
+        });
     }
 
     public static void searchTracks(String query, int offset, final QueueUp.CallReceiver<List<SpotifyTrack>> receiver) {

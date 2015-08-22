@@ -14,7 +14,7 @@
     <string name="drawer_open">Open</string>
     <string name="drawer_close">Close</string>
     <string name="or">or</string>
-    <string name="email_address">email address</string>
+    <string name="email_address">Email address</string>
     <string name="queueup_login">QueueUp Login</string>
     <string name="sign_in">Sign In</string>
     <string name="register">Register</string>
@@ -37,4 +37,5 @@
     <string name="hello_world">Hello world!</string>
     <string name="trending_playlists">Trending Playlists</string>
     <string name="search_playlists">Search Playlists</string>
+    <string name="full_name">Full name</string>
 </resources>

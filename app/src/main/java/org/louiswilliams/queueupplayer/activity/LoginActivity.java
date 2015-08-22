@@ -4,6 +4,10 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
+import android.widget.Button;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import com.facebook.AccessToken;
 import com.facebook.CallbackManager;
@@ -17,6 +21,7 @@ import com.facebook.login.widget.LoginButton;
 import org.louiswilliams.queueupplayer.R;
 
 import org.louiswilliams.queueupplayer.queueup.QueueUp;
+import org.louiswilliams.queueupplayer.queueup.api.ApiHmac;
 import org.louiswilliams.queueupplayer.queueup.api.QueueUpClient;
 import org.louiswilliams.queueupplayer.queueup.QueueUpStore;
 import org.louiswilliams.queueupplayer.queueup.objects.QueueUpApiCredential;
@@ -30,6 +35,7 @@ public class LoginActivity extends Activity {
 
     private CallbackManager callbackManager;
     private QueueUpStore mStore;
+    private boolean isStateLogIn = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,8 +56,73 @@ public class LoginActivity extends Activity {
             LoginButton loginButton = (LoginButton) findViewById(R.id.login_button);
             loginButton.setReadPermissions("email");
             loginButton.setReadPermissions("user_friends");
-        }
 
+            final TextView nameText = (TextView) findViewById(R.id.user_name);
+            final TextView emailText = (TextView) findViewById(R.id.email);
+            final TextView passwordText = (TextView) findViewById(R.id.password);
+            final TextView passwordConfText = (TextView) findViewById(R.id.password_conf);
+
+            Button emailMultiButton = (Button) findViewById(R.id.login_multi_button);
+            final Button emailLoginButton = (Button) findViewById(R.id.login_email_button);
+            final Button emailRegisterButton = (Button) findViewById(R.id.register_email_button);
+
+            emailLoginButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+
+                    nameText.setVisibility(View.GONE);
+                    passwordConfText.setVisibility(View.GONE);
+
+                    isStateLogIn = true;
+                    view.setEnabled(false);
+                    emailRegisterButton.setEnabled(true);
+                }
+            });
+
+            emailRegisterButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+
+                    nameText.setVisibility(View.VISIBLE);
+                    passwordConfText.setVisibility(View.VISIBLE);
+
+                    isStateLogIn = false;
+                    view.setEnabled(false);
+                    emailLoginButton.setEnabled(true);
+                }
+            });
+
+            emailMultiButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+
+                    String name = nameText.getText().toString();
+                    String email = emailText.getText().toString();
+                    String password = passwordText.getText().toString();
+                    String passwordConf = passwordConfText.getText().toString();
+
+                    if (isStateLogIn) {
+
+                        if (email.isEmpty() || password.isEmpty()) {
+                            Toast.makeText(LoginActivity.this, "Email and password cannot be empty", Toast.LENGTH_SHORT).show();
+                        } else {
+                            doEmailLogin(email, password);
+                        }
+                    } else {
+                        if (email.isEmpty() || password.isEmpty() || name.isEmpty() || passwordConf.isEmpty()) {
+                            Toast.makeText(LoginActivity.this, "No fields can be empty", Toast.LENGTH_SHORT).show();
+                        } else {
+                            if (!password.equals(passwordConf)) {
+                                Toast.makeText(LoginActivity.this, "Passwords do not match", Toast.LENGTH_SHORT).show();
+                            } else {
+                                doEmailRegister(nameText.getText().toString(), emailText.getText().toString(), passwordText.getText().toString());
+                            }
+
+                        }
+                    }
+                }
+            });
+        }
 
 
         LoginManager.getInstance().registerCallback(callbackManager, new FacebookCallback<LoginResult>() {
@@ -59,7 +130,7 @@ public class LoginActivity extends Activity {
             public void onSuccess(final LoginResult loginResult) {
                 Log.d(QueueUp.LOG_TAG, "ACCESS_TOKEN:" + loginResult.getAccessToken().getToken());
 
-                doLogin(loginResult.getAccessToken());
+                doFacebookLogin(loginResult.getAccessToken());
             }
 
             @Override
@@ -79,7 +150,7 @@ public class LoginActivity extends Activity {
     }
 
 
-    private void doLogin(final AccessToken accessToken) {
+    private void doFacebookLogin(final AccessToken accessToken) {
         QueueUpClient.loginFacebook(accessToken.getToken(), new QueueUp.CallReceiver<QueueUpApiCredential>() {
 
             @Override
@@ -96,6 +167,45 @@ public class LoginActivity extends Activity {
             public void onException(Exception e) {
                 Log.e(QueueUp.LOG_TAG, "Problem logging in with Facebook: " + e.getMessage());
 
+                finishWithException(e);
+            }
+        });
+    }
+
+    private void doEmailLogin(String email, String password) {
+
+        QueueUpClient.loginEmail(email, password, new QueueUp.CallReceiver<QueueUpApiCredential>() {
+            @Override
+            public void onResult(QueueUpApiCredential result) {
+
+                mStore.putString(QueueUpStore.CLIENT_TOKEN, result.clientToken);
+                mStore.putString(QueueUpStore.USER_ID, result.userId);
+
+                finishAsOk();
+            }
+
+            @Override
+            public void onException(Exception e) {
+                finishWithException(e);
+            }
+        });
+
+    }
+
+    private void doEmailRegister(String name, String email, String password) {
+        QueueUpClient.register(name, email, password, new QueueUp.CallReceiver<QueueUpApiCredential>() {
+            @Override
+            public void onResult(QueueUpApiCredential result) {
+
+                mStore.putString(QueueUpStore.CLIENT_TOKEN, result.clientToken);
+                mStore.putString(QueueUpStore.USER_ID, result.userId);
+
+                finishAsOk();
+
+            }
+
+            @Override
+            public void onException(Exception e) {
                 finishWithException(e);
             }
         });

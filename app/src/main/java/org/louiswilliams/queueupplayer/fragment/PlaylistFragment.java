@@ -19,6 +19,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
+import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -26,16 +27,12 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 
-import com.gc.materialdesign.views.ButtonFlat;
 import com.gc.materialdesign.views.ProgressBarDeterminate;
 import com.squareup.picasso.Picasso;
 
 import org.louiswilliams.queueupplayer.R;
 import org.louiswilliams.queueupplayer.activity.InviteContactsActivity;
 import org.louiswilliams.queueupplayer.activity.MainActivity;
-
-import java.util.List;
-
 import org.louiswilliams.queueupplayer.queueup.PlaylistListener;
 import org.louiswilliams.queueupplayer.queueup.PlaylistPlayer;
 import org.louiswilliams.queueupplayer.queueup.QueueUp;
@@ -44,6 +41,8 @@ import org.louiswilliams.queueupplayer.queueup.objects.QueueUpPlaylist;
 import org.louiswilliams.queueupplayer.queueup.objects.QueueUpStateChange;
 import org.louiswilliams.queueupplayer.queueup.objects.QueueUpTrack;
 import org.louiswilliams.queueupplayer.queueup.objects.SpotifyTrack;
+
+import java.util.List;
 
 
 public class PlaylistFragment extends Fragment implements PlaylistListener {
@@ -66,7 +65,7 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-//        setHasOptionsMenu(true);
+        setHasOptionsMenu(true);
     }
 
     @Override
@@ -106,11 +105,9 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
 
     @Override
     public void onCreateOptionsMenu (Menu menu, MenuInflater menuInflater) {
-//        if (mThisPlaylist != null && isUserAdmin(mThisPlaylist.adminId)) {
-//            menuInflater.inflate(R.menu.menu_playlist_admin, menu);
-//        } else {
-//            menuInflater.inflate(R.menu.menu_playlist, menu);
-//        }
+        if (mThisPlaylist != null && isUserAdmin(mThisPlaylist.adminId)) {
+            menuInflater.inflate(R.menu.menu_playlist_admin, menu);
+        }
         super.onCreateOptionsMenu(menu, menuInflater);
     }
 
@@ -175,25 +172,27 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
 
         } else {
 
-            final ButtonFlat playHereButton = (ButtonFlat) playlistHeader.findViewById(R.id.play_here_button);
+            final Button playHereButton = (Button) playlistHeader.findViewById(R.id.play_here_button);
 
             /* If the user is the admin of the current playlist, give the option to play, otherwise say who owns it */
             if (isAdmin) {
 
+                View.OnClickListener playHereListener;
+
                 /* Don't allow playing unless there's a current track */
                 if (playlist.current == null) {
 
-                    playHereButton.setOnClickListener(new View.OnClickListener() {
+                    playHereListener = new View.OnClickListener() {
                         @Override
                         public void onClick(View view) {
                             mActivity.toast("Add tracks to play!");
                         }
-                    });
+                    };
                 } else {
 
 
                     /* Listen to the "play here" button */
-                    View.OnClickListener playHereListener = new View.OnClickListener() {
+                    playHereListener = new View.OnClickListener() {
                         @Override
                         public void onClick(View v) {
 
@@ -214,9 +213,9 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
 
                         }
                     };
-
-                    playHereButton.setOnClickListener(playHereListener);
                 }
+
+                playHereButton.setOnClickListener(playHereListener);
 
             } else {
                 ViewGroup parent = (ViewGroup) playHereButton.getParent();

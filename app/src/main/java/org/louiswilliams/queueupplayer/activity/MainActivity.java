@@ -20,6 +20,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
@@ -53,6 +54,7 @@ import org.louiswilliams.queueupplayer.queueup.SpotifyPlayer;
 import org.louiswilliams.queueupplayer.queueup.api.QueueUpClient;
 import org.louiswilliams.queueupplayer.queueup.api.SpotifyTokenManager;
 import org.louiswilliams.queueupplayer.queueup.objects.QueueUpPlaylist;
+import org.louiswilliams.queueupplayer.queueup.objects.QueueUpUser;
 import org.louiswilliams.queueupplayer.widget.PlayerNotification;
 
 import java.util.Arrays;
@@ -64,7 +66,6 @@ public class MainActivity
             FragmentManager.OnBackStackChangedListener {
 
     private String[] navigationTitles = {"Trending Playlists"};
-    private Menu mMenu;
     private DrawerLayout mDrawerLayout;
     private ListView mDrawerList;
     private DrawerListAdapter mDrawerAdapter;
@@ -142,7 +143,7 @@ public class MainActivity
         if (isLoggedIn()) {
             headerView = (LinearLayout) getLayoutInflater().inflate(R.layout.drawer_header, null, false);
 
-            ButtonFlat logoutButton = (ButtonFlat) headerView.findViewById(R.id.drawer_logout_button);
+            Button logoutButton = (Button) headerView.findViewById(R.id.drawer_logout_button);
 
             logoutButton.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -157,7 +158,7 @@ public class MainActivity
         } else {
             headerView = (LinearLayout) getLayoutInflater().inflate(R.layout.drawer_header_default, null, false);
 
-            ButtonFlat loginButton = (ButtonFlat) headerView.findViewById(R.id.drawer_login_button);
+            Button loginButton = (Button) headerView.findViewById(R.id.drawer_login_button);
             loginButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
@@ -192,12 +193,6 @@ public class MainActivity
         displayHomeUp();
 
         handleIntent(getIntent());
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        mMenu = menu;
-        return super.onCreateOptionsMenu(menu);
     }
 
     public  void goToLogin() {
@@ -459,6 +454,9 @@ public class MainActivity
                         }
                         break;
                 }
+
+                /* Clear the data so reloading the activity doesn't try to swap a token again */
+                intent.setData(null);
             }
         }
     }
@@ -541,20 +539,36 @@ public class MainActivity
 
     public void populateHeaderWithProfileInfo(View headerView) {
         ImageView userImage = (ImageView) headerView.findViewById(R.id.drawer_user_image);
-        TextView userName = (TextView) headerView.findViewById(R.id.drawer_user_name);
+        final TextView userName = (TextView) headerView.findViewById(R.id.drawer_user_name);
 
         Profile profile = Profile.getCurrentProfile();
         AccessToken accessToken = AccessToken.getCurrentAccessToken();
 
         Log.d(QueueUp.LOG_TAG, "Access token: " + accessToken);
         /* If logged in with Facebook*/
-        if (profile != null) {
+        if (accessToken != null) {
             Uri proPicUri = profile.getProfilePictureUri(userImage.getLayoutParams().width, userImage.getLayoutParams().height);
             Picasso.with(this).load(proPicUri).into(userImage);
 
             userName.setText(profile.getFirstName() + " " + profile.getLastName());
         } else {
-            toast("Profile null");
+
+            mQueueUpClient.userGet(mUserId, new QueueUp.CallReceiver<QueueUpUser>() {
+                @Override
+                public void onResult(final QueueUpUser result) {
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            userName.setText(result.name);
+                        }
+                    });
+                }
+
+                @Override
+                public void onException(Exception e) {
+                    toast(e.getMessage());
+                }
+            });
         }
 
 
@@ -594,7 +608,7 @@ public class MainActivity
     public void maybeDoFacebookLogin() {
         if (AccessToken.getCurrentAccessToken() == null) {
             Intent intent = new Intent(getApplicationContext(), LoginActivity.class);
-            intent.putExtra("DO_FB_LOGIN", true);
+            intent.putExtra(LoginActivity.EXTRA_DO_LOGIN, true);
         }
     }
 
