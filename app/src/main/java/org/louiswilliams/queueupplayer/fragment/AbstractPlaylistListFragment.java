@@ -111,7 +111,7 @@ public abstract class AbstractPlaylistListFragment extends Fragment implements P
         /* Show or hide the player bar if something is playing */
         View playerBar = mView.findViewById(R.id.player_bar);
         if (mActivity.getPlaylistPlayer() != null) {
-            setupPlayerBar(mView);
+            setupPlayerBar(playerBar);
         } else {
             playerBar.setVisibility(View.GONE);
         }
@@ -183,6 +183,8 @@ public abstract class AbstractPlaylistListFragment extends Fragment implements P
         /* Set up buttons and listeners */
         ImageButton playButton = (ImageButton) bar.findViewById(R.id.play_button);
         ImageButton skipButton = (ImageButton) bar.findViewById(R.id.skip_button);
+
+        bar.setClickable(true);
 
         View.OnClickListener playButtonListener = new View.OnClickListener() {
             @Override

@@ -12,10 +12,8 @@ import android.os.Bundle;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.SearchView;
 import android.util.Log;
 import android.view.Gravity;
-import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
@@ -31,7 +29,6 @@ import com.facebook.AccessToken;
 import com.facebook.FacebookSdk;
 import com.facebook.Profile;
 import com.facebook.login.LoginManager;
-import com.gc.materialdesign.views.ButtonFlat;
 import com.spotify.sdk.android.authentication.AuthenticationClient;
 import com.spotify.sdk.android.authentication.AuthenticationRequest;
 import com.spotify.sdk.android.authentication.AuthenticationResponse;
@@ -58,14 +55,13 @@ import org.louiswilliams.queueupplayer.queueup.objects.QueueUpUser;
 import org.louiswilliams.queueupplayer.widget.PlayerNotification;
 
 import java.util.Arrays;
-import java.util.List;
 
 public class MainActivity
         extends AppCompatActivity
         implements
             FragmentManager.OnBackStackChangedListener {
 
-    private String[] navigationTitles = {"Trending Playlists"};
+    private String[] navigationTitles = {"Trending Playlists", "Your Playlists"};
     private DrawerLayout mDrawerLayout;
     private ListView mDrawerList;
     private DrawerListAdapter mDrawerAdapter;
@@ -296,7 +292,22 @@ public class MainActivity
         return tmp;
     }
 
-    public PlaylistPlayer subscribeToPlaylist(final String playlistId) {
+    public PlaylistClient subscribePlaylistClient(final String playlistId) {
+
+        return mQueueUpClient.getPlaylistClient(new QueueUp.CallReceiver<PlaylistClient>() {
+            @Override
+            public void onResult(PlaylistClient result) {
+
+            }
+
+            @Override
+            public void onException(Exception e) {
+
+            }
+        });
+    }
+
+    public PlaylistPlayer subscribePlaylistPlayer(final String playlistId) {
 
         unsubscribeFromCurrentPlaylist();
 

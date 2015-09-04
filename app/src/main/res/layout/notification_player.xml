@@ -53,77 +53,51 @@
 
     </LinearLayout>
 
+
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:clipToPadding="false">
+        android:orientation="horizontal"
+        android:layout_marginTop="8dp"
+        >
 
-
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal">
-
-            <ImageButton
-                android:layout_gravity="center_vertical"
-                android:id="@+id/play_button"
-                android:layout_width="36dp"
-                android:layout_height="36dp"
-                android:paddingLeft="0dp"
-                android:paddingRight="0dp"
-                android:src="@drawable/ic_action_play_arrow_36"
-                android:background="@drawable/dark_white_oval_ripple"
-                >
-
-            </ImageButton>
-
-            <ImageButton
-                android:layout_gravity="center_vertical"
-                android:id="@+id/skip_button"
-                android:paddingLeft="0dp"
-                android:paddingRight="4dp"
-                android:layout_width="36dp"
-                android:layout_height="36dp"
-                android:src="@drawable/ic_action_skip_next_36"
-                android:background="@drawable/dark_white_oval_ripple"
-
-                android:layout_marginLeft="12dp"
-                >
-
-            </ImageButton>
-
-            <ImageButton
-                android:id="@+id/stop_playback_button"
-                android:layout_width="36dp"
-                android:layout_height="36dp"
-                android:src="@drawable/ic_action_clear_36"
-                android:background="@drawable/dark_white_oval_ripple"
-                android:scaleType="centerInside"
-                android:padding="2dp"
-                />
-
-        </LinearLayout>
-
-
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="end"
+        <ImageButton
+            android:layout_gravity="center_vertical"
+            android:id="@+id/play_button"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:paddingLeft="0dp"
+            android:paddingRight="0dp"
+            android:src="@drawable/ic_action_play_arrow_36"
+            android:background="@drawable/dark_white_oval_ripple"
             >
 
-            <TextView
-                android:gravity="start"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textColor="@color/primary_dark_material_light"
-                android:textSize="11sp"
-                android:paddingTop="2dp"
-                android:paddingRight="6dp"
-                android:id="@+id/track_progress_text"
-                android:text="@string/no_progress"/>
+        </ImageButton>
 
-        </LinearLayout>
+        <ImageButton
+            android:layout_gravity="center_vertical"
+            android:id="@+id/skip_button"
+            android:paddingLeft="0dp"
+            android:paddingRight="4dp"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:src="@drawable/ic_action_skip_next_36"
+            android:background="@drawable/dark_white_oval_ripple"
+
+            android:layout_marginLeft="12dp"
+            >
+
+        </ImageButton>
+
+        <ImageButton
+            android:id="@+id/stop_playback_button"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:src="@drawable/ic_action_clear_36"
+            android:background="@drawable/dark_white_oval_ripple"
+            android:scaleType="centerInside"
+            android:padding="2dp"
+            />
 
     </LinearLayout>
 

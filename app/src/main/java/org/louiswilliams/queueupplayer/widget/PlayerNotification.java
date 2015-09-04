@@ -129,12 +129,12 @@ public class PlayerNotification extends Notification implements PlaylistListener
 
     @Override
     public void onTrackProgress(int progress, int duration) {
-        String progressText = String.format("%d:%02d", progress / (60 * 1000), (progress / 1000) % 60);
-        String durationText = String.format("%d:%02d", duration / (60 * 1000), (duration / 1000) % 60);
-
-        mContentView.setTextViewText(R.id.track_progress_text, progressText + "/" + durationText);
-
-        mNotificationManager.notify(NOTIFICATION_ID, mBuilder.build());
+//        String progressText = String.format("%d:%02d", progress / (60 * 1000), (progress / 1000) % 60);
+//        String durationText = String.format("%d:%02d", duration / (60 * 1000), (duration / 1000) % 60);
+//
+//        mContentView.setTextViewText(R.id.track_progress_text, progressText + "/" + durationText);
+//
+//        mNotificationManager.notify(NOTIFICATION_ID, mBuilder.build());
     }
 
     @Override

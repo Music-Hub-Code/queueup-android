@@ -203,7 +203,7 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
                             playHereButton.setOnClickListener(null);
 
                         /* Tell the activity to subscribe to this playlist and launch the player */
-                            PlaylistPlayer playlistPlayer = mActivity.subscribeToPlaylist(mPlaylistId);
+                            PlaylistPlayer playlistPlayer = mActivity.subscribePlaylistPlayer(mPlaylistId);
 
                             playlistPlayer.addPlaylistListener(PlaylistFragment.this);
 
