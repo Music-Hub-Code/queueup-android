@@ -2,30 +2,18 @@ package org.louiswilliams.queueupplayer.queueup;
 
 import android.util.Log;
 
-import com.github.nkzawa.emitter.Emitter;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
-
 import org.louiswilliams.queueupplayer.queueup.objects.QueueUpStateChange;
+
+import io.socket.emitter.Emitter;
 
 public class PlaylistPlayer extends PlaylistClient {
 
-    private QueueUpStateChange currentState;
-    private Queue<PlaylistListener> playlistListeners;
-    private PlaybackReceiver playbackReceiver;
-
     public PlaylistPlayer(String clientToken, String userId, QueueUp.CallReceiver<PlaylistClient> receiver, PlaybackReceiver playbackReceiver) {
-        super(clientToken, userId, receiver);
-
-        /* The playback receiver receives events about the end of playback on the server side */
-        this.playbackReceiver = playbackReceiver;
-
-        /* We need a thread-safe data structure, because the application can be iterating while simultaneously remove or adding a listener */
-        playlistListeners = new ConcurrentLinkedQueue<>();
+        super(clientToken, userId, receiver, playbackReceiver);
     }
 
     public void subscribe(String playlistId, boolean force) {
@@ -100,18 +88,6 @@ public class PlaylistPlayer extends PlaylistClient {
         }
     }
 
-    public void addPlaylistListener(PlaylistListener listener) {
-        playlistListeners.add(listener);
-    }
-
-    public void removePlaylistListener(PlaylistListener listener) {
-        playlistListeners.remove(listener);
-    }
-
-    public void removeAllPlaylistListeners() {
-        playlistListeners.clear();
-    }
-
     public void updateTrackProgress(int progress, int duration) {
 
         this.currentProgress = progress;
@@ -134,61 +110,4 @@ public class PlaylistPlayer extends PlaylistClient {
 
     }
 
-    public QueueUpStateChange getCurrentState() {
-        return currentState;
-    }
-
-    /* Listen to updates from the server about the playlist */
-    private PlaylistClient.StateChangeListener stateChangeListener = new PlaylistClient.StateChangeListener() {
-        @Override
-        public void onStateChange(final QueueUpStateChange state) {
-            Log.d(QueueUp.LOG_TAG, "State change: " + state);
-
-            /* This signals end of playback */
-            if (state.current == null) {
-                playbackReceiver.onPlaybackEnd();
-                return;
-            }
-
-            /* New track */
-            if (currentState == null ||
-                    currentState.current == null ||
-                    !currentState.current.uri.equals(state.current.uri)) {
-                Log.d(QueueUp.LOG_TAG, "Changing tracks...");
-
-                /* Update every listener */
-                for (PlaylistListener listener : playlistListeners) {
-                    listener.onTrackChanged(state.current);
-                }
-            }
-
-            /* If the playing state is not what it currently is (it changed) */
-
-            if (currentState == null ||
-                    (currentState.playing && !state.playing) ||
-                    (!currentState.playing && state.playing)) {
-
-                /* Update every listener */
-                for (PlaylistListener listener : playlistListeners) {
-                    listener.onPlayingChanged(state.playing);
-                }
-
-            }
-
-            /* New queue */
-            if (state.tracks != null) {
-
-                /* Update every listener */
-                for (PlaylistListener listener : playlistListeners) {
-                    listener.onQueueChanged(state.tracks);
-                }
-            }
-
-        }
-
-        @Override
-        public void onError(String message) {
-            Log.e(QueueUp.LOG_TAG, message);
-        }
-    };
 }

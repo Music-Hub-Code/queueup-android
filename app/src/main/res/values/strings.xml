@@ -15,8 +15,8 @@
     <string name="drawer_close">Close</string>
     <string name="or">or</string>
     <string name="email_address">Email address</string>
-    <string name="queueup_login">QueueUp Login</string>
-    <string name="sign_in">Sign In</string>
+    <string name="queueup_login">Login</string>
+    <string name="sign_in">Log In</string>
     <string name="register">Register</string>
     <string name="logout">Logout</string>
     <string name="log_in">Log In</string>
@@ -38,4 +38,5 @@
     <string name="trending_playlists">Trending Playlists</string>
     <string name="search_playlists">Search Playlists</string>
     <string name="full_name">Full name</string>
+    <string name="title_activity_splash">SplashActivity</string>
 </resources>

@@ -3,6 +3,7 @@ package org.louiswilliams.queueupplayer.activity;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -21,10 +22,12 @@ import com.facebook.login.widget.LoginButton;
 import org.louiswilliams.queueupplayer.R;
 
 import org.louiswilliams.queueupplayer.queueup.QueueUp;
-import org.louiswilliams.queueupplayer.queueup.api.ApiHmac;
 import org.louiswilliams.queueupplayer.queueup.api.QueueUpClient;
 import org.louiswilliams.queueupplayer.queueup.QueueUpStore;
 import org.louiswilliams.queueupplayer.queueup.objects.QueueUpApiCredential;
+
+import java.util.Arrays;
+import java.util.Collection;
 
 public class LoginActivity extends Activity {
 
@@ -35,6 +38,7 @@ public class LoginActivity extends Activity {
 
     private CallbackManager callbackManager;
     private QueueUpStore mStore;
+    private QueueUpClient mQueueupClient;
     private boolean isStateLogIn = true;
 
     @Override
@@ -42,13 +46,18 @@ public class LoginActivity extends Activity {
         super.onCreate(savedInstanceState);
 
         mStore = QueueUpStore.with(this);
+        String userId = mStore.getString(QueueUpStore.CLIENT_TOKEN);
+        String clientToken = mStore.getString(QueueUpStore.USER_ID);
+
+        mQueueupClient = new QueueUpClient(userId, clientToken);
+
 
         FacebookSdk.sdkInitialize(getApplicationContext());
         callbackManager = CallbackManager.Factory.create();
 
         Intent intent = getIntent();
 
-        /* If we are told to go ahead and do a login, bypassing displaying anything. */
+        /* If we want to show the login activity, and not bypass the display */
         if (!intent.getBooleanExtra(EXTRA_DO_LOGIN, false)) {
 
             setContentView(R.layout.activity_login);
@@ -65,6 +74,7 @@ public class LoginActivity extends Activity {
             Button emailMultiButton = (Button) findViewById(R.id.login_multi_button);
             final Button emailLoginButton = (Button) findViewById(R.id.login_email_button);
             final Button emailRegisterButton = (Button) findViewById(R.id.register_email_button);
+
 
             emailLoginButton.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -122,6 +132,9 @@ public class LoginActivity extends Activity {
                     }
                 }
             });
+
+        } else {
+            LoginManager.getInstance().logInWithReadPermissions(this, Arrays.asList("email", "user_friends"));
         }
 
 
@@ -151,13 +164,14 @@ public class LoginActivity extends Activity {
 
 
     private void doFacebookLogin(final AccessToken accessToken) {
-        QueueUpClient.loginFacebook(accessToken.getToken(), new QueueUp.CallReceiver<QueueUpApiCredential>() {
+
+        mQueueupClient.loginFacebook(accessToken.getToken(), new QueueUp.CallReceiver<QueueUpApiCredential>() {
 
             @Override
             public void onResult(QueueUpApiCredential result) {
 
-                mStore.putString(QueueUpStore.CLIENT_TOKEN, result.clientToken);
                 mStore.putString(QueueUpStore.USER_ID, result.userId);
+                mStore.putString(QueueUpStore.CLIENT_TOKEN, result.clientToken);
                 mStore.putString(QueueUpStore.FACEBOOK_ID, accessToken.getUserId());
 
                 finishAsOk();
@@ -170,14 +184,16 @@ public class LoginActivity extends Activity {
                 finishWithException(e);
             }
         });
+
     }
 
-    private void doEmailLogin(String email, String password) {
+    private void doEmailLogin(final String email, String password) {
 
         QueueUpClient.loginEmail(email, password, new QueueUp.CallReceiver<QueueUpApiCredential>() {
             @Override
             public void onResult(QueueUpApiCredential result) {
 
+                mStore.putString(QueueUpStore.EMAIL_ADDRESS, email);
                 mStore.putString(QueueUpStore.CLIENT_TOKEN, result.clientToken);
                 mStore.putString(QueueUpStore.USER_ID, result.userId);
 
@@ -192,11 +208,12 @@ public class LoginActivity extends Activity {
 
     }
 
-    private void doEmailRegister(String name, String email, String password) {
-        QueueUpClient.register(name, email, password, new QueueUp.CallReceiver<QueueUpApiCredential>() {
+    private void doEmailRegister(String name, final String email, String password) {
+        mQueueupClient.register(name, email, password, new QueueUp.CallReceiver<QueueUpApiCredential>() {
             @Override
             public void onResult(QueueUpApiCredential result) {
 
+                mStore.putString(QueueUpStore.EMAIL_ADDRESS, email);
                 mStore.putString(QueueUpStore.CLIENT_TOKEN, result.clientToken);
                 mStore.putString(QueueUpStore.USER_ID, result.userId);
 
@@ -210,6 +227,7 @@ public class LoginActivity extends Activity {
             }
         });
     }
+
 
     private void finishWithException(Exception exception) {
         Intent i = new Intent();
@@ -227,6 +245,10 @@ public class LoginActivity extends Activity {
     private void finishAsOk() {
         setResult(RESULT_OK);
         finish();
+    }
+
+    private String getDeviceId() {
+        return Settings.Secure.getString(this.getContentResolver(), Settings.Secure.ANDROID_ID);
     }
 
     @Override

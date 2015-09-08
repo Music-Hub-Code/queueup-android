@@ -5,75 +5,60 @@
     android:gravity="center_horizontal"
     tools:context="org.louiswilliams.queueupplayer.activity.LoginActivity">
 
-
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="32dp"
-        android:textSize="32sp"
-        android:text="@string/queueup_login"
-        android:id="@+id/textView2"
-        android:gravity="center_horizontal" />
-
     <LinearLayout
         android:orientation="vertical"
         android:gravity="center"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignParentRight="true"
-        android:layout_alignParentEnd="true"
         android:paddingLeft="32dp"
         android:paddingRight="32dp"
         android:paddingTop="@dimen/activity_vertical_margin"
         android:paddingBottom="@dimen/activity_vertical_margin"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentTop="true"
         >
 
-        <com.facebook.login.widget.LoginButton
-            android:id="@+id/login_button"
-            android:layout_width="fill_parent"
-            android:layout_height="64dp"
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:src="@drawable/queueup_logo"
+            android:scaleType="centerInside"
             android:layout_gravity="center_horizontal"
-            android:layout_marginBottom="30dp"
-            android:layout_marginTop="30dp"
+            android:layout_marginBottom="20dp"
             />
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textAppearance="?android:attr/textAppearanceMedium"
-            android:text="@string/or"
-            android:layout_marginBottom="25dp"
-            android:id="@+id/textView"
-            android:layout_gravity="center_horizontal" />
 
-        <LinearLayout
+            />
+        <RadioGroup
+            android:id="@+id/login_button_group"
             android:orientation="horizontal"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal">
 
-            <Button
+            <ToggleButton
                 android:layout_width="0dp"
                 android:layout_weight="1"
                 android:layout_height="wrap_content"
-                android:text="@string/sign_in"
+                android:textOff="@string/sign_in"
+                android:textOn="@string/sign_in"
                 style="?android:attr/buttonBarButtonStyle"
                 android:textColor="@color/accent_material_dark"
                 android:enabled="false"
                 android:id="@+id/login_email_button" />
 
-            <Button
+            <ToggleButton
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="@string/register"
+                android:textOn="@string/register"
+                android:textOff="@string/register"
                 style="?android:attr/buttonBarButtonStyle"
                 android:textColor="@color/accent_material_dark"
                 android:id="@+id/register_email_button"
                 android:layout_gravity="center_horizontal" />
-        </LinearLayout>
+        </RadioGroup>
+
+
 
         <EditText
             android:layout_width="match_parent"
@@ -121,7 +106,21 @@
             android:textColor="@color/accent_material_dark"
             android:id="@+id/login_multi_button" />
 
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:text="@string/or"
+            android:layout_marginTop="20dp"
+            android:layout_marginBottom="30dp"
+            android:layout_gravity="center_horizontal" />
 
+        <com.facebook.login.widget.LoginButton
+            android:id="@+id/login_button"
+            android:layout_width="fill_parent"
+            android:layout_height="64dp"
+            android:layout_gravity="center_horizontal"
+            />
 
     </LinearLayout>
 </RelativeLayout>

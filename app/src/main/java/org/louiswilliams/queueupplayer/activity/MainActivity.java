@@ -72,6 +72,7 @@ public class MainActivity
     private String mUserId;
     private String mClientToken;
     private String mFacebookId;
+    private String mEmailAddress;
     private boolean showNewTrackOnPlaylistLoad;
     private PlaylistPlayer mPlaylistPlayer;
     private SpotifyPlayer mSpotifyPlayer;
@@ -98,26 +99,35 @@ public class MainActivity
         mClientToken = mStore.getString(QueueUpStore.CLIENT_TOKEN);
         mUserId = mStore.getString(QueueUpStore.USER_ID);
         mFacebookId = mStore.getString(QueueUpStore.FACEBOOK_ID);
+        mEmailAddress = mStore.getString(QueueUpStore.EMAIL_ADDRESS);
 
+        /* If we are registered non-anonymously, proceed, otherwise login anonymously */
         if (isLoggedIn()) {
             mQueueUpClient = new QueueUpClient(mClientToken, mUserId);
         } else {
             mQueueUpClient = new QueueUpClient(null, null);
+            goToSplash();
+            return;
         }
+
+        /* Set up out layout */
+        doSetup(savedInstanceState);
+
+    }
+
+    /* Setup UI elements */
+    public void doSetup(Bundle savedInstanceState) {
 
         if (savedInstanceState == null) {
             showPlaylistListFragment();
+        } else {
+            Log.d(QueueUp.LOG_TAG, "savedInstanceState != null");
         }
 
         setContentView(R.layout.drawer_main);
 
         /* Make sure FB SDK is initialized before doing FB stuff later on */
         ensureSdkInitialized();
-
-        /* Redo the facebook login if this is a cold startup */
-        if (isLoggedInWithFacebook()) {
-            maybeDoFacebookLogin();
-        }
 
         mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_main);
         mDrawerList = (ListView) findViewById(R.id.left_drawer);
@@ -136,7 +146,7 @@ public class MainActivity
         LinearLayout headerView;
 
         /* Display different navigation headers if a user is logged in or not */
-        if (isLoggedIn()) {
+        if (isClientRegistered()) {
             headerView = (LinearLayout) getLayoutInflater().inflate(R.layout.drawer_header, null, false);
 
             Button logoutButton = (Button) headerView.findViewById(R.id.drawer_logout_button);
@@ -189,6 +199,13 @@ public class MainActivity
         displayHomeUp();
 
         handleIntent(getIntent());
+
+    }
+
+    public void goToSplash() {
+        Intent intent = new Intent(getBaseContext(), SplashActivity.class);
+        startActivity(intent);
+        finish();
     }
 
     public  void goToLogin() {
@@ -292,21 +309,6 @@ public class MainActivity
         return tmp;
     }
 
-    public PlaylistClient subscribePlaylistClient(final String playlistId) {
-
-        return mQueueUpClient.getPlaylistClient(new QueueUp.CallReceiver<PlaylistClient>() {
-            @Override
-            public void onResult(PlaylistClient result) {
-
-            }
-
-            @Override
-            public void onException(Exception e) {
-
-            }
-        });
-    }
-
     public PlaylistPlayer subscribePlaylistPlayer(final String playlistId) {
 
         unsubscribeFromCurrentPlaylist();
@@ -322,7 +324,7 @@ public class MainActivity
                 mPlaylistPlayer.addPlaylistListener(getPlayerNotification());
 
 
-                /* Start log into spotify sequence */
+                /* Start log into Spotify sequence */
                 spotifyLogin();
 
                 /* Perform the subscription */
@@ -353,7 +355,7 @@ public class MainActivity
 
     public void unsubscribeFromCurrentPlaylist() {
         if (mPlaylistPlayer != null) {
-            Log.d(QueueUp.LOG_TAG, "Unsubscribing from preview player");
+            Log.d(QueueUp.LOG_TAG, "Unsubscribing from previous player");
             mPlaylistPlayer.removeAllPlaylistListeners();
             if (mSpotifyPlayer != null) {
                 mSpotifyPlayer.stopReceivingPlaybackNotifications();
@@ -531,6 +533,7 @@ public class MainActivity
 //
 //        unsubscribeFromCurrentPlaylist();
 
+        Log.d(QueueUp.LOG_TAG, "Stopping playback!");
         recreate();
     }
 
@@ -541,6 +544,10 @@ public class MainActivity
 
     public boolean isLoggedIn() {
         return mUserId != null && mClientToken != null;
+    }
+
+    public boolean isClientRegistered() {
+        return mEmailAddress != null || mFacebookId != null;
     }
 
     public boolean isLoggedInWithFacebook() {
@@ -595,7 +602,6 @@ public class MainActivity
 
     public void doLogin() {
         Intent loginIntent = new Intent(getBaseContext(), LoginActivity.class);
-
         startActivityForResult(loginIntent, LoginActivity.QUEUEUP_LOGIN_REQUEST_CODE);
 
     }
@@ -611,7 +617,12 @@ public class MainActivity
     /* Initialize the FB SDK if it isn't already */
     public void ensureSdkInitialized() {
         if (!FacebookSdk.isInitialized()) {
-            FacebookSdk.sdkInitialize(getApplicationContext());
+            FacebookSdk.sdkInitialize(getApplicationContext(), new FacebookSdk.InitializeCallback() {
+                @Override
+                public void onInitialized() {
+                    maybeDoFacebookLogin();
+                }
+            });
         }
     }
 
@@ -620,6 +631,7 @@ public class MainActivity
         if (AccessToken.getCurrentAccessToken() == null) {
             Intent intent = new Intent(getApplicationContext(), LoginActivity.class);
             intent.putExtra(LoginActivity.EXTRA_DO_LOGIN, true);
+            startActivity(intent);
         }
     }
 

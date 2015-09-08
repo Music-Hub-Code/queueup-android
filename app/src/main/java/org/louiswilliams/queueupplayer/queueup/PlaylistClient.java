@@ -2,14 +2,16 @@ package org.louiswilliams.queueupplayer.queueup;
 
 import android.util.Log;
 
-import com.github.nkzawa.emitter.Emitter;
-import com.github.nkzawa.socketio.client.IO;
-import com.github.nkzawa.socketio.client.Socket;
+import io.socket.client.Socket;
+import io.socket.client.IO;
+import io.socket.emitter.Emitter;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.net.URISyntaxException;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import org.louiswilliams.queueupplayer.queueup.objects.QueueUpStateChange;
 
@@ -24,12 +26,26 @@ public class PlaylistClient {
     protected int currentProgress;
     protected int currentDuration;
 
-    public PlaylistClient(String clientToken, String userId, final QueueUp.CallReceiver<PlaylistClient> authReceiver) {
+    protected PlaybackReceiver playbackReceiver;
+    protected QueueUpStateChange currentState;
+
+    protected Queue<PlaylistListener> playlistListeners;
+
+    public PlaylistClient(String clientToken, String userId, final QueueUp.CallReceiver<PlaylistClient> authReceiver, PlaybackReceiver playbackReceiver) {
         mClientToken = clientToken;
         mUserId = userId;
 
+        /* The playback receiver receives events about the end of playback on the server side */
+        this.playbackReceiver = playbackReceiver;
+
+        /* We need a thread-safe data structure, because the application can be iterating while simultaneously remove or adding a listener */
+        playlistListeners = new ConcurrentLinkedQueue<>();
         try {
-            mSocket = IO.socket(SOCKET_URL);
+
+            /* Force to create a new connection if there are multiple on the same URL */
+            IO.Options opts = new IO.Options();
+            opts.forceNew = true;
+            mSocket = IO.socket(SOCKET_URL, opts);
 
             final Emitter.Listener onConnectListener = new Emitter.Listener() {
                 @Override
@@ -96,7 +112,7 @@ public class PlaylistClient {
 
     }
 
-    protected void subscribe(String playlistId, final StateChangeListener receiver) {
+    public void subscribe(String playlistId) {
 
         if (mSocket != null) {
             JSONObject params = new JSONObject();
@@ -109,7 +125,8 @@ public class PlaylistClient {
                     @Override
                     public void call(Object... args) {
                         QueueUpStateChange state = new QueueUpStateChange((JSONObject) args[0]);
-                        receiver.onStateChange(state);
+                        stateChangeListener.onStateChange(state);
+                        currentState = state;
                     }
                 });
 
@@ -126,6 +143,62 @@ public class PlaylistClient {
         mSocket.emit("client_unsubscribe");
     }
 
+
+    /* Listen to updates from the server about the playlist */
+    protected PlaylistClient.StateChangeListener stateChangeListener = new PlaylistClient.StateChangeListener() {
+        @Override
+        public void onStateChange(final QueueUpStateChange state) {
+            Log.d(QueueUp.LOG_TAG, "State change: " + state);
+
+            /* This signals end of playback */
+            if (state.current == null) {
+                playbackReceiver.onPlaybackEnd();
+                return;
+            }
+
+            /* New track */
+            if (currentState == null ||
+                    currentState.current == null ||
+                    !currentState.current.uri.equals(state.current.uri)) {
+                Log.d(QueueUp.LOG_TAG, "Changing tracks...");
+
+                /* Update every listener */
+                for (PlaylistListener listener : playlistListeners) {
+                    listener.onTrackChanged(state.current);
+                }
+            }
+
+            /* If the playing state is not what it currently is (it changed) */
+
+            if (currentState == null ||
+                    (currentState.playing && !state.playing) ||
+                    (!currentState.playing && state.playing)) {
+
+                /* Update every listener */
+                for (PlaylistListener listener : playlistListeners) {
+                    listener.onPlayingChanged(state.playing);
+                }
+
+            }
+
+            /* New queue */
+            if (state.tracks != null) {
+
+                /* Update every listener */
+                for (PlaylistListener listener : playlistListeners) {
+                    listener.onQueueChanged(state.tracks);
+                }
+            }
+
+        }
+
+        @Override
+        public void onError(String message) {
+            Log.e(QueueUp.LOG_TAG, message);
+        }
+    };
+
+
     public boolean isConnected() {
         return (mSocket != null && mSocket.connected());
     }
@@ -137,6 +210,19 @@ public class PlaylistClient {
     public String getPlaylistId() {
         return mSubscription;
     }
+
+    public void addPlaylistListener(PlaylistListener listener) {
+        playlistListeners.add(listener);
+    }
+
+    public void removePlaylistListener(PlaylistListener listener) {
+        playlistListeners.remove(listener);
+    }
+
+    public void removeAllPlaylistListeners() {
+        playlistListeners.clear();
+    }
+
 
     public int getCurrentProgress() {
         return currentProgress;
@@ -154,8 +240,15 @@ public class PlaylistClient {
         }
     }
 
+    public QueueUpStateChange getCurrentState() {
+        return currentState;
+    }
+
+
     public interface StateChangeListener {
         void onStateChange(QueueUpStateChange state);
         void onError(String message);
     }
+
+
 }

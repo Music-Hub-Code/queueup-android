@@ -33,7 +33,7 @@ import org.louiswilliams.queueupplayer.queueup.objects.SpotifyTrack;
 public class QueueUpClient {
 
     private String clientToken, userId;
-    private PlaylistClient playlistClient;
+    private PlaylistPlayer playlistPlayer;
     private static HttpGet searchGetRequest;
 
 
@@ -62,13 +62,14 @@ public class QueueUpClient {
                 receiver.onException(e);
             }
         });
-
     }
 
-    public static void register(String name, String email, String password, final QueueUp.CallReceiver<QueueUpApiCredential> receiver){
+    public void register(String name, String email, String password, final QueueUp.CallReceiver<QueueUpApiCredential> receiver){
         JSONObject json = new JSONObject();
 
         try {
+            json.put("user_id", userId);
+            json.put("client_token", clientToken);
             json.put("name", name);
             json.put("email", email);
             json.put("password", password);
@@ -110,17 +111,50 @@ public class QueueUpClient {
         login(json, receiver);
     }
 
-    public static void loginFacebook (String accessToken, QueueUp.CallReceiver<QueueUpApiCredential> receiver) {
+    public void loginFacebook (String accessToken, QueueUp.CallReceiver<QueueUpApiCredential> receiver) {
         JSONObject json = new JSONObject();
 
         try {
             json.put("facebook_access_token", accessToken);
+            json.put("user_id", userId);
+            json.put("client_token", clientToken);
         } catch (JSONException e) {
             receiver.onException(new QueueUpException("Error sending JSON: " + e.getMessage()));
             return;
         }
 
         login(json, receiver);
+    }
+
+    public static void loginInit(String deviceId, final QueueUp.CallReceiver<QueueUpApiCredential> receiver) {
+        JSONObject json = new JSONObject();
+
+        try {
+            JSONObject device = new JSONObject();
+            device.put("id", deviceId);
+            json.put("device", device);
+        } catch (JSONException e) {
+            receiver.onException(new QueueUpException("Error sending JSON: " + e.getMessage()));
+            return;
+        }
+
+        sendPost("/auth/init", json, new QueueUp.CallReceiver<JSONObject>() {
+            @Override
+            public void onResult(JSONObject result) {
+                try {
+                    String clientToken = result.getString("client_token");
+                    String userId = result.getString("user_id");
+                    receiver.onResult(new QueueUpApiCredential(userId, clientToken));
+                } catch (JSONException e) {
+                    receiver.onException(new QueueUpException(e));
+                }
+            }
+
+            @Override
+            public void onException(Exception e) {
+                receiver.onException(e);
+            }
+        });
     }
 
     public void playlistGetList(final QueueUp.CallReceiver<List<QueueUpPlaylist>> receiver) {
@@ -485,21 +519,16 @@ public class QueueUpClient {
         return post;
     }
 
-
-    public PlaylistClient getPlaylistClient(QueueUp.CallReceiver<PlaylistClient> receiver) {
-        if (playlistClient != null) {
-            playlistClient.disconnect();
-        }
-        playlistClient = new PlaylistClient(clientToken, userId, receiver);
-        return playlistClient;
+    public PlaylistClient getNewPlaylistClient(QueueUp.CallReceiver<PlaylistClient> receiver, PlaybackReceiver playbackReceiver) {
+        return new PlaylistPlayer(clientToken, userId, receiver, playbackReceiver);
     }
 
     public PlaylistPlayer getPlaylistPlayer(QueueUp.CallReceiver<PlaylistClient> receiver, PlaybackReceiver playbackReceiver) {
-        if (playlistClient != null) {
-            playlistClient.disconnect();
+        if (playlistPlayer != null) {
+            playlistPlayer.disconnect();
         }
         PlaylistPlayer player = new PlaylistPlayer(clientToken, userId, receiver, playbackReceiver);
-        playlistClient = player;
+        playlistPlayer = player;
         return player;
     }
 

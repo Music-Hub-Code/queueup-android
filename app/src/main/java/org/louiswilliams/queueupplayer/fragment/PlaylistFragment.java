@@ -33,6 +33,8 @@ import com.squareup.picasso.Picasso;
 import org.louiswilliams.queueupplayer.R;
 import org.louiswilliams.queueupplayer.activity.InviteContactsActivity;
 import org.louiswilliams.queueupplayer.activity.MainActivity;
+import org.louiswilliams.queueupplayer.queueup.PlaybackReceiver;
+import org.louiswilliams.queueupplayer.queueup.PlaylistClient;
 import org.louiswilliams.queueupplayer.queueup.PlaylistListener;
 import org.louiswilliams.queueupplayer.queueup.PlaylistPlayer;
 import org.louiswilliams.queueupplayer.queueup.QueueUp;
@@ -47,12 +49,13 @@ import java.util.List;
 
 public class PlaylistFragment extends Fragment implements PlaylistListener {
 
-    private String mPlaylistId;
+    private ListView mTrackList;
+    private PlaylistClient mPlaylistClient;
     private QueueUpClient mQueueUpClient;
     private QueueUpPlaylist mThisPlaylist;
-    private View mView;
+    private String mPlaylistId;
     private TrackListAdapter mTrackListAdapter;
-    private ListView mTrackList;
+    private View mView;
 
     private MainActivity mActivity;
 
@@ -137,6 +140,8 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
             mActivity.getPlaylistPlayer().removePlaylistListener(this);
         }
 
+        unsubscribeAsClient();
+
         super.onDestroyView();
     }
 
@@ -172,6 +177,8 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
 
         } else {
 
+            subscribeAsClient();
+
             final Button playHereButton = (Button) playlistHeader.findViewById(R.id.play_here_button);
 
             /* If the user is the admin of the current playlist, give the option to play, otherwise say who owns it */
@@ -195,6 +202,9 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
                     playHereListener = new View.OnClickListener() {
                         @Override
                         public void onClick(View v) {
+
+                            /* Unsubscribe as regular client */
+                            unsubscribeAsClient();
 
                         /* Show the progress bar */
                             setProgressBar(View.VISIBLE);
@@ -372,14 +382,16 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
         final TextView trackName = (TextView) mView.findViewById(R.id.playlist_current_track);
         final TextView trackArist = (TextView) mView.findViewById(R.id.playlist_current_artist);
 
-        mActivity.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                Picasso.with(mActivity).load(current.album.imageUrls.get(0)).into(albumArt);
-                trackName.setText(current.name);
-                trackArist.setText(current.artists.get(0).name);
-            }
-        });
+        if (albumArt != null) {
+            mActivity.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Picasso.with(mActivity).load(current.album.imageUrls.get(0)).into(albumArt);
+                    trackName.setText(current.name);
+                    trackArist.setText(current.artists.get(0).name);
+                }
+            });
+        }
 
     }
 
@@ -457,6 +469,37 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
 
     public boolean currentPlaylistIsPlaying() {
         return (mActivity.getPlaylistPlayer() != null && mActivity.getPlaylistPlayer().getPlaylistId().equals(mPlaylistId));
+    }
+
+    public void subscribeAsClient() {
+
+        /* Create a temporary playlist client to subscribe to updates, independent of a player */
+        mPlaylistClient = mQueueUpClient.getNewPlaylistClient(new QueueUp.CallReceiver<PlaylistClient>() {
+            @Override
+            public void onResult(PlaylistClient result) {
+
+                result.addPlaylistListener(PlaylistFragment.this);
+                result.subscribe(mPlaylistId);
+            }
+
+            @Override
+            public void onException(Exception e) {
+                Log.d(QueueUp.LOG_TAG, e.getMessage());
+                mActivity.toast(e.getMessage());
+            }
+        }, new PlaybackReceiver() {
+            @Override
+            public void onPlaybackEnd() { }
+        });
+
+    }
+
+    public void unsubscribeAsClient() {
+        if (mPlaylistClient != null) {
+            mPlaylistClient.removeAllPlaylistListeners();
+            mPlaylistClient.disconnect();
+            mPlaylistClient = null;
+        }
     }
 
     @Override

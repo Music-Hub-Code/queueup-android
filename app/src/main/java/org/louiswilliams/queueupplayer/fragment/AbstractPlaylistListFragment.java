@@ -20,7 +20,6 @@ import android.widget.BaseAdapter;
 import android.widget.GridView;
 import android.widget.ImageButton;
 import android.widget.ImageView;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.gc.materialdesign.views.ProgressBarDeterminate;
@@ -152,7 +151,7 @@ public abstract class AbstractPlaylistListFragment extends Fragment implements P
     }
 
     public void showCreatePlaylistDialog() {
-        if (mActivity.isLoggedIn()) {
+        if (mActivity.isClientRegistered()) {
             PlaylistNameFragment playlistNameFragment = new PlaylistNameFragment();
 
             playlistNameFragment.setDialogTitle("New Playlist");

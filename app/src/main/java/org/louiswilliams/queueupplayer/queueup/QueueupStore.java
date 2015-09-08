@@ -9,7 +9,8 @@ public class QueueUpStore {
     public static final String USER_ID = "userId";
     public static final String CLIENT_TOKEN = "clientToken";
     public static final String FACEBOOK_ID = "facebookId";
-    public static final String SPOTIFY_ID = "spotifyId";
+    public static final String DEVICE_ID = "deviceId";
+    public static final String EMAIL_ADDRESS = "emailAddress";
     public static final String SPOTIFY_ENCRYPTED_REFRESH_TOKEN = "spotifyRefreshToken";
     public static final String SPOTIFY_ACCESS_TOKEN = "spotifyAccessToken";
     public static final String SPOTIFY_TOKEN_EXPIRATION_TIME_SECONDS = "spotifyExpiresIn";
@@ -30,6 +31,14 @@ public class QueueUpStore {
 
     public String getString(String field) {
         return prefs.getString(field, null);
+    }
+
+    public boolean getBoolean(String field) {
+        return prefs.getBoolean(field, false);
+    }
+
+    public void putBoolean(String field, boolean value) {
+        prefs.edit().putBoolean(field, value).apply();
     }
 
     public long getLong(String field) {
