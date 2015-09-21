@@ -64,17 +64,11 @@ public abstract class AbstractPlaylistListFragment extends Fragment implements P
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
-        mActivity.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mActivity.setTitle("Trending Playlists");
-            }
-        });
-
-        populate();
 
         mView = (SwipeRefreshLayout) inflater.inflate(R.layout.fragment_playlist_list, container, false);
         mView.setOnRefreshListener(this);
+
+        populate();
 
         playlistGrid = (GridView) mView.findViewById(R.id.playlist_grid);
         playlistGrid.setOnItemClickListener(new AdapterView.OnItemClickListener() {

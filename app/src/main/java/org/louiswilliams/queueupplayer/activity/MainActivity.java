@@ -61,7 +61,12 @@ public class MainActivity
         implements
             FragmentManager.OnBackStackChangedListener {
 
-    private String[] navigationTitles = {"Trending Playlists", "Your Playlists"};
+    public static final String PLAYLISTS_ALL = "all";
+    public static final String PLAYLISTS_FRIENDS = "friends";
+    public static final String PLAYLISTS_MINE = "mine";
+    public static final String[] NAVIGATION_TITLES = {"Top Playlists", "Friend's Playlists", "Your Playlists"};
+    public static final String[] NAVIGATION_ACTIONS = {PLAYLISTS_ALL, PLAYLISTS_FRIENDS, PLAYLISTS_MINE};
+    public int currentNavigationAction;
     private DrawerLayout mDrawerLayout;
     private ListView mDrawerList;
     private DrawerListAdapter mDrawerAdapter;
@@ -118,6 +123,8 @@ public class MainActivity
     /* Setup UI elements */
     public void doSetup(Bundle savedInstanceState) {
 
+        currentNavigationAction = 0;
+
         if (savedInstanceState == null) {
             showPlaylistListFragment();
         } else {
@@ -132,14 +139,19 @@ public class MainActivity
         mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_main);
         mDrawerList = (ListView) findViewById(R.id.left_drawer);
 
-        mDrawerAdapter = new DrawerListAdapter(this, R.layout.drawer_list_item, Arrays.asList(navigationTitles));
-        mDrawerAdapter.setSelection(0);
+        mDrawerAdapter = new DrawerListAdapter(this, R.layout.drawer_list_item, Arrays.asList(NAVIGATION_TITLES));
+        mDrawerAdapter.setSelection(currentNavigationAction);
 
         mDrawerList.setOnItemClickListener(new ListView.OnItemClickListener() {
 
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                Log.d(LOG_TAG, "Clicked " + position);
+                int drawerSelection = position - 1;
+                mDrawerAdapter.setSelection(drawerSelection);
+                mDrawerAdapter.notifyDataSetInvalidated();
+                currentNavigationAction = drawerSelection;
+                handleDrawerClickAction(drawerSelection);
+
             }
         });
 
@@ -233,7 +245,10 @@ public class MainActivity
     public PlaylistListFragment showPlaylistListFragment() {
         FragmentTransaction transaction = getFragmentManager().beginTransaction();
 
+        Bundle bundle = new Bundle();
+        bundle.putString("action", NAVIGATION_ACTIONS[currentNavigationAction]);
         PlaylistListFragment playlistListFragment = new PlaylistListFragment();
+        playlistListFragment.setArguments(bundle);
 
         transaction.replace(R.id.content_frame, playlistListFragment);
         transaction.commit();
@@ -429,6 +444,13 @@ public class MainActivity
 
     }
 
+    private void handleDrawerClickAction(int index) {
+        String action = NAVIGATION_ACTIONS[index];
+        Log.d(LOG_TAG, "Clicked " + action);
+        showPlaylistListFragment();
+        mDrawerLayout.closeDrawers();
+    }
+
     private void handleIntent(Intent intent) {
 
         /* Search intent  */
@@ -550,6 +572,12 @@ public class MainActivity
         return mEmailAddress != null || mFacebookId != null;
     }
 
+    public AccessToken getAccessToken() {
+        AccessToken accessToken = AccessToken.getCurrentAccessToken();
+        Log.d(QueueUp.LOG_TAG, "Access token: " + accessToken);
+        return accessToken;
+    }
+
     public boolean isLoggedInWithFacebook() {
         return mFacebookId != null;
     }
@@ -560,11 +588,9 @@ public class MainActivity
         final TextView userName = (TextView) headerView.findViewById(R.id.drawer_user_name);
 
         Profile profile = Profile.getCurrentProfile();
-        AccessToken accessToken = AccessToken.getCurrentAccessToken();
 
-        Log.d(QueueUp.LOG_TAG, "Access token: " + accessToken);
         /* If logged in with Facebook*/
-        if (accessToken != null) {
+        if (getAccessToken() != null) {
             Uri proPicUri = profile.getProfilePictureUri(userImage.getLayoutParams().width, userImage.getLayoutParams().height);
             Picasso.with(this).load(proPicUri).into(userImage);
 
@@ -626,9 +652,9 @@ public class MainActivity
         }
     }
 
-    /* Only redo the FB login if the access token is null */
+    /* Only redo the FB login if the access token is null and the user is logged in */
     public void maybeDoFacebookLogin() {
-        if (AccessToken.getCurrentAccessToken() == null) {
+        if (mStore.getString(QueueUpStore.FACEBOOK_ID) != null && AccessToken.getCurrentAccessToken() == null) {
             Intent intent = new Intent(getApplicationContext(), LoginActivity.class);
             intent.putExtra(LoginActivity.EXTRA_DO_LOGIN, true);
             startActivity(intent);

@@ -50,7 +50,7 @@ public class QueueUpStore {
     }
 
     public void clear() {
-        prefs.edit().clear().apply();
+        prefs.edit().clear().commit();
     }
 
 }

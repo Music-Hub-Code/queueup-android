@@ -39,4 +39,5 @@
     <string name="search_playlists">Search Playlists</string>
     <string name="full_name">Full name</string>
     <string name="title_activity_splash">SplashActivity</string>
+    <string name="facebook_notification">Log in with Facebook to see your friends\' playlists</string>
 </resources>

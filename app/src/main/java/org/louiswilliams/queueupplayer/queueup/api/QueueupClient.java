@@ -312,6 +312,61 @@ public class QueueUpClient {
         }
     }
 
+    public void getFriendsPlaylists(List<String> fbIds, final QueueUp.CallReceiver<List<QueueUpPlaylist>> receiver) {
+
+        JSONArray jsonIds = new JSONArray();
+        for (String id : fbIds) {
+            jsonIds.put(id);
+        }
+
+        try {
+            JSONObject request = new JSONObject();
+            request.put("fb_ids", jsonIds);
+            sendApiPost("/users/friends/playlists", request, new QueueUp.CallReceiver<JSONObject>() {
+                @Override
+                public void onResult(JSONObject result) {
+                    JSONArray jsonPlaylists = result.optJSONArray("playlists");
+                    List<QueueUpPlaylist> playlists = new ArrayList<QueueUpPlaylist>();
+                    if (jsonPlaylists != null) {
+                        for (int i = 0; i < jsonPlaylists.length(); i++) {
+                            playlists.add(new QueueUpPlaylist(jsonPlaylists.optJSONObject(i)));
+                        }
+                    }
+                    receiver.onResult(playlists);
+                }
+
+                @Override
+                public void onException(Exception e) {
+                    receiver.onException(e);
+                }
+            });
+        } catch (JSONException e) {
+            Log.e(QueueUp.LOG_TAG, "JSON error addind IDS: " + e.getMessage());
+        }
+    }
+
+    public void getUserPlaylists(String userId, final QueueUp.CallReceiver<List<QueueUpPlaylist>> receiver) {
+        sendApiGet("/users/" + userId + "/playlists", new QueueUp.CallReceiver<JSONObject>() {
+            @Override
+            public void onResult(JSONObject result) {
+                Log.d(QueueUp.LOG_TAG, result.toString());
+                JSONArray jsonPlaylists = result.optJSONArray("playlists");
+                List<QueueUpPlaylist> playlists = new ArrayList<QueueUpPlaylist>();
+                if (jsonPlaylists != null) {
+                    for (int i = 0; i < jsonPlaylists.length(); i++) {
+                        playlists.add(new QueueUpPlaylist(jsonPlaylists.optJSONObject(i)));
+                    }
+                }
+                receiver.onResult(playlists);
+            }
+
+            @Override
+            public void onException(Exception e) {
+                receiver.onException(e);
+            }
+        });
+    }
+
     public void userGet(String userId, final QueueUp.CallReceiver<QueueUpUser> receiver) {
         sendApiGet("/users/" + userId, new QueueUp.CallReceiver<JSONObject>() {
             @Override
@@ -330,6 +385,7 @@ public class QueueUpClient {
             }
         });
     }
+
 
     public static void searchTracks(String query, int offset, final QueueUp.CallReceiver<List<SpotifyTrack>> receiver) {
 
