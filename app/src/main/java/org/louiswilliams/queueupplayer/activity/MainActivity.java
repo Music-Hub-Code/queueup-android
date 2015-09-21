@@ -546,14 +546,6 @@ public class MainActivity
 
     /* Just recreate the activity, which resets everything to a clean slate */
     public void stopPlayback() {
-//        if (mSpotifyPlayer != null) {
-//            mSpotifyPlayer.getPlayer().pause();
-//            mSpotifyPlayer.stopReceivingPlaybackNotifications();
-//        }
-//
-//        mPlaylistPlayer.removeAllPlaylistListeners();
-//
-//        unsubscribeFromCurrentPlaylist();
 
         Log.d(QueueUp.LOG_TAG, "Stopping playback!");
         recreate();

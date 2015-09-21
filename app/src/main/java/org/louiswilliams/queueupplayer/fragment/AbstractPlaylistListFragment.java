@@ -176,6 +176,7 @@ public abstract class AbstractPlaylistListFragment extends Fragment implements P
         /* Set up buttons and listeners */
         ImageButton playButton = (ImageButton) bar.findViewById(R.id.play_button);
         ImageButton skipButton = (ImageButton) bar.findViewById(R.id.skip_button);
+        ImageButton stopButton = (ImageButton) bar.findViewById(R.id.stop_playback_button);
 
         bar.setClickable(true);
 
@@ -196,8 +197,17 @@ public abstract class AbstractPlaylistListFragment extends Fragment implements P
             }
         };
 
+        View.OnClickListener stopButtonListener = new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                /* Send the update signal */
+                mActivity.stopPlayback();
+            }
+        };
+
         playButton.setOnClickListener(playButtonListener);
         skipButton.setOnClickListener(skipButtonListener);
+        stopButton.setOnClickListener(stopButtonListener);
 
         /* Populate visual content */
 

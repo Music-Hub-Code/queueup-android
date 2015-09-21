@@ -50,9 +50,8 @@
                 android:layout_height="56dp"
                 android:src="@drawable/ic_action_play_arrow_36"
                 android:background="@drawable/dark_white_oval_ripple"
-                >
+                />
 
-            </ImageButton>
 
             <ImageButton
                 android:layout_gravity="center_horizontal"
@@ -63,9 +62,19 @@
                 android:background="@drawable/dark_white_oval_ripple"
 
                 android:layout_marginLeft="12dp"
-                >
+                />
 
-            </ImageButton>
+            <ImageButton
+                android:layout_gravity="center_horizontal"
+                android:id="@+id/stop_playback_button"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:src="@drawable/ic_action_clear_36"
+                android:background="@drawable/dark_white_oval_ripple"
+
+                android:layout_marginLeft="12dp"
+                />
+
         </LinearLayout>
     </LinearLayout>
 

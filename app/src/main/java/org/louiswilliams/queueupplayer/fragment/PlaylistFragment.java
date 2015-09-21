@@ -326,6 +326,7 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
 
         ImageButton playButton = (ImageButton) playlistControls.findViewById(R.id.play_button);
         ImageButton skipButton = (ImageButton) playlistControls.findViewById(R.id.skip_button);
+        ImageButton stopButton = (ImageButton) playlistControls.findViewById(R.id.stop_playback_button);
 
         View.OnClickListener playButtonListener = new View.OnClickListener() {
             @Override
@@ -347,8 +348,17 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
             }
         };
 
+        View.OnClickListener stopButtonListener = new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                /* Send the update signal */
+                mActivity.stopPlayback();
+            }
+        };
+
         playButton.setOnClickListener(playButtonListener);
         skipButton.setOnClickListener(skipButtonListener);
+        stopButton.setOnClickListener(stopButtonListener);
 
         /* Initialize the play button */
         updatePlayButton(playButton, playing);
