@@ -1,89 +1,105 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
+<RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/track_list_item"
     android:layout_width="match_parent"
     android:layout_height="64dp"
-    android:gravity="center_horizontal"
-    android:orientation="horizontal"
-    android:translationX="-2dp"
     android:elevation="2dp"
+    android:translationX="-2dp"
+    android:gravity="center_horizontal"
     android:background="@color/primary_material_dark"
-    android:id="@+id/track_list_item"
     android:layout_marginLeft="16dp"
     android:layout_marginRight="16dp"
-    android:clipToPadding="false">
+    android:clipToPadding="false"
+    >
 
-    <ImageView
-        android:id="@+id/track_list_item_image"
-        android:background="@color/primary_dark_material_light"
-        android:layout_width="64dp"
-        android:layout_height="64dp"
-        android:scaleType="fitStart"/>
-
-    <LinearLayout
-        android:layout_width="0dp"
-        android:layout_weight="1"
-        android:layout_height="match_parent"
-        android:layout_toRightOf="@+id/track_list_item_image"
-        android:background="#ff222222"
-        android:orientation="vertical"
-        android:paddingTop="4dp"
-        android:paddingBottom="8dp"
-        android:paddingLeft="12dp"
-        android:paddingRight="12dp"
-        >
-
-
-        <TextView
-            android:paddingTop="4dp"
-            android:textColor="@color/primary_material_light"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textSize="16sp"
-            android:id="@+id/track_list_item_name"
-            android:singleLine="true"
-            android:ellipsize="marquee"
-            android:gravity="start"
-            />
-        <TextView
-            android:paddingTop="4dp"
-            android:textColor="@color/primary_dark_material_light"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textSize="14sp"
-            android:singleLine="true"
-            android:ellipsize="marquee"
-            android:id="@+id/track_list_item_artist"
-            android:gravity="start"
-            />
-    </LinearLayout>
-
-    <LinearLayout
-        android:id="@+id/track_votes"
-        android:layout_gravity="center_vertical"
-        android:gravity="center_vertical"
+    <TextView
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
-        android:orientation="vertical"
-        android:descendantFocusability="blocksDescendants"
-        >
-        <ImageView
-            android:id="@+id/track_votes_image"
-            android:focusable="false"
-            android:focusableInTouchMode="false"
-            android:background="@drawable/background_transparent"
-            android:src="@drawable/ic_action_keyboard_arrow_up_grey_36"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
+        android:layout_marginLeft="8dp"
+        android:gravity="center_vertical"
+        android:textSize="12sp"
+        android:text="Remove"/>
 
-        <TextView
-            android:id="@+id/track_votes_count"
-            android:text="@string/no_votes"
-            android:textSize="12sp"
-            android:layout_marginTop="-4dp"
-            android:layout_gravity="center_horizontal"
+    <LinearLayout
+        android:id="@+id/track_list_item_frame"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="horizontal">
+
+        <ImageView
+            android:id="@+id/track_list_item_image"
+            android:background="@color/primary_dark_material_light"
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:scaleType="fitStart"/>
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="match_parent"
+            android:layout_toRightOf="@+id/track_list_item_image"
+            android:background="#ff222222"
+            android:orientation="vertical"
+            android:paddingTop="4dp"
+            android:paddingBottom="8dp"
+            android:paddingLeft="12dp"
+            android:paddingRight="12dp"
+            >
+
+
+            <TextView
+                android:paddingTop="4dp"
+                android:textColor="@color/primary_material_light"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="16sp"
+                android:id="@+id/track_list_item_name"
+                android:singleLine="true"
+                android:ellipsize="marquee"
+                android:gravity="start"
+                />
+            <TextView
+                android:paddingTop="4dp"
+                android:textColor="@color/primary_dark_material_light"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="14sp"
+                android:singleLine="true"
+                android:ellipsize="marquee"
+                android:id="@+id/track_list_item_artist"
+                android:gravity="start"
+                />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/track_votes"
+            android:layout_gravity="center_vertical"
+            android:gravity="center_vertical"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:descendantFocusability="blocksDescendants"
+            >
+            <ImageView
+                android:id="@+id/track_votes_image"
+                android:focusable="false"
+                android:focusableInTouchMode="false"
+                android:background="@drawable/background_transparent"
+                android:src="@drawable/ic_action_keyboard_arrow_up_grey_36"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+
+            <TextView
+                android:id="@+id/track_votes_count"
+                android:text="@string/no_votes"
+                android:textSize="12sp"
+                android:layout_marginTop="-4dp"
+                android:layout_gravity="center_horizontal"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+        </LinearLayout>
+
     </LinearLayout>
 
-</LinearLayout>
+</RelativeLayout>

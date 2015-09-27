@@ -47,7 +47,7 @@ public class PlaylistListFragment extends AbstractPlaylistListFragment implement
         mActivity.runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                mActivity.setTitle(MainActivity.NAVIGATION_TITLES[mActivity.currentNavigationAction]);
+                mActivity.setTitle(getString(MainActivity.NAVIGATION_TITLES[mActivity.currentNavigationAction]));
             }
         });
 
@@ -142,13 +142,14 @@ public class PlaylistListFragment extends AbstractPlaylistListFragment implement
 
         } else {
             final ProgressBar progress = (ProgressBar) mView.findViewById(R.id.loading_progress_bar);
-            final TextView facebookNotif = (TextView) mView.findViewById(R.id.facebook_notification);
+            final TextView playlistNotif = (TextView) mView.findViewById(R.id.playlist_notification);
 
             mActivity.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
                     progress.setVisibility(View.GONE);
-                    facebookNotif.setVisibility(View.VISIBLE);
+                    playlistNotif.setText(getString(R.string.facebook_notification));
+                    playlistNotif.setVisibility(View.VISIBLE);
                 }
             });
 
@@ -161,18 +162,37 @@ public class PlaylistListFragment extends AbstractPlaylistListFragment implement
             @Override
             public void onResult(List<QueueUpPlaylist> playlists) {
                 Log.d(QueueUp.LOG_TAG, "Playlist all success");
-                mPlaylists = playlists;
 
-                adapter = new PlaylistGridAdapter(mActivity, mPlaylists, R.layout.playlist_item);
                 final ProgressBar progress = (ProgressBar) mView.findViewById(R.id.loading_progress_bar);
+                final TextView notification = (TextView) mView.findViewById(R.id.playlist_notification);
 
-                mActivity.runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        progress.setVisibility(View.GONE);
-                        playlistGrid.setAdapter(adapter);
-                    }
-                });
+                if (playlists.size() > 0) {
+                    mPlaylists = playlists;
+                    adapter = new PlaylistGridAdapter(mActivity, mPlaylists, R.layout.playlist_item);
+
+                    mActivity.runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            progress.setVisibility(View.GONE);
+                            playlistGrid.setAdapter(adapter);
+                        }
+                    });
+                } else {
+
+
+                    mActivity.runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            progress.setVisibility(View.GONE);
+                            notification.setText(getString(R.string.create_playlist_notification));
+                            notification.setVisibility(View.VISIBLE);
+                        }
+                    });
+                }
+
+
+
+
 
             }
 

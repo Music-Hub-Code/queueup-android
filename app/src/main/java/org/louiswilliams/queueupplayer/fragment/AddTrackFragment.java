@@ -72,12 +72,14 @@ public class AddTrackFragment extends Fragment {
             @Override
             public void onScrollStateChanged(AbsListView view, int scrollState) {
 
+                if (scrollState != 0) {
+                    mActivity.hideKeyboard();
+                }
             }
 
             @Override
             public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
                 /* Adjust the numbers because the footer throws off the counts by 1 */
-//                ((HeaderViewListAdapter) mTrackListAdapter).getHeadersCount();
                 int visibleAdj = visibleItemCount - 1;
                 int totalAdj = totalItemCount - 1;
 
@@ -92,6 +94,8 @@ public class AddTrackFragment extends Fragment {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 SpotifyTrack track = (SpotifyTrack) mTrackListAdapter.getItem(position);
+                mTrackListAdapter.mTrackList.remove(track);
+                mTrackListAdapter.notifyDataSetChanged();
                 addTrackToPlaylist(track);
 
             }

@@ -26,6 +26,7 @@ public class DrawerListAdapter extends BaseAdapter {
 
     public void setSelection(int selection) {
         mSelection = selection;
+        this.notifyDataSetChanged();
     }
 
     @Override
@@ -44,7 +45,7 @@ public class DrawerListAdapter extends BaseAdapter {
         if (position == mSelection) {
             view.setBackgroundColor(mContext.getResources().getColor(R.color.primary_dark_material_light));
         } else {
-            view.setBackground(mContext.getResources().getDrawable(R.drawable.background_transparent));
+            view.setBackgroundColor(mContext.getResources().getColor(R.color.background_material_dark));
         }
 
         return view;

@@ -233,7 +233,7 @@ public abstract class AbstractPlaylistListFragment extends Fragment implements P
     public void updateTrackViews(final SpotifyTrack track) {
         final ImageView albumArt = (ImageView) mView.findViewById(R.id.playlist_image);
         final TextView trackName = (TextView) mView.findViewById(R.id.playlist_current_track);
-        final TextView trackArist = (TextView) mView.findViewById(R.id.playlist_current_artist);
+        final TextView trackArtist = (TextView) mView.findViewById(R.id.playlist_current_artist);
 
         mActivity.runOnUiThread(new Runnable() {
             @Override
@@ -242,9 +242,9 @@ public abstract class AbstractPlaylistListFragment extends Fragment implements P
                 Picasso.with(mActivity).load(imageUrls.get(imageUrls.size() - 1)).into(albumArt);
 
                 trackName.setText(track.name);
-                trackArist.setText(track.artists.get(0).name);
+                trackArtist.setText(track.artists.get(0).name);
                 trackName.setSelected(true);
-                trackArist.setSelected(true);
+                trackArtist.setSelected(true);
             }
         });
 
@@ -363,12 +363,11 @@ public abstract class AbstractPlaylistListFragment extends Fragment implements P
             ImageView adminIcon = (ImageView) playlistItem.findViewById(R.id.playlist_list_item_admin_icon);
 
             title.setText(playlist.name.toUpperCase());
+            adminIcon.setImageDrawable(getResources().getDrawable(R.mipmap.ic_queueup));
             if (!playlist.adminName.isEmpty()) {
                 adminName.setText(playlist.adminName);
-                adminIcon.setImageDrawable(getResources().getDrawable(R.mipmap.ic_facebook));
             } else {
-                adminName.setText("Spotify User");
-                adminIcon.setImageDrawable(getResources().getDrawable(R.mipmap.ic_spotify));
+                adminName.setText("QueueUp User");
             }
 
             if (playlist.current != null && playlist.current.album != null && playlist.current.album.imageUrls != null) {

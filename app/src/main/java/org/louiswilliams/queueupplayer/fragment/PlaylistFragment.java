@@ -248,7 +248,7 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
 
         final ImageView albumArt = (ImageView) playlistHeader.findViewById(R.id.playlist_image);
         final TextView trackName = (TextView) playlistHeader.findViewById(R.id.playlist_current_track);
-        final TextView trackArist = (TextView) playlistHeader.findViewById(R.id.playlist_current_artist);
+        final TextView trackArtist = (TextView) playlistHeader.findViewById(R.id.playlist_current_artist);
 
         mActivity.runOnUiThread(new Runnable() {
             @Override
@@ -261,14 +261,14 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
                     if (playlist.current.album != null && playlist.current.album.imageUrls != null && playlist.current.album.imageUrls.size() > 0) {
                         Picasso.with(mActivity).load(playlist.current.album.imageUrls.get(0)).into(albumArt);
 
-                        albumArt.getLayoutParams().height = mTrackList.getWidth() - (mTrackList.getPaddingLeft() + mTrackList.getPaddingRight());
-                        albumArt.requestLayout();
-
                     }
 
                     trackName.setText(playlist.current.name);
-                    trackArist.setText(playlist.current.artists.get(0).name);
+                    trackArtist.setText(playlist.current.artists.get(0).name);
                 }
+
+                albumArt.getLayoutParams().height = mTrackList.getWidth() - (mTrackList.getPaddingLeft() + mTrackList.getPaddingRight());
+                albumArt.requestLayout();
 
                 mTrackList.addHeaderView(playlistHeader, null, false);
                 mTrackList.addFooterView(playlistFooter, null, false);
@@ -390,7 +390,7 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
     private void updateCurrentTrack(final SpotifyTrack current) {
         final ImageView albumArt = (ImageView) mView.findViewById(R.id.playlist_image);
         final TextView trackName = (TextView) mView.findViewById(R.id.playlist_current_track);
-        final TextView trackArist = (TextView) mView.findViewById(R.id.playlist_current_artist);
+        final TextView trackArtist = (TextView) mView.findViewById(R.id.playlist_current_artist);
 
         if (albumArt != null) {
             mActivity.runOnUiThread(new Runnable() {
@@ -398,7 +398,7 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
                 public void run() {
                     Picasso.with(mActivity).load(current.album.imageUrls.get(0)).into(albumArt);
                     trackName.setText(current.name);
-                    trackArist.setText(current.artists.get(0).name);
+                    trackArtist.setText(current.artists.get(0).name);
                 }
             });
         }
@@ -455,6 +455,21 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
 
     }
 
+    public void showTrackDeleteDialog(int position) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(mActivity);
+        final String trackId = ((QueueUpTrack) mTrackListAdapter.getItem(position)).id;
+
+        builder.setTitle("Remove Track")
+                .setMessage("Are you sure you want to remove this track?")
+                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        removeTrack(trackId);
+                    }
+                }).setNegativeButton("No", null)
+                .show();
+    }
+
     public void deletePlaylist() {
         mQueueUpClient.playlistDelete(mPlaylistId, new QueueUp.CallReceiver<Boolean>() {
 
@@ -467,6 +482,22 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
                         getFragmentManager().popBackStackImmediate();
                     }
                 });
+            }
+
+            @Override
+            public void onException(Exception e) {
+                Log.e(QueueUp.LOG_TAG, e.getMessage());
+                mActivity.toast(e.getMessage());
+            }
+        });
+    }
+
+    public void removeTrack(String trackId) {
+        mQueueUpClient.playlistDeleteTrack(mPlaylistId, trackId, new QueueUp.CallReceiver<QueueUpPlaylist>() {
+
+            @Override
+            public void onResult(QueueUpPlaylist result) {
+                mTrackListAdapter.updateTrackList(result.tracks);
             }
 
             @Override
@@ -651,7 +682,67 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
 
             Picasso.with(mContext).load(imageUrls.get(0)).into(image);
 
+            /* Swipe to delete tracks, only for the admin */
+            if (isUserAdmin(mThisPlaylist.adminId)) {
+                trackView.setOnTouchListener(new OnSwipeTouchListener(position));
+            }
             return trackView;
+        }
+    }
+
+    private class OnSwipeTouchListener implements View.OnTouchListener {
+
+        private float startX;
+        private int offset;
+        private boolean removing;
+        private int position;
+
+        public OnSwipeTouchListener(int position) {
+            this.position = position;
+        }
+
+        @Override
+        public boolean onTouch(View view, MotionEvent motionEvent) {
+
+            float difference = motionEvent.getX() - startX;
+            float max = view.getMeasuredHeight();
+
+            LinearLayout frame = (LinearLayout) view.findViewById(R.id.track_list_item_frame);
+
+            switch (motionEvent.getAction()) {
+                case MotionEvent.ACTION_DOWN:
+                    startX = motionEvent.getX();
+                    removing = false;
+                    break;
+                case MotionEvent.ACTION_UP:
+
+                    resetView(frame);
+
+                    break;
+                case MotionEvent.ACTION_CANCEL:
+                    resetView(frame);
+
+                    break;
+                case MotionEvent.ACTION_MOVE:
+
+                    if (difference > 0) {
+                        offset = (int) Math.min(difference / 2, max);
+                        frame.setPadding(offset, frame.getPaddingTop(), -offset, frame.getPaddingBottom());
+
+                        if (offset == max && !removing) {
+                            removing = true;
+                            showTrackDeleteDialog(position);
+//                            resetView(frame);
+                        }
+                    }
+                    break;
+            }
+            return true;
+        }
+
+        private void resetView(View view) {
+            view.setPadding(0, view.getPaddingTop(), 0, view.getPaddingBottom());
+            view.invalidate();
         }
     }
 

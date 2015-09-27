@@ -25,7 +25,7 @@
     <string name="no_progress">0:00/0:00</string>
     <string name="no_track">No track</string>
     <string name="playlist">Playlist</string>
-    <string name="queueup_user_placeholder">Queueup User</string>
+    <string name="queueup_user_placeholder">QueueUp User</string>
     <string name="play_with_spotify">Play with Spotify</string>
     <string name="no_votes">0</string>
     <string name="search_tracks">Search tracks</string>
@@ -34,10 +34,13 @@
     <string name="playlist_invite">Invite Friends</string>
     <string name="title_activity_invite_contacts">InviteContactsActivity</string>
 
-    <string name="hello_world">Hello world!</string>
+    <string name="top_playlists">Top Playlists</string>
+    <string name="friends_playlists">Friends\' Playlists</string>
+    <string name="my_playlists">My Playlists</string>
     <string name="trending_playlists">Search</string>
     <string name="search_playlists">Search playlists, users</string>
     <string name="full_name">Full name</string>
     <string name="title_activity_splash">SplashActivity</string>
     <string name="facebook_notification">Log in with Facebook to see your friends\' playlists</string>
+    <string name="create_playlist_notification">You don\'t have any playlists yet.</string>
 </resources>

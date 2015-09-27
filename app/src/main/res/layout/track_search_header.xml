@@ -19,6 +19,7 @@
             android:id="@+id/track_search_box"
             android:textSize="18sp"
             android:hint="@string/search_tracks"
+            android:singleLine="true"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
 

@@ -312,6 +312,28 @@ public class QueueUpClient {
         }
     }
 
+    public void playlistDeleteTrack(String playlistId, String trackId, final QueueUp.CallReceiver<QueueUpPlaylist> receiver) {
+        try {
+            JSONObject request = new JSONObject();
+            request.put("track_id", trackId);
+
+            sendApiPost("/playlists/" + playlistId + "/delete/track", request, new QueueUp.CallReceiver<JSONObject>() {
+                @Override
+                public void onResult(JSONObject result) {
+                    QueueUpPlaylist playlist = new QueueUpPlaylist(result.optJSONObject("playlist"));
+                    receiver.onResult(playlist);
+                }
+
+                @Override
+                public void onException(Exception e) {
+                    receiver.onException(e);
+                }
+            });
+        } catch (JSONException e) {
+            Log.e(QueueUp.LOG_TAG, "JSON error deleting track:" + e.getMessage());
+        }
+    }
+
     public void getFriendsPlaylists(List<String> fbIds, final QueueUp.CallReceiver<List<QueueUpPlaylist>> receiver) {
 
         JSONArray jsonIds = new JSONArray();

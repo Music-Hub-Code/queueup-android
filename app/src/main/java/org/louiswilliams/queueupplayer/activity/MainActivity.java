@@ -29,6 +29,9 @@ import com.facebook.AccessToken;
 import com.facebook.FacebookSdk;
 import com.facebook.Profile;
 import com.facebook.login.LoginManager;
+import com.google.android.gms.analytics.ExceptionReporter;
+import com.google.android.gms.analytics.HitBuilders;
+import com.google.android.gms.analytics.Tracker;
 import com.spotify.sdk.android.authentication.AuthenticationClient;
 import com.spotify.sdk.android.authentication.AuthenticationRequest;
 import com.spotify.sdk.android.authentication.AuthenticationResponse;
@@ -37,6 +40,7 @@ import com.spotify.sdk.android.player.Player;
 import com.spotify.sdk.android.player.Spotify;
 import com.squareup.picasso.Picasso;
 
+import org.louiswilliams.queueupplayer.QueueUpApplication;
 import org.louiswilliams.queueupplayer.R;
 import org.louiswilliams.queueupplayer.fragment.AddTrackFragment;
 import org.louiswilliams.queueupplayer.fragment.PlaylistFragment;
@@ -54,7 +58,9 @@ import org.louiswilliams.queueupplayer.queueup.objects.QueueUpPlaylist;
 import org.louiswilliams.queueupplayer.queueup.objects.QueueUpUser;
 import org.louiswilliams.queueupplayer.widget.PlayerNotification;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 public class MainActivity
         extends AppCompatActivity
@@ -64,7 +70,7 @@ public class MainActivity
     public static final String PLAYLISTS_ALL = "all";
     public static final String PLAYLISTS_FRIENDS = "friends";
     public static final String PLAYLISTS_MINE = "mine";
-    public static final String[] NAVIGATION_TITLES = {"Top Playlists", "Friend's Playlists", "Your Playlists"};
+    public static final int[] NAVIGATION_TITLES = {R.string.top_playlists, R.string.friends_playlists, R.string.my_playlists};
     public static final String[] NAVIGATION_ACTIONS = {PLAYLISTS_ALL, PLAYLISTS_FRIENDS, PLAYLISTS_MINE};
     public int currentNavigationAction;
     private DrawerLayout mDrawerLayout;
@@ -93,8 +99,14 @@ public class MainActivity
 
         CLIENT_ID = getString(R.string.spotify_client_id);
 
-//        AndroidLoggingHandler.reset(new AndroidLoggingHandler());
-//        java.util.logging.Logger.getLogger(Socket.class.getName()).setLevel(Level.FINEST);
+        /* Set up Google analytics for uncaught exceptions */
+        Tracker tracker = ((QueueUpApplication)getApplication()).getDefaultTracker();
+        Thread.UncaughtExceptionHandler uncaughtExceptionHandler = new ExceptionReporter(
+                tracker,
+                Thread.getDefaultUncaughtExceptionHandler(),
+                getApplicationContext()
+        );
+        Thread.setDefaultUncaughtExceptionHandler(uncaughtExceptionHandler);
 
         getFragmentManager().addOnBackStackChangedListener(this);
 
@@ -139,18 +151,20 @@ public class MainActivity
         mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_main);
         mDrawerList = (ListView) findViewById(R.id.left_drawer);
 
-        mDrawerAdapter = new DrawerListAdapter(this, R.layout.drawer_list_item, Arrays.asList(NAVIGATION_TITLES));
+        List<String> titles = new ArrayList<>();
+        for (int id : NAVIGATION_TITLES) {
+            titles.add(getString(id));
+        }
+        mDrawerAdapter = new DrawerListAdapter(this, R.layout.drawer_list_item, titles);
         mDrawerAdapter.setSelection(currentNavigationAction);
 
         mDrawerList.setOnItemClickListener(new ListView.OnItemClickListener() {
 
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                int drawerSelection = position - 1;
-                mDrawerAdapter.setSelection(drawerSelection);
-                mDrawerAdapter.notifyDataSetInvalidated();
-                currentNavigationAction = drawerSelection;
-                handleDrawerClickAction(drawerSelection);
+                currentNavigationAction = position - 1;
+                mDrawerAdapter.setSelection(currentNavigationAction);
+                handleDrawerClickAction(currentNavigationAction);
 
             }
         });
@@ -582,7 +596,7 @@ public class MainActivity
         Profile profile = Profile.getCurrentProfile();
 
         /* If logged in with Facebook*/
-        if (getAccessToken() != null) {
+        if (getAccessToken() != null && profile != null) {
             Uri proPicUri = profile.getProfilePictureUri(userImage.getLayoutParams().width, userImage.getLayoutParams().height);
             Picasso.with(this).load(proPicUri).into(userImage);
 

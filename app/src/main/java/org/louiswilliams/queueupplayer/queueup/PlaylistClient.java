@@ -152,6 +152,7 @@ public class PlaylistClient {
 
             /* This signals end of playback */
             if (state.current == null) {
+                Log.d(QueueUp.LOG_TAG, "Current is NULL!");
                 playbackReceiver.onPlaybackEnd();
                 return;
             }
