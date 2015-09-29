@@ -20,12 +20,12 @@ public class SpotifyPlayer implements PlaylistListener, PlayerNotificationCallba
     private static final int PROGRESS_INTERVAL = 1000;
 
     private Player mPlayer;
-    private PlaylistPlayer mPlaylistPlayer;
+    private PlaybackController mPlaybackController;
     private Timer mProgressTimer;
 
-    public SpotifyPlayer(PlaylistPlayer playlistPlayer, Player player) {
+    public SpotifyPlayer(PlaybackController playlistPlayer, Player player) {
         mPlayer = player;
-        mPlaylistPlayer = playlistPlayer;
+        mPlaybackController = playlistPlayer;
     }
 
     @Override
@@ -67,7 +67,7 @@ public class SpotifyPlayer implements PlaylistListener, PlayerNotificationCallba
 
     @Override
     public void onPlayerReady() {
-        final QueueUpStateChange state = mPlaylistPlayer.getCurrentState();
+        final QueueUpStateChange state = mPlaybackController.getCurrentState();
 
         if (state != null && state.current != null) {
 
@@ -100,7 +100,7 @@ public class SpotifyPlayer implements PlaylistListener, PlayerNotificationCallba
     public void onPlaybackEvent(PlayerNotificationCallback.EventType eventType, PlayerState playerState) {
         Log.d(QueueUp.LOG_TAG, "EVENT: " + eventType);
         if (eventType == PlayerNotificationCallback.EventType.END_OF_CONTEXT) {
-            mPlaylistPlayer.updateTrackDone();
+            mPlaybackController.updateTrackDone();
         } else if (eventType == PlayerNotificationCallback.EventType.PAUSE) {
             stopProgressUpdater();
         } else if (eventType == PlayerNotificationCallback.EventType.PLAY) {
@@ -126,7 +126,7 @@ public class SpotifyPlayer implements PlaylistListener, PlayerNotificationCallba
                         int duration = playerState.durationInMs;
                         int progress = playerState.positionInMs;
 
-                        mPlaylistPlayer.updateTrackProgress(progress, duration);
+                        mPlaybackController.updateTrackProgress(progress, duration);
 
                     }
                 });

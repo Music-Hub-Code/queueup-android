@@ -15,7 +15,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 import org.louiswilliams.queueupplayer.queueup.objects.QueueUpStateChange;
 
-public class PlaylistClient {
+public class PlaylistClient  {
 
     private static final String SOCKET_URL = QueueUp.SOCKET_URL;
     protected String mClientToken;

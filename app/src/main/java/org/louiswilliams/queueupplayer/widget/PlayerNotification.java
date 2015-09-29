@@ -1,6 +1,5 @@
 package org.louiswilliams.queueupplayer.widget;
 
-import android.app.Activity;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -8,6 +7,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.os.Handler;
 import android.util.Log;
 import android.widget.RemoteViews;
 
@@ -18,20 +18,20 @@ import org.louiswilliams.queueupplayer.activity.MainActivity;
 
 import java.util.List;
 
+import org.louiswilliams.queueupplayer.queueup.PlaybackController;
 import org.louiswilliams.queueupplayer.queueup.PlaylistListener;
-import org.louiswilliams.queueupplayer.queueup.PlaylistPlayer;
 import org.louiswilliams.queueupplayer.queueup.QueueUp;
 import org.louiswilliams.queueupplayer.queueup.objects.QueueUpTrack;
 import org.louiswilliams.queueupplayer.queueup.objects.SpotifyTrack;
 
 public class PlayerNotification extends Notification implements PlaylistListener {
 
-    private static final int NOTIFICATION_ID = 1;
+    public static final int NOTIFICATION_ID = 1;
     private static final String PLAY_BUTTON_INTENT = "QUEUEUP_PLAY_BUTTON";
     private static final String SKIP_BUTTON_INTENT = "QUEUEUP_SKIP_BUTTON";
     private static final String STOP_BUTTON_INTENT = "QUEUEUP_STOP_BUTTON";
 
-    private Activity mActivity;
+    private Context mContext;
     private NotificationManager mNotificationManager;
     private Builder mBuilder;
     private RemoteViews mContentView;
@@ -40,27 +40,27 @@ public class PlayerNotification extends Notification implements PlaylistListener
     private BroadcastReceiver skipReceiver;
     private BroadcastReceiver stopReceiver;
 
-    public PlayerNotification(Activity context) {
+    public PlayerNotification(Context context) {
         super();
 
         Log.d(QueueUp.LOG_TAG, "Creating notification for the first time...");
 
-        mActivity = context;
+        mContext = context;
         mNotificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
 
         playReceiver = new PlayButtonHandler();
         skipReceiver = new SkipButtonHandler();
         stopReceiver = new StopButtonHandler();
 
-        mActivity.registerReceiver(playReceiver, new IntentFilter(PLAY_BUTTON_INTENT));
-        mActivity.registerReceiver(skipReceiver, new IntentFilter(SKIP_BUTTON_INTENT));
-        mActivity.registerReceiver(stopReceiver, new IntentFilter(STOP_BUTTON_INTENT));
+        mContext.registerReceiver(playReceiver, new IntentFilter(PLAY_BUTTON_INTENT));
+        mContext.registerReceiver(skipReceiver, new IntentFilter(SKIP_BUTTON_INTENT));
+        mContext.registerReceiver(stopReceiver, new IntentFilter(STOP_BUTTON_INTENT));
 
 
-        mBuilder = new Notification.Builder(mActivity);
+        mBuilder = new Notification.Builder(mContext);
         mBuilder.setOngoing(true);
 
-        mContentView = new RemoteViews(mActivity.getPackageName(), R.layout.notification_player);
+        mContentView = new RemoteViews(mContext.getPackageName(), R.layout.notification_player);
         mBuilder.setContent(mContentView);
 
         Intent playButtonIntent = new Intent(PLAY_BUTTON_INTENT);
@@ -68,11 +68,11 @@ public class PlayerNotification extends Notification implements PlaylistListener
         Intent stopButtonIntent = new Intent(STOP_BUTTON_INTENT);
 
 
-        mContentView.setOnClickPendingIntent(R.id.play_button, PendingIntent.getBroadcast(mActivity, 0, playButtonIntent, 0));
-        mContentView.setOnClickPendingIntent(R.id.skip_button, PendingIntent.getBroadcast(mActivity, 0, skipButtonIntent, 0));
-        mContentView.setOnClickPendingIntent(R.id.stop_playback_button, PendingIntent.getBroadcast(mActivity, 0, stopButtonIntent, 0));
+        mContentView.setOnClickPendingIntent(R.id.play_button, PendingIntent.getBroadcast(mContext, 0, playButtonIntent, 0));
+        mContentView.setOnClickPendingIntent(R.id.skip_button, PendingIntent.getBroadcast(mContext, 0, skipButtonIntent, 0));
+        mContentView.setOnClickPendingIntent(R.id.stop_playback_button, PendingIntent.getBroadcast(mContext, 0, stopButtonIntent, 0));
 
-        PendingIntent openAppIntent = PendingIntent.getActivity(mActivity, 0, new Intent(mActivity, MainActivity.class), 0);
+        PendingIntent openAppIntent = PendingIntent.getActivity(mContext, 0, new Intent(mContext, MainActivity.class), 0);
         mBuilder.setContentIntent(openAppIntent);
 
 
@@ -80,9 +80,9 @@ public class PlayerNotification extends Notification implements PlaylistListener
 
     public void cancel() {
         try {
-            mActivity.unregisterReceiver(playReceiver);
-            mActivity.unregisterReceiver(skipReceiver);
-            mActivity.unregisterReceiver(stopReceiver);
+            mContext.unregisterReceiver(playReceiver);
+            mContext.unregisterReceiver(skipReceiver);
+            mContext.unregisterReceiver(stopReceiver);
         } catch (IllegalArgumentException e) {
             Log.w(QueueUp.LOG_TAG, e.getMessage());
         }
@@ -113,10 +113,11 @@ public class PlayerNotification extends Notification implements PlaylistListener
             mContentView.setTextViewText(R.id.playlist_current_artist, current.artists.get(0).name);
             if (current.album.imageUrls != null && current.album.imageUrls.size() > 0) {
 
-                mActivity.runOnUiThread(new Runnable() {
+                Handler handler = new Handler(mContext.getMainLooper());
+                handler.post(new Runnable() {
                     @Override
                     public void run() {
-                        Picasso.with(mActivity).load(current.album.imageUrls.get(0)).into(mContentView, R.id.playlist_image, NOTIFICATION_ID, notification);
+                    Picasso.with(mContext).load(current.album.imageUrls.get(0)).into(mContentView, R.id.playlist_image, NOTIFICATION_ID, notification);
                     }
                 });
             }
@@ -129,12 +130,7 @@ public class PlayerNotification extends Notification implements PlaylistListener
 
     @Override
     public void onTrackProgress(int progress, int duration) {
-//        String progressText = String.format("%d:%02d", progress / (60 * 1000), (progress / 1000) % 60);
-//        String durationText = String.format("%d:%02d", duration / (60 * 1000), (duration / 1000) % 60);
-//
-//        mContentView.setTextViewText(R.id.track_progress_text, progressText + "/" + durationText);
-//
-//        mNotificationManager.notify(NOTIFICATION_ID, mBuilder.build());
+        // NOOP
     }
 
     @Override
@@ -153,11 +149,11 @@ public class PlayerNotification extends Notification implements PlaylistListener
         @Override
         public void onReceive(Context context, Intent intent) {
             Log.d(QueueUp.LOG_TAG, "Play button pressed");
-            if (context instanceof MainActivity) {
-                PlaylistPlayer player = ((MainActivity) context).getPlaylistPlayer();
+            if (context instanceof PlaybackController) {
+                PlaybackController controller = ((PlaybackController) context);
 
-                boolean playing = player.getCurrentState().playing;
-                player.updateTrackPlaying(!playing);
+                boolean playing = controller.getCurrentState().playing;
+                controller.updateTrackPlaying(!playing);
             } else {
                 Log.e(QueueUp.LOG_TAG, "Received context isn't an instance of Main activity...");
             }
@@ -169,11 +165,11 @@ public class PlayerNotification extends Notification implements PlaylistListener
         @Override
         public void onReceive(Context context, Intent intent) {
             Log.d(QueueUp.LOG_TAG, "Skip button pressed");
-            if (context instanceof MainActivity) {
+            if (context instanceof PlaybackController) {
 
-                PlaylistPlayer player = ((MainActivity) context).getPlaylistPlayer();
+                PlaybackController controller = ((PlaybackController) context);
 
-                player.updateTrackDone();
+                controller.updateTrackDone();
             } else {
                 Log.e(QueueUp.LOG_TAG, "Received context isn't an instance of Main activity...");
             }
@@ -187,8 +183,8 @@ public class PlayerNotification extends Notification implements PlaylistListener
 
             cancel();
             Log.d(QueueUp.LOG_TAG, "Stop pressed");
-            if (context instanceof  MainActivity) {
-                ((MainActivity) context).stopPlayback();
+            if (context instanceof  PlaybackController) {
+                ((PlaybackController) context).stopPlayback();
             }
         }
     }

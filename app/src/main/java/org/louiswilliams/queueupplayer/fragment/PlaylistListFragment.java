@@ -19,7 +19,6 @@ import org.louiswilliams.queueupplayer.activity.MainActivity;
 import org.louiswilliams.queueupplayer.queueup.PlaylistListener;
 import org.louiswilliams.queueupplayer.queueup.QueueUp;
 import org.louiswilliams.queueupplayer.queueup.objects.QueueUpPlaylist;
-import org.w3c.dom.Text;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -69,7 +68,7 @@ public class PlaylistListFragment extends AbstractPlaylistListFragment implement
 
     public void populateAll() {
 
-        mActivity.getQueueupClient().playlistGetList(new QueueUp.CallReceiver<List<QueueUpPlaylist>>() {
+        mActivity.getQueueUpClient().playlistGetList(new QueueUp.CallReceiver<List<QueueUpPlaylist>>() {
             @Override
             public void onResult(List<QueueUpPlaylist> playlists) {
                 Log.d(QueueUp.LOG_TAG, "Playlist all success");
@@ -109,7 +108,7 @@ public class PlaylistListFragment extends AbstractPlaylistListFragment implement
                     }
 
                     /* Now do a request to QueueUp to show us our friend's playlists*/
-                    mActivity.getQueueupClient().getFriendsPlaylists(ids, new QueueUp.CallReceiver<List<QueueUpPlaylist>>() {
+                    mActivity.getQueueUpClient().getFriendsPlaylists(ids, new QueueUp.CallReceiver<List<QueueUpPlaylist>>() {
                         @Override
                         public void onResult(List<QueueUpPlaylist> result) {
                             mPlaylists  = result;
@@ -158,7 +157,7 @@ public class PlaylistListFragment extends AbstractPlaylistListFragment implement
     }
 
     public void populateMine() {
-            mActivity.getQueueupClient().getUserPlaylists(mActivity.getCurrentUserId(), new QueueUp.CallReceiver<List<QueueUpPlaylist>>() {
+            mActivity.getQueueUpClient().getUserPlaylists(mActivity.getCurrentUserId(), new QueueUp.CallReceiver<List<QueueUpPlaylist>>() {
             @Override
             public void onResult(List<QueueUpPlaylist> playlists) {
                 Log.d(QueueUp.LOG_TAG, "Playlist all success");

@@ -27,6 +27,7 @@ import com.squareup.picasso.Picasso;
 
 import org.louiswilliams.queueupplayer.R;
 import org.louiswilliams.queueupplayer.activity.MainActivity;
+import org.louiswilliams.queueupplayer.queueup.PlaybackController;
 import org.louiswilliams.queueupplayer.queueup.PlaylistListener;
 import org.louiswilliams.queueupplayer.queueup.PlaylistPlayer;
 import org.louiswilliams.queueupplayer.queueup.QueueUp;
@@ -103,7 +104,7 @@ public abstract class AbstractPlaylistListFragment extends Fragment implements P
 
         /* Show or hide the player bar if something is playing */
         View playerBar = mView.findViewById(R.id.player_bar);
-        if (mActivity.getPlaylistPlayer() != null) {
+        if (mActivity.getPlaybackController() != null) {
             setupPlayerBar(playerBar);
         } else {
             playerBar.setVisibility(View.GONE);
@@ -137,8 +138,8 @@ public abstract class AbstractPlaylistListFragment extends Fragment implements P
 
     @Override
     public void onDestroyView() {
-        if (mActivity.getPlaylistPlayer() != null) {
-            mActivity.getPlaylistPlayer().removePlaylistListener(AbstractPlaylistListFragment.this);
+        if (mActivity.getPlaybackController() != null) {
+            mActivity.getPlaybackController().removePlaylistListener(AbstractPlaylistListFragment.this);
         }
 
         super.onDestroyView();
@@ -170,8 +171,8 @@ public abstract class AbstractPlaylistListFragment extends Fragment implements P
 
     public void setupPlayerBar(View bar) {
 
-        PlaylistPlayer playlistPlayer = mActivity.getPlaylistPlayer();
-        final QueueUpStateChange currentState = playlistPlayer.getCurrentState();
+        PlaybackController playbackController = mActivity.getPlaybackController();
+        final QueueUpStateChange currentState = playbackController.getCurrentState();
 
         /* Set up buttons and listeners */
         ImageButton playButton = (ImageButton) bar.findViewById(R.id.play_button);
@@ -184,7 +185,7 @@ public abstract class AbstractPlaylistListFragment extends Fragment implements P
             @Override
             public void onClick(View v) {
                 /* Just invert the current playing status */
-                updateTrackPlaying(!mActivity.getPlaylistPlayer().getCurrentState().playing);
+                updateTrackPlaying(!mActivity.getPlaybackController().getCurrentState().playing);
 
             }
         };
@@ -193,7 +194,7 @@ public abstract class AbstractPlaylistListFragment extends Fragment implements P
             @Override
             public void onClick(View v) {
                 /* Send the update signal */
-                mActivity.getPlaylistPlayer().updateTrackDone();
+                mActivity.getPlaybackController().updateTrackDone();
             }
         };
 
@@ -216,11 +217,11 @@ public abstract class AbstractPlaylistListFragment extends Fragment implements P
 
             updateTrackViews(currentState.current);
 
-            onTrackProgress(playlistPlayer.getCurrentProgress(), playlistPlayer.getCurrentDuration());
+            onTrackProgress(playbackController.getCurrentProgress(), playbackController.getCurrentDuration());
         }
 
         /* Tell the activity we are now the active listener */
-        mActivity.getPlaylistPlayer().addPlaylistListener(AbstractPlaylistListFragment.this);
+        mActivity.getPlaybackController().addPlaylistListener(AbstractPlaylistListFragment.this);
 
         bar.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -270,7 +271,7 @@ public abstract class AbstractPlaylistListFragment extends Fragment implements P
     }
 
     private void updateTrackPlaying(boolean playing) {
-        mActivity.getPlaylistPlayer().updateTrackPlaying(playing);
+        mActivity.getPlaybackController().updateTrackPlaying(playing);
 
 //        updatePlayButton(playing);
     }
@@ -311,7 +312,7 @@ public abstract class AbstractPlaylistListFragment extends Fragment implements P
 
     @Override
     public String getPlaylistId() {
-        return mActivity.getPlaylistPlayer().getPlaylistId();
+        return mActivity.getPlaybackController().getPlaylistId();
     }
 
     @Override

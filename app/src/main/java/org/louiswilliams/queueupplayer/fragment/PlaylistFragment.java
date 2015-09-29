@@ -36,7 +36,6 @@ import org.louiswilliams.queueupplayer.activity.MainActivity;
 import org.louiswilliams.queueupplayer.queueup.PlaybackReceiver;
 import org.louiswilliams.queueupplayer.queueup.PlaylistClient;
 import org.louiswilliams.queueupplayer.queueup.PlaylistListener;
-import org.louiswilliams.queueupplayer.queueup.PlaylistPlayer;
 import org.louiswilliams.queueupplayer.queueup.QueueUp;
 import org.louiswilliams.queueupplayer.queueup.api.QueueUpClient;
 import org.louiswilliams.queueupplayer.queueup.objects.QueueUpPlaylist;
@@ -79,7 +78,7 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
         Log.d(QueueUp.LOG_TAG, "Loading playlist" + mPlaylistId);
 
         /* Get the client*/
-        mQueueUpClient = mActivity.getQueueupClient();
+        mQueueUpClient = mActivity.getQueueUpClient();
 
         /* Get the playlist data to initially populate the view */
         mQueueUpClient.playlistGet(mPlaylistId, new QueueUp.CallReceiver<QueueUpPlaylist>() {
@@ -136,8 +135,8 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
     @Override
     public void onDestroyView() {
         /* Make sure the activity knows that there is no playlist listener anymore  */
-        if (mActivity.getPlaylistPlayer() != null) {
-            mActivity.getPlaylistPlayer().removePlaylistListener(this);
+        if (mActivity.getPlaybackController() != null) {
+            mActivity.getPlaybackController().removePlaylistListener(this);
         }
 
         unsubscribeAsClient();
@@ -173,7 +172,7 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
         if (currentPlaylistIsPlaying()) {
             showPlaylistControls(playlistHeader, playlist.playing);
             setProgressBar(View.GONE);
-            mActivity.getPlaylistPlayer().addPlaylistListener(PlaylistFragment.this);
+            mActivity.getPlaybackController().addPlaylistListener(PlaylistFragment.this);
 
         } else {
 
@@ -206,18 +205,16 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
                             /* Unsubscribe as regular client */
                             unsubscribeAsClient();
 
-                        /* Show the progress bar */
+                            /* Show the progress bar */
                             setProgressBar(View.VISIBLE);
 
-                        /* Prevent the button from being pressed again*/
+                            /* Prevent the button from being pressed again*/
                             playHereButton.setOnClickListener(null);
 
-                        /* Tell the activity to subscribe to this playlist and launch the player */
-                            PlaylistPlayer playlistPlayer = mActivity.subscribePlaylistPlayer(mPlaylistId);
+                            /* Tell the activity to subscribe to this playlist and launch the player */
+                            mActivity.subscribePlaylistPlayer(mPlaylistId, PlaylistFragment.this);
 
-                            playlistPlayer.addPlaylistListener(PlaylistFragment.this);
-
-                        /* Insert the playlist controls */
+                            /* Insert the playlist controls */
                             showPlaylistControls(playlistHeader, playlist.playing);
 
 
@@ -282,7 +279,7 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
 
 
                 if (currentPlaylistIsPlaying()) {
-                    onTrackProgress(mActivity.getPlaylistPlayer().getCurrentProgress(), mActivity.getPlaylistPlayer().getCurrentDuration());
+                    onTrackProgress(mActivity.getPlaybackController().getCurrentProgress(), mActivity.getPlaybackController().getCurrentDuration());
                 }
 
                 setProgressBar(View.GONE);
@@ -332,7 +329,7 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
             @Override
             public void onClick(View v) {
                 /* Just invert the current playing status */
-                QueueUpStateChange current =  mActivity.getPlaylistPlayer().getCurrentState();
+                QueueUpStateChange current =  mActivity.getPlaybackController().getCurrentState();
 
                 /* Unless it's null, which means we should just play anyways */
                 boolean updateToPlaying = (current == null || !current.playing);
@@ -344,7 +341,7 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
             @Override
             public void onClick(View v) {
                 /* Send the update signal */
-                mActivity.getPlaylistPlayer().updateTrackDone();
+                mActivity.getPlaybackController().updateTrackDone();
             }
         };
 
@@ -383,7 +380,7 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
     }
 
     private void updateTrackPlaying(boolean playing) {
-        mActivity.getPlaylistPlayer().updateTrackPlaying(playing);
+        mActivity.getPlaybackController().updateTrackPlaying(playing);
 
     }
 
@@ -509,7 +506,7 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
     }
 
     public boolean currentPlaylistIsPlaying() {
-        return (mActivity.getPlaylistPlayer() != null && mActivity.getPlaylistPlayer().getPlaylistId().equals(mPlaylistId));
+        return (mActivity.getPlaybackController() != null && mActivity.getPlaybackController().getPlaylistId().equals(mPlaylistId));
     }
 
     public void subscribeAsClient() {
@@ -758,7 +755,7 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
 
         @Override
         public boolean onTouch(final View view, final MotionEvent event) {
-            final QueueUpClient client = mActivity.getQueueupClient();
+            final QueueUpClient client = mActivity.getQueueUpClient();
 
             final ImageView imageView = (ImageView) view.findViewById(R.id.track_votes_image);
 

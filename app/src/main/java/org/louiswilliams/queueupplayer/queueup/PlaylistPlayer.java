@@ -10,7 +10,7 @@ import org.louiswilliams.queueupplayer.queueup.objects.QueueUpStateChange;
 
 import io.socket.emitter.Emitter;
 
-public class PlaylistPlayer extends PlaylistClient {
+public class PlaylistPlayer extends PlaylistClient implements PlaybackController {
 
     public PlaylistPlayer(String clientToken, String userId, QueueUp.CallReceiver<PlaylistClient> receiver, PlaybackReceiver playbackReceiver) {
         super(clientToken, userId, receiver, playbackReceiver);
@@ -54,6 +54,7 @@ public class PlaylistPlayer extends PlaylistClient {
         }
     }
 
+    @Override
     public void updatePlaybackReady() {
         Log.d(QueueUp.LOG_TAG, "Playback ready");
 
@@ -62,6 +63,7 @@ public class PlaylistPlayer extends PlaylistClient {
         }
     }
 
+    @Override
     public void updateTrackPlaying(boolean playing) {
 
         Log.d(QueueUp.LOG_TAG, "Player playing: " + playing);
@@ -80,6 +82,7 @@ public class PlaylistPlayer extends PlaylistClient {
         }
     }
 
+    @Override
     public void updateTrackDone() {
         Log.d(QueueUp.LOG_TAG, "Track done");
 
@@ -88,6 +91,12 @@ public class PlaylistPlayer extends PlaylistClient {
         }
     }
 
+    @Override
+    public void stopPlayback() {
+        disconnect();
+    }
+
+    @Override
     public void updateTrackProgress(int progress, int duration) {
 
         this.currentProgress = progress;
@@ -107,7 +116,6 @@ public class PlaylistPlayer extends PlaylistClient {
                 Log.e(QueueUp.LOG_TAG, e.getMessage());
             }
         }
-
     }
 
 }
