@@ -34,6 +34,7 @@
             <TextView
                 android:id="@+id/playlist_current_track"
                 android:textColor="@color/primary_material_dark"
+                android:textColorLink="@color/primary_material_dark"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:textSize="16sp"
@@ -43,6 +44,7 @@
             <TextView
                 android:id="@+id/playlist_current_artist"
                 android:textColor="@color/primary_dark_material_light"
+                android:textColorLink="@color/primary_dark_material_light"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:textSize="14sp"

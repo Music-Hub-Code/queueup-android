@@ -210,8 +210,10 @@ public class MainActivity
             });
         }
 
+        LinearLayout footerView = (LinearLayout) getLayoutInflater().inflate(R.layout.drawer_footer, null, false);
 
         mDrawerList.addHeaderView(headerView, null, false);
+        mDrawerList.addFooterView(footerView, null, false);
         mDrawerList.setAdapter(mDrawerAdapter);
 
         mDrawerToggle = new ActionBarDrawerToggle(this, mDrawerLayout, R.string.drawer_open, R.string.drawer_close) {

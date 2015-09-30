@@ -6,6 +6,7 @@ import android.app.Fragment;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Looper;
 import android.util.Log;
@@ -41,6 +42,7 @@ import org.louiswilliams.queueupplayer.queueup.api.QueueUpClient;
 import org.louiswilliams.queueupplayer.queueup.objects.QueueUpPlaylist;
 import org.louiswilliams.queueupplayer.queueup.objects.QueueUpStateChange;
 import org.louiswilliams.queueupplayer.queueup.objects.QueueUpTrack;
+import org.louiswilliams.queueupplayer.queueup.objects.SpotifyArtist;
 import org.louiswilliams.queueupplayer.queueup.objects.SpotifyTrack;
 
 import java.util.List;
@@ -258,24 +260,25 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
                     if (playlist.current.album != null && playlist.current.album.imageUrls != null && playlist.current.album.imageUrls.size() > 0) {
                         Picasso.with(mActivity).load(playlist.current.album.imageUrls.get(0)).into(albumArt);
 
+                        albumArt.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View view) {
+                                showTrackOptionsDialog(null, playlist.current, false);
+                            }
+                        });
                     }
 
+                    SpotifyArtist artist = playlist.current.artists.get(0);
                     trackName.setText(playlist.current.name);
-                    trackArtist.setText(playlist.current.artists.get(0).name);
+                    trackArtist.setText(artist.name);
                 }
 
                 albumArt.getLayoutParams().height = mTrackList.getWidth() - (mTrackList.getPaddingLeft() + mTrackList.getPaddingRight());
                 albumArt.requestLayout();
 
-                mTrackList.addHeaderView(playlistHeader, null, false);
+                mTrackList.addHeaderView(playlistHeader, null, true);
                 mTrackList.addFooterView(playlistFooter, null, false);
                 mTrackList.setAdapter(mTrackListAdapter);
-                mTrackList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                    @Override
-                    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                        view.findViewById(R.id.track_list_item_name).setSelected(true);
-                    }
-                });
 
 
                 if (currentPlaylistIsPlaying()) {
@@ -389,16 +392,19 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
         final TextView trackName = (TextView) mView.findViewById(R.id.playlist_current_track);
         final TextView trackArtist = (TextView) mView.findViewById(R.id.playlist_current_artist);
 
-        if (albumArt != null) {
-            mActivity.runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
+        mActivity.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+
+                if (albumArt != null) {
                     Picasso.with(mActivity).load(current.album.imageUrls.get(0)).into(albumArt);
-                    trackName.setText(current.name);
-                    trackArtist.setText(current.artists.get(0).name);
                 }
-            });
-        }
+
+                trackName.setText(current.name);
+                trackArtist.setText(current.artists.get(0).name);
+
+            }
+        });
 
     }
 
@@ -462,6 +468,45 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         removeTrack(trackId);
+                    }
+                }).setNegativeButton("No", null)
+                .show();
+    }
+
+    public void showTrackOptionsDialog(final String trackId, final SpotifyTrack track, boolean showDelete) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(mActivity);
+
+        String[] trackOptions;
+
+        if (showDelete) {
+            trackOptions = new String[] {"Open in Spotify", "Delete track"};
+        } else {
+            trackOptions = new String[] {"Open in Spotify"};
+        }
+
+        builder.setTitle(track.name + " by " + track.artists.get(0).name)
+            .setItems(trackOptions, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        if (i == 0) {
+                            openLink(track.uri);
+                        } else if (i == 1) {
+                            removeTrack(trackId);
+                        }
+                    }
+            }).show();
+    }
+
+    public void showOpenInSpotifyDialog(int position) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(mActivity);
+        final String uri = ((QueueUpTrack) mTrackListAdapter.getItem(position)).track.uri;
+
+        builder.setTitle("Open in Spotify?")
+                .setMessage("The song will play without QueueUp")
+                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        openLink(uri);
                     }
                 }).setNegativeButton("No", null)
                 .show();
@@ -538,6 +583,11 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
             mPlaylistClient.disconnect();
             mPlaylistClient = null;
         }
+    }
+
+    public void openLink(String uri) {
+        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(uri));
+        startActivity(intent);
     }
 
     @Override
@@ -635,7 +685,7 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
         }
 
         @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
+        public View getView(final int position, View convertView, ViewGroup parent) {
             View trackView;
             final QueueUpTrack track = mTrackList.get(position);
 
@@ -661,7 +711,7 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
 
             votesCount.setText(String.valueOf(track.votes));
 
-            votes.setBackgroundResource(R.drawable.background_transparent);
+            votes.setBackgroundColor(getResources().getColor(R.color.primary_material_dark));
 
             boolean userIsVoter = track.voters.contains(mActivity.getCurrentUserId());
 
@@ -679,10 +729,12 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
 
             Picasso.with(mContext).load(imageUrls.get(0)).into(image);
 
-            /* Swipe to delete tracks, only for the admin */
-            if (isUserAdmin(mThisPlaylist.adminId)) {
-                trackView.setOnTouchListener(new OnSwipeTouchListener(position));
-            }
+            trackView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    showTrackOptionsDialog(track.id, track.track, isUserAdmin(mThisPlaylist.adminId));
+                }
+            });
             return trackView;
         }
     }
@@ -692,16 +744,19 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
         private float startX;
         private int offset;
         private boolean removing;
+        private boolean opening;
+        private boolean showDelete;
         private int position;
 
-        public OnSwipeTouchListener(int position) {
+        public OnSwipeTouchListener(int position, boolean showDelete) {
             this.position = position;
+            this.showDelete = showDelete;
         }
 
         @Override
         public boolean onTouch(View view, MotionEvent motionEvent) {
 
-            float difference = motionEvent.getX() - startX;
+            float difference = startX - motionEvent.getX();
             float max = view.getMeasuredHeight();
 
             LinearLayout frame = (LinearLayout) view.findViewById(R.id.track_list_item_frame);
@@ -710,6 +765,7 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
                 case MotionEvent.ACTION_DOWN:
                     startX = motionEvent.getX();
                     removing = false;
+                    opening = false;
                     break;
                 case MotionEvent.ACTION_UP:
 
@@ -722,16 +778,25 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
                     break;
                 case MotionEvent.ACTION_MOVE:
 
-                    if (difference > 0) {
-                        offset = (int) Math.min(difference / 2, max);
+                    offset = (int) Math.min(Math.abs(difference) / 2, max);
+                    if (showDelete && difference > 0 && !removing) {
+                        frame.setPadding(-offset, frame.getPaddingTop(), offset, frame.getPaddingBottom());
+
+                        if (offset > 0.85 * max) {
+                            removing = true;
+                            frame.setPadding(-(int) max, frame.getPaddingTop(), (int) max, frame.getPaddingBottom());
+                            showTrackDeleteDialog(position);
+                        }
+                    } else if (difference < 0 && !opening) {
                         frame.setPadding(offset, frame.getPaddingTop(), -offset, frame.getPaddingBottom());
 
-                        if (offset == max && !removing) {
-                            removing = true;
-                            showTrackDeleteDialog(position);
-//                            resetView(frame);
+                        if (offset > 0.85 * max) {
+                            opening = true;
+                            frame.setPadding((int) max, frame.getPaddingTop(), -(int) max, frame.getPaddingBottom());
+                            showOpenInSpotifyDialog(position);
                         }
                     }
+
                     break;
             }
             return true;
@@ -784,7 +849,7 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
                 return true;
             /* Reset the button */
             } else if (event.getAction() == MotionEvent.ACTION_UP) {
-                view.setBackground(getResources().getDrawable(R.drawable.background_transparent));
+                view.setBackgroundColor(getResources().getColor(R.color.primary_material_dark));
                 imageView.setImageDrawable(mActivity.getResources().getDrawable(R.drawable.ic_action_keyboard_arrow_up_grey_36));
                 return true;
             }
