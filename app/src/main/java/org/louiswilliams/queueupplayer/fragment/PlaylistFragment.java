@@ -478,9 +478,9 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
         String[] trackOptions;
 
         if (showDelete) {
-            trackOptions = new String[] {"Open in Spotify", "Delete track"};
+            trackOptions = new String[] {"Exit and open in Spotify", "Delete track"};
         } else {
-            trackOptions = new String[] {"Open in Spotify"};
+            trackOptions = new String[] {"Exit and open in Spotify"};
         }
 
         builder.setTitle(track.name + " by " + track.artists.get(0).name)
@@ -488,7 +488,8 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
                 @Override
                 public void onClick(DialogInterface dialogInterface, int i) {
                     if (i == 0) {
-                        openLink(track.uri);
+//                        openLink(track.uri);
+                        showOpenInSpotifyDialog(track.uri);
                     } else if (i == 1) {
                         removeTrack(trackId);
                     }
@@ -496,12 +497,11 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
             }).show();
     }
 
-    public void showOpenInSpotifyDialog(int position) {
+    public void showOpenInSpotifyDialog(final String uri) {
         AlertDialog.Builder builder = new AlertDialog.Builder(mActivity);
-        final String uri = ((QueueUpTrack) mTrackListAdapter.getItem(position)).track.uri;
 
-        builder.setTitle("Open in Spotify?")
-                .setMessage("The song will play without QueueUp")
+        builder.setTitle("Are you sure you want to exit?")
+                .setMessage("This will leave the app and open Spotify")
                 .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
@@ -743,75 +743,6 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
                 }
             });
             return trackView;
-        }
-    }
-
-    private class OnSwipeTouchListener implements View.OnTouchListener {
-
-        private float startX;
-        private int offset;
-        private boolean removing;
-        private boolean opening;
-        private boolean showDelete;
-        private int position;
-
-        public OnSwipeTouchListener(int position, boolean showDelete) {
-            this.position = position;
-            this.showDelete = showDelete;
-        }
-
-        @Override
-        public boolean onTouch(View view, MotionEvent motionEvent) {
-
-            float difference = startX - motionEvent.getX();
-            float max = view.getMeasuredHeight();
-
-            LinearLayout frame = (LinearLayout) view.findViewById(R.id.track_list_item_frame);
-
-            switch (motionEvent.getAction()) {
-                case MotionEvent.ACTION_DOWN:
-                    startX = motionEvent.getX();
-                    removing = false;
-                    opening = false;
-                    break;
-                case MotionEvent.ACTION_UP:
-
-                    resetView(frame);
-
-                    break;
-                case MotionEvent.ACTION_CANCEL:
-                    resetView(frame);
-
-                    break;
-                case MotionEvent.ACTION_MOVE:
-
-                    offset = (int) Math.min(Math.abs(difference) / 2, max);
-                    if (showDelete && difference > 0 && !removing) {
-                        frame.setPadding(-offset, frame.getPaddingTop(), offset, frame.getPaddingBottom());
-
-                        if (offset > 0.85 * max) {
-                            removing = true;
-                            frame.setPadding(-(int) max, frame.getPaddingTop(), (int) max, frame.getPaddingBottom());
-                            showTrackDeleteDialog(position);
-                        }
-                    } else if (difference < 0 && !opening) {
-                        frame.setPadding(offset, frame.getPaddingTop(), -offset, frame.getPaddingBottom());
-
-                        if (offset > 0.85 * max) {
-                            opening = true;
-                            frame.setPadding((int) max, frame.getPaddingTop(), -(int) max, frame.getPaddingBottom());
-                            showOpenInSpotifyDialog(position);
-                        }
-                    }
-
-                    break;
-            }
-            return true;
-        }
-
-        private void resetView(View view) {
-            view.setPadding(0, view.getPaddingTop(), 0, view.getPaddingBottom());
-            view.invalidate();
         }
     }
 
