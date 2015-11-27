@@ -10,6 +10,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.res.Configuration;
+import android.location.Location;
+import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
@@ -50,6 +52,7 @@ import org.louiswilliams.queueupplayer.queueup.PlaybackController;
 import org.louiswilliams.queueupplayer.queueup.PlaybackReceiver;
 import org.louiswilliams.queueupplayer.queueup.PlaylistListener;
 import org.louiswilliams.queueupplayer.queueup.QueueUp;
+import org.louiswilliams.queueupplayer.queueup.QueueUpLocationListener;
 import org.louiswilliams.queueupplayer.queueup.QueueUpStore;
 import org.louiswilliams.queueupplayer.queueup.api.QueueUpClient;
 import org.louiswilliams.queueupplayer.queueup.api.SpotifyTokenManager;
@@ -82,6 +85,7 @@ public class MainActivity
     private DrawerListAdapter mDrawerAdapter;
     private Intent mPlayerServiceIntent;
     private ListView mDrawerList;
+    private QueueUpLocationListener locationListener;
     private PlayerService mPlayerService;
     private QueueUpClient mQueueUpClient;
     private QueueUpStore mStore;
@@ -108,7 +112,6 @@ public class MainActivity
 
         getFragmentManager().addOnBackStackChangedListener(this);
 
-
         mStore = QueueUpStore.with(this);
 
         mSpotifyClientId = getString(R.string.spotify_client_id);
@@ -132,6 +135,18 @@ public class MainActivity
         /* Set up out layout */
         doSetup(savedInstanceState);
 
+    }
+
+    @Override
+    public void onResume() {
+        if (locationListener == null) {
+            LocationManager locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+            locationListener = new QueueUpLocationListener(locationManager);
+        } else {
+            locationListener.stopUpdates();
+        }
+        locationListener.startUpdatesUntilBest();
+        super.onResume();
     }
 
     /* Setup UI elements */
@@ -658,8 +673,9 @@ public class MainActivity
     }
 
     /* Create a new playlist */
-    public void doCreatePlaylist(String name) {
-        mQueueUpClient.playlistCreate(name, new QueueUp.CallReceiver<QueueUpPlaylist>() {
+    public void doCreatePlaylist(String name, Location location) {
+        Log.d(QueueUp.LOG_TAG, "Created playlist at " + location);
+        mQueueUpClient.playlistCreate(name, location, new QueueUp.CallReceiver<QueueUpPlaylist>() {
             @Override
             public void onResult(QueueUpPlaylist result) {
                 toast("Created " + result.name);
@@ -673,6 +689,10 @@ public class MainActivity
             }
         });
 
+    }
+
+    public QueueUpLocationListener getLocationListener() {
+        return locationListener;
     }
 
     @Override
@@ -698,6 +718,12 @@ public class MainActivity
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    protected void onPause() {
+        locationListener.startPassiveUpdates();
+        super.onPause();
     }
 
     @Override

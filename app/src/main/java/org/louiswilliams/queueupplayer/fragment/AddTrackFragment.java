@@ -153,7 +153,7 @@ public class AddTrackFragment extends Fragment {
 
         mActivity.toastTop("Track added");
 
-        QueueUpClient.playlistAddTrack(mPlaylistId, track.id, new QueueUp.CallReceiver<JSONObject>() {
+        mActivity.getQueueUpClient().playlistAddTrack(mPlaylistId, track.id, new QueueUp.CallReceiver<JSONObject>() {
             @Override
             public void onResult(JSONObject result) {
                 // Instead of exiting the fragment, just show a confirmation

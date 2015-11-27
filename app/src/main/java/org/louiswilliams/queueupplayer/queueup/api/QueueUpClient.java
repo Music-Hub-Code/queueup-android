@@ -1,5 +1,6 @@
 package org.louiswilliams.queueupplayer.queueup.api;
 
+import android.location.Location;
 import android.util.Log;
 
 import org.apache.http.HttpResponse;
@@ -204,10 +205,17 @@ public class QueueUpClient {
         });
     }
 
-    public void playlistCreate(String playlistName, final QueueUp.CallReceiver<QueueUpPlaylist> receiver) {
+    public void playlistCreate(String playlistName, Location userLocation, final QueueUp.CallReceiver<QueueUpPlaylist> receiver) {
         try {
+            JSONObject location = new JSONObject();
+            location.put("latitude", userLocation.getLatitude());
+            location.put("longitude", userLocation.getLongitude());
+            location.put("accuracy", userLocation.getAccuracy());
+            location.put("altitude", userLocation.getAltitude());
+
             JSONObject playlist = new JSONObject();
             playlist.put("name", playlistName);
+            playlist.put("location", location);
 
             JSONObject request = new JSONObject();
             request.put("playlist", playlist);
@@ -302,11 +310,11 @@ public class QueueUpClient {
         });
     }
 
-    public static void playlistAddTrack(String playlistId, String spotifyUri, final QueueUp.CallReceiver<JSONObject> receiver) {
+    public void playlistAddTrack(String playlistId, String spotifyUri, final QueueUp.CallReceiver<JSONObject> receiver) {
         try {
             JSONObject request = new JSONObject();
             request.put("track_id", spotifyUri);
-            sendPost("/playlists/" + playlistId + "/add", request, receiver);
+            sendApiPost("/playlists/" + playlistId + "/add", request, receiver);
         } catch (JSONException e) {
             Log.e(QueueUp.LOG_TAG, "JSON error adding track: " + e.getMessage());
         }

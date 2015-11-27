@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.Fragment;
 import android.app.SearchManager;
 import android.content.Context;
+import android.location.Location;
 import android.os.Bundle;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.SearchView;
@@ -31,6 +32,7 @@ import org.louiswilliams.queueupplayer.queueup.PlaybackController;
 import org.louiswilliams.queueupplayer.queueup.PlaylistListener;
 import org.louiswilliams.queueupplayer.queueup.PlaylistPlayer;
 import org.louiswilliams.queueupplayer.queueup.QueueUp;
+import org.louiswilliams.queueupplayer.queueup.QueueUpLocationListener;
 import org.louiswilliams.queueupplayer.queueup.objects.QueueUpPlaylist;
 import org.louiswilliams.queueupplayer.queueup.objects.QueueUpStateChange;
 import org.louiswilliams.queueupplayer.queueup.objects.QueueUpTrack;
@@ -98,6 +100,8 @@ public abstract class AbstractPlaylistListFragment extends Fragment implements P
         addPlaylistButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                QueueUpLocationListener locationListener = mActivity.getLocationListener();
+                locationListener.startUpdates();
                 showCreatePlaylistDialog();
             }
         });
@@ -149,15 +153,19 @@ public abstract class AbstractPlaylistListFragment extends Fragment implements P
         if (mActivity.isClientRegistered()) {
             PlaylistNameFragment playlistNameFragment = new PlaylistNameFragment();
 
+            final QueueUpLocationListener locationListener = mActivity.getLocationListener();
             playlistNameFragment.setDialogTitle("New Playlist");
             playlistNameFragment.setPlaylistNameListener(new PlaylistNameFragment.PlaylistNameListener() {
                 @Override
                 public void onPlaylistCreate(PlaylistNameFragment dialogFragment) {
-                    mActivity.doCreatePlaylist(dialogFragment.getPlaylistName());
+                    Location location = locationListener.getCurrentBestLocation();
+                    locationListener.stopUpdates();
+                    mActivity.doCreatePlaylist(dialogFragment.getPlaylistName(), location);
                 }
 
                 @Override
                 public void onCancel() {
+                    locationListener.stopUpdates();
                 }
             });
 
@@ -380,7 +388,6 @@ public abstract class AbstractPlaylistListFragment extends Fragment implements P
             } else {
                 ImageView image = (ImageView) playlistItem.findViewById(R.id.playlist_list_item_image);
                 image.setImageDrawable(mContext.getResources().getDrawable(R.drawable.background_opaque_gray));
-                Log.d(QueueUp.LOG_TAG, "Current playlist is null...");
             }
 
             return playlistItem;
