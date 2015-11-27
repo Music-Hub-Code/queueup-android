@@ -18,7 +18,6 @@ import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.FrameLayout;
@@ -109,7 +108,7 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
 
     @Override
     public void onCreateOptionsMenu (Menu menu, MenuInflater menuInflater) {
-        if (mThisPlaylist != null && isUserAdmin(mThisPlaylist.adminId)) {
+        if (mThisPlaylist != null && isUserOwner(mThisPlaylist.adminId)) {
             menuInflater.inflate(R.menu.menu_playlist_admin, menu);
         }
         super.onCreateOptionsMenu(menu, menuInflater);
@@ -149,7 +148,7 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
     private void populateView(final QueueUpPlaylist playlist) {
         List<QueueUpTrack> tracks = playlist.tracks;
         String userId = playlist.adminId;
-        final boolean isAdmin = isUserAdmin(userId);
+        final boolean isAdmin = isUserOwner(userId);
 
         mTrackListAdapter = new TrackListAdapter(mActivity, tracks, R.layout.track_item);
         mTrackList = (ListView) mView.findViewById(R.id.track_list);
@@ -486,14 +485,14 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
 
         builder.setTitle(track.name + " by " + track.artists.get(0).name)
             .setItems(trackOptions, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                        if (i == 0) {
-                            openLink(track.uri);
-                        } else if (i == 1) {
-                            removeTrack(trackId);
-                        }
+                @Override
+                public void onClick(DialogInterface dialogInterface, int i) {
+                    if (i == 0) {
+                        openLink(track.uri);
+                    } else if (i == 1) {
+                        removeTrack(trackId);
                     }
+                }
             }).show();
     }
 
@@ -634,9 +633,17 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
         }
     }
 
-    public boolean isUserAdmin(String userId) {
+    public boolean isUserOwner(String userId) {
         return (mQueueUpClient.getUserId() != null && mQueueUpClient.getUserId().equals(userId));
+    }
 
+    public boolean userCanDeleteTrack(QueueUpTrack track) {
+        if (isUserOwner(mThisPlaylist.adminId)) {
+            return true;
+        } else if (track.addedByUserId != null) {
+            return mQueueUpClient.getUserId() != null && mQueueUpClient.getUserId().equals(track.addedByUserId);
+        }
+        return false;
     }
 
     @Override
@@ -713,7 +720,7 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
 
             votes.setBackgroundColor(getResources().getColor(R.color.primary_material_dark));
 
-            boolean userIsVoter = track.voters.contains(mActivity.getCurrentUserId());
+            final boolean userIsVoter = track.voters.contains(mActivity.getCurrentUserId());
 
             if (userIsVoter) {
                 votesImage.setImageResource(R.drawable.ic_action_keyboard_arrow_up_white_36);
@@ -732,7 +739,7 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
             trackView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    showTrackOptionsDialog(track.id, track.track, isUserAdmin(mThisPlaylist.adminId));
+                    showTrackOptionsDialog(track.id, track.track, userCanDeleteTrack(track));
                 }
             });
             return trackView;

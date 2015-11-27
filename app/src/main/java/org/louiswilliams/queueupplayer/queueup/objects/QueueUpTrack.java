@@ -11,12 +11,11 @@ import java.util.List;
 
 import org.louiswilliams.queueupplayer.queueup.QueueUp;
 
-/**
- * Created by Louis on 5/23/2015.
- */
 public class QueueUpTrack extends QueueUpObject {
     public SpotifyTrack track;
     public int votes;
+    public String addedByUserId;
+    public String addedByName;
     public List<String> voters;
 
 
@@ -24,6 +23,13 @@ public class QueueUpTrack extends QueueUpObject {
         super(obj);
         try {
             track = new SpotifyTrack(obj.getJSONObject("track"));
+
+            JSONObject addedBy = obj.optJSONObject("addedBy");
+            if (addedBy != null) {
+                addedByUserId = addedBy.optString("_id");
+                addedByName = addedBy.optString("name");
+            }
+
             votes = obj.optInt("votes");
             voters = new ArrayList<String>();
             JSONArray votersJson = obj.optJSONArray("voters");
