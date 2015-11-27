@@ -100,8 +100,6 @@ public abstract class AbstractPlaylistListFragment extends Fragment implements P
         addPlaylistButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                QueueUpLocationListener locationListener = mActivity.getLocationListener();
-                locationListener.startUpdates();
                 showCreatePlaylistDialog();
             }
         });
@@ -151,9 +149,15 @@ public abstract class AbstractPlaylistListFragment extends Fragment implements P
 
     public void showCreatePlaylistDialog() {
         if (mActivity.isClientRegistered()) {
+            if (!mActivity.isLocationEnabled()) {
+                mActivity.alertLocationEnable();
+                return;
+            }
+            final QueueUpLocationListener locationListener = mActivity.getLocationListener();
+            locationListener.startUpdates();
+
             PlaylistNameFragment playlistNameFragment = new PlaylistNameFragment();
 
-            final QueueUpLocationListener locationListener = mActivity.getLocationListener();
             playlistNameFragment.setDialogTitle("New Playlist");
             playlistNameFragment.setPlaylistNameListener(new PlaylistNameFragment.PlaylistNameListener() {
                 @Override

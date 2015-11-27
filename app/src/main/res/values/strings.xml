@@ -43,4 +43,8 @@
     <string name="title_activity_splash">SplashActivity</string>
     <string name="facebook_notification">Log in with Facebook to see your friends\' playlists</string>
     <string name="create_playlist_notification">You don\'t have any playlists yet.</string>
+    <string name="location_not_found_title">Location not enabled</string>
+    <string name="location_not_found_message">We use your location so your friends can find your playlists. Do you want to enable Location?</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
 </resources>
