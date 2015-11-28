@@ -54,6 +54,7 @@ import org.louiswilliams.queueupplayer.queueup.PlaybackController;
 import org.louiswilliams.queueupplayer.queueup.PlaybackReceiver;
 import org.louiswilliams.queueupplayer.queueup.PlaylistListener;
 import org.louiswilliams.queueupplayer.queueup.QueueUp;
+import org.louiswilliams.queueupplayer.queueup.QueueUpException;
 import org.louiswilliams.queueupplayer.queueup.QueueUpLocationListener;
 import org.louiswilliams.queueupplayer.queueup.QueueUpStore;
 import org.louiswilliams.queueupplayer.queueup.api.QueueUpClient;
@@ -125,12 +126,17 @@ public class MainActivity
         mEmailAddress = mStore.getString(QueueUpStore.EMAIL_ADDRESS);
 
         /* If we are registered non-anonymously, proceed, otherwise login anonymously */
-        if (isLoggedIn()) {
-            mQueueUpClient = new QueueUpClient(mClientToken, mUserId);
-        } else {
-            mQueueUpClient = new QueueUpClient(null, null);
-            goToSplash();
-            return;
+        try {
+            if (isLoggedIn()) {
+                mQueueUpClient = new QueueUpClient(getApplicationContext(), mClientToken, mUserId);
+            } else {
+                mQueueUpClient = new QueueUpClient(getApplicationContext(), null, null);
+                goToSplash();
+                return;
+            }
+        } catch (QueueUpException e) {
+            Log.e(QueueUp.LOG_TAG, e.getMessage());
+            toast(e.getMessage());
         }
 
 

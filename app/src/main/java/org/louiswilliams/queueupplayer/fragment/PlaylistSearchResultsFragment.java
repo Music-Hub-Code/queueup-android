@@ -46,7 +46,7 @@ public class PlaylistSearchResultsFragment extends AbstractPlaylistListFragment 
     protected void populate() {
 
         /* Do a search query and pass the results back to the fragment  */
-        QueueUpClient.searchPlaylists(mQuery, new QueueUp.CallReceiver<List<QueueUpPlaylist>>() {
+        mActivity.getQueueUpClient().searchPlaylists(mQuery, new QueueUp.CallReceiver<List<QueueUpPlaylist>>() {
             @Override
             public void onResult(List<QueueUpPlaylist> playlists) {
                 Log.d(QueueUp.LOG_TAG, "Playlist search success");

@@ -22,6 +22,7 @@ import com.facebook.login.widget.LoginButton;
 import org.louiswilliams.queueupplayer.R;
 
 import org.louiswilliams.queueupplayer.queueup.QueueUp;
+import org.louiswilliams.queueupplayer.queueup.QueueUpException;
 import org.louiswilliams.queueupplayer.queueup.api.QueueUpClient;
 import org.louiswilliams.queueupplayer.queueup.QueueUpStore;
 import org.louiswilliams.queueupplayer.queueup.objects.QueueUpApiCredential;
@@ -49,7 +50,11 @@ public class LoginActivity extends Activity {
         String userId = mStore.getString(QueueUpStore.CLIENT_TOKEN);
         String clientToken = mStore.getString(QueueUpStore.USER_ID);
 
-        mQueueupClient = new QueueUpClient(userId, clientToken);
+        try {
+            mQueueupClient = new QueueUpClient(getApplicationContext(), userId, clientToken);
+        } catch (QueueUpException e){
+            Log.e(QueueUp.LOG_TAG, e.getMessage());
+        }
 
 
         FacebookSdk.sdkInitialize(getApplicationContext());
@@ -189,7 +194,7 @@ public class LoginActivity extends Activity {
 
     private void doEmailLogin(final String email, String password) {
 
-        QueueUpClient.loginEmail(email, password, new QueueUp.CallReceiver<QueueUpApiCredential>() {
+        mQueueupClient.loginEmail(email, password, new QueueUp.CallReceiver<QueueUpApiCredential>() {
             @Override
             public void onResult(QueueUpApiCredential result) {
 

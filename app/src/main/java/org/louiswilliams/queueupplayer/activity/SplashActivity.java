@@ -12,6 +12,7 @@ import android.widget.Toast;
 
 import org.louiswilliams.queueupplayer.R;
 import org.louiswilliams.queueupplayer.queueup.QueueUp;
+import org.louiswilliams.queueupplayer.queueup.QueueUpException;
 import org.louiswilliams.queueupplayer.queueup.QueueUpStore;
 import org.louiswilliams.queueupplayer.queueup.api.QueueUpClient;
 import org.louiswilliams.queueupplayer.queueup.api.SpotifyTokenManager;
@@ -20,6 +21,7 @@ import org.louiswilliams.queueupplayer.queueup.objects.QueueUpApiCredential;
 public class SplashActivity extends AppCompatActivity {
 
     QueueUpStore mStore;
+    QueueUpClient mQueueupClient;
     final static int SPLASH_TIMEOUT = 2000;
 
     @Override
@@ -27,6 +29,11 @@ public class SplashActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
 
         mStore = QueueUpStore.with(this);
+        try {
+            mQueueupClient = new QueueUpClient(getApplicationContext(), null, null);
+        } catch (QueueUpException e) {
+            Log.e(QueueUp.LOG_TAG, e.getMessage());
+        }
 
         final String clientToken = mStore.getString(QueueUpStore.CLIENT_TOKEN);
         final String userId = mStore.getString(QueueUpStore.USER_ID);
@@ -53,7 +60,7 @@ public class SplashActivity extends AppCompatActivity {
 
     public void doFirstTimeInit() {
 
-        QueueUpClient.loginInit(getDeviceId(), new QueueUp.CallReceiver<QueueUpApiCredential>() {
+        mQueueupClient.loginInit(getDeviceId(), new QueueUp.CallReceiver<QueueUpApiCredential>() {
             @Override
             public void onResult(QueueUpApiCredential result) {
 

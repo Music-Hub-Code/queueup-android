@@ -1,26 +1,32 @@
 package org.louiswilliams.queueupplayer.queueup.api;
 
+import android.content.Context;
 import android.location.Location;
 import android.util.Log;
 
-import org.apache.http.HttpResponse;
-import org.apache.http.client.ResponseHandler;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.util.EntityUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
+import java.net.URL;
 import java.net.URLEncoder;
+import java.security.KeyManagementException;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.louiswilliams.queueupplayer.R;
 import org.louiswilliams.queueupplayer.queueup.PlaybackReceiver;
 import org.louiswilliams.queueupplayer.queueup.PlaylistClient;
 import org.louiswilliams.queueupplayer.queueup.PlaylistPlayer;
@@ -31,21 +37,56 @@ import org.louiswilliams.queueupplayer.queueup.objects.QueueUpPlaylist;
 import org.louiswilliams.queueupplayer.queueup.objects.QueueUpUser;
 import org.louiswilliams.queueupplayer.queueup.objects.SpotifyTrack;
 
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManagerFactory;
+
 public class QueueUpClient {
 
     private String clientToken, userId;
     private PlaylistPlayer playlistPlayer;
-    private static HttpGet searchGetRequest;
+    private static SSLContext sslContext;
+    private static HttpsURLConnection searchGetRequest;
+
+    private static final String CF_CSR = "X.509";
+    private static final String TLS = "TLS";
 
 
-
-    public QueueUpClient(String clientToken, String userId) {
+    public QueueUpClient(Context context, String clientToken, String userId) throws QueueUpException {
         this.clientToken = clientToken;
         this.userId = userId;
+
+        createSslContext(context);
     }
 
+    public static void createSslContext(Context applicationContext) throws QueueUpException {
+        if (sslContext == null) {
+            try {
+                CertificateFactory cf = CertificateFactory.getInstance(CF_CSR);
+                InputStream in = applicationContext.getResources().openRawResource(R.raw.queueup_crt);
+                Certificate ca = cf.generateCertificate(in);
+                in.close();
 
-    public static void login(JSONObject json, final QueueUp.CallReceiver<QueueUpApiCredential> receiver){
+                String keyStoreType = KeyStore.getDefaultType();
+                KeyStore keyStore = KeyStore.getInstance(keyStoreType);
+                keyStore.load(null, null);
+                keyStore.setCertificateEntry("ca", ca);
+
+                String tmfAlgorithm = TrustManagerFactory.getDefaultAlgorithm();
+                TrustManagerFactory tmf = TrustManagerFactory.getInstance(tmfAlgorithm);
+                tmf.init(keyStore);
+
+                sslContext = SSLContext.getInstance(TLS);
+                sslContext.init(null, tmf.getTrustManagers(), null);
+
+            } catch (CertificateException | IOException | KeyStoreException | NoSuchAlgorithmException | KeyManagementException e) {
+                e.printStackTrace();
+                throw new QueueUpException("Error loading SSL certificate!", e);
+            }
+        }
+    }
+
+    public void login(JSONObject json, final QueueUp.CallReceiver<QueueUpApiCredential> receiver){
         sendPost("/auth/login", json, new QueueUp.CallReceiver<JSONObject>() {
             @Override
             public void onResult(JSONObject result) {
@@ -98,7 +139,7 @@ public class QueueUpClient {
         });
     }
 
-    public static void loginEmail(String email, String password, QueueUp.CallReceiver<QueueUpApiCredential> receiver) {
+    public void loginEmail(String email, String password, QueueUp.CallReceiver<QueueUpApiCredential> receiver) {
         JSONObject json = new JSONObject();
 
         try {
@@ -127,7 +168,7 @@ public class QueueUpClient {
         login(json, receiver);
     }
 
-    public static void loginInit(String deviceId, final QueueUp.CallReceiver<QueueUpApiCredential> receiver) {
+    public void loginInit(String deviceId, final QueueUp.CallReceiver<QueueUpApiCredential> receiver) {
         JSONObject json = new JSONObject();
 
         try {
@@ -417,7 +458,7 @@ public class QueueUpClient {
     }
 
 
-    public static void searchTracks(String query, int offset, final QueueUp.CallReceiver<List<SpotifyTrack>> receiver) {
+    public void searchTracks(String query, int offset, final QueueUp.CallReceiver<List<SpotifyTrack>> receiver) {
 
         /* Short circuit if the string is empty */
         if (query.length() == 0) {
@@ -426,7 +467,7 @@ public class QueueUpClient {
         }
 
         if (searchGetRequest != null) {
-            searchGetRequest.abort();
+            searchGetRequest.disconnect();
             searchGetRequest = null;
         }
 
@@ -461,7 +502,7 @@ public class QueueUpClient {
         });
     }
 
-    public static void searchPlaylists(String query, final QueueUp.CallReceiver<List<QueueUpPlaylist>> receiver) {
+    public void searchPlaylists(String query, final QueueUp.CallReceiver<List<QueueUpPlaylist>> receiver) {
         /* Short circuit if the string is empty */
         if (query.length() == 0) {
             receiver.onResult(new ArrayList<QueueUpPlaylist>());
@@ -469,7 +510,7 @@ public class QueueUpClient {
         }
 
         if (searchGetRequest != null) {
-            searchGetRequest.abort();
+            searchGetRequest.disconnect();
             searchGetRequest = null;
         }
 
@@ -504,105 +545,130 @@ public class QueueUpClient {
         });
     }
 
-    private HttpGet sendApiGet(String uri, final QueueUp.CallReceiver<JSONObject> receiver) {
-        HttpGet get = new HttpGet(QueueUp.API_URL + uri);
+    private void sendApiGet(String uri, final QueueUp.CallReceiver<JSONObject> receiver) {
+        try {
+            URL get = new URL(QueueUp.API_URL + uri);
 
-        /* Use API credientials only when available */
-        if (clientToken != null && userId != null) {
-            ApiHmac.hmacSha1(clientToken).setHeadersForUser(get, userId);
+            sendApiRequest((HttpsURLConnection) get.openConnection(), null, receiver);
+        } catch (IOException e) {
+            receiver.onException(e);
         }
-
-        return sendGet(get, receiver);
     }
 
-    private HttpPost sendApiPost(String uri, JSONObject json, final QueueUp.CallReceiver<JSONObject> receiver) {
-        HttpPost post = new HttpPost(QueueUp.API_URL + uri);
-
-        /* Use API credientials only when available */
-        if (clientToken != null && userId != null) {
-            ApiHmac.hmacSha1(clientToken).setHeadersForUser(post, userId);
+    private HttpsURLConnection sendApiPost(String uri, JSONObject json, final QueueUp.CallReceiver<JSONObject> receiver) {
+        HttpsURLConnection connection = null;
+        try {
+            URL post = new URL(QueueUp.API_URL + uri);
+            connection = (HttpsURLConnection) post.openConnection();
+            connection.setRequestMethod("POST");
+            sendApiRequest(connection, json, receiver);
+        } catch (IOException e) {
+            receiver.onException(e);
         }
-
-        return sendPost(post, json, receiver);
-
+        return connection;
     }
 
-    private static HttpGet sendGet(String url, final QueueUp.CallReceiver<JSONObject> receiver) {
-        return sendGet(new HttpGet(QueueUp.API_URL + url), receiver);
+    private HttpsURLConnection sendPost(String uri, JSONObject object, final QueueUp.CallReceiver<JSONObject> receiver) {
+        HttpsURLConnection connection = null;
+        try {
+            URL url = new URL(QueueUp.API_URL + uri);
+            connection = (HttpsURLConnection) url.openConnection();
+            connection.setRequestMethod("POST");
+            sendRequest(connection, object, receiver);
+        } catch (IOException e) {
+            receiver.onException(e);
+        }
+        return connection;
     }
 
-    private static HttpGet sendGet(HttpGet get, final QueueUp.CallReceiver<JSONObject> receiver) {
-        sendApiRequest(get, receiver);
-        return get;
+    private HttpsURLConnection sendGet(String uri, final QueueUp.CallReceiver<JSONObject> receiver) {
+        HttpsURLConnection connection = null;
+        try {
+            URL url = new URL(QueueUp.API_URL + uri);
+            connection = (HttpsURLConnection) url.openConnection();
+            sendRequest(connection, null, receiver);
+        } catch (IOException e) {
+            receiver.onException(e);
+        }
+        return connection;
     }
 
+    private HttpsURLConnection sendApiRequest(final HttpsURLConnection connection, final JSONObject data, final QueueUp.CallReceiver<JSONObject> receiver) {
+        if (clientToken != null && userId != null) {
+            ApiHmac.hmacSha1(clientToken).setAuthHeadersForUser(connection, userId);
+        }
+        return sendRequest(connection, data, receiver);
+    }
 
-    private static HttpRequestBase sendApiRequest(final HttpRequestBase request, final QueueUp.CallReceiver<JSONObject> receiver) {
+    private HttpsURLConnection sendRequest(final HttpsURLConnection connection, final JSONObject data, final QueueUp.CallReceiver<JSONObject> receiver) {
         new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
-                    new DefaultHttpClient().execute(request, new ResponseHandler<Void>() {
-                        @Override
-                        public Void handleResponse(HttpResponse httpResponse) throws IOException {
-                            JSONObject json;
+                    connection.setSSLSocketFactory(sslContext.getSocketFactory());
 
-                            /* Get the JSON response*/
-                            try {
-                                json = new JSONObject(EntityUtils.toString(httpResponse.getEntity()));
-                            } catch (JSONException e) {
-                                Log.e(QueueUp.LOG_TAG, e.getMessage());
-                                throw new IOException(e);
-                            }
+                    boolean isPost = data != null;
 
-                            /* Anything other than 200 is an error */
-                            if (httpResponse.getStatusLine().getStatusCode() == 200) {
-                                receiver.onResult(json);
-                            } else {
+                    /* POST data */
+                    if (isPost) {
+                        String dataOut = data.toString();
+                        connection.setDoOutput(true);
+                        connection.setRequestProperty("Content-Type", "application/json");
+                        connection.setFixedLengthStreamingMode(dataOut.length());
 
-                                /* Attempt to getString the error message */
-                                JSONObject error = json.optJSONObject("error");
-                                String message = "Error: ";
-                                if (error != null) {
-                                    message += error.optString("message", "UNKNOWN");
-                                } else {
-                                    message += httpResponse.getStatusLine().getStatusCode();
-                                }
+                        BufferedOutputStream out = new BufferedOutputStream(connection.getOutputStream());
+                        out.write(dataOut.getBytes(), 0, dataOut.length());
+                        out.close();
+                    } else {
+                        connection.connect();
+                    }
 
-                                receiver.onException(new QueueUpException(message));
-                            }
-                            return null;
+                    if (connection.getResponseCode() == 200) {
+                        String response = readStream(connection.getInputStream());
+
+                        JSONObject json = new JSONObject(response);
+
+                        receiver.onResult(json);
+                    } else {
+                        String response = readStream(connection.getErrorStream());
+
+                        JSONObject json = new JSONObject(response);
+
+                        /* Attempt to getString the error message */
+                        JSONObject error = json.optJSONObject("error");
+                        String message = "Error (" + connection.getResponseCode() + "): ";
+                        if (error != null) {
+                            message += error.optString("message", "UNKNOWN");
                         }
-                    });
-                } catch (IOException e) {
-                    Log.e(QueueUp.LOG_TAG, "Http execution error: " + e.getMessage());
+
+                        receiver.onException(new QueueUpException(message));
+                    }
+
+
+                } catch (IOException | JSONException e) {
+                    e.printStackTrace();
                     receiver.onException(e);
+                } finally {
+                    if (connection != null) {
+                        connection.disconnect();
+                    }
                 }
             }
         }).start();
 
-        return request;
+        return connection;
     }
 
-    private static HttpPost sendPost(String uri, JSONObject json, QueueUp.CallReceiver<JSONObject> receiver) {
-        return sendPost(new HttpPost(QueueUp.API_URL + uri), json, receiver);
-    }
+    private String readStream(InputStream inputStream) throws IOException {
+        BufferedInputStream in = new BufferedInputStream(inputStream);
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
 
-    private static HttpPost sendPost(HttpPost post, final JSONObject json, final QueueUp.CallReceiver<JSONObject> receiver ) {
-
-        post.setHeader("Content-type", "application/json");
-
-        try {
-            post.setEntity(new StringEntity(json.toString()));
-        } catch (UnsupportedEncodingException e) {
-            Log.e(QueueUp.LOG_TAG, e.getMessage());
-            receiver.onException(new QueueUpException(e));
-            return post;
+        byte buffer[] = new byte[1024];
+        int len;
+        while ((len = in.read(buffer)) != -1) {
+            out.write(buffer, 0, len);
         }
-
-        sendApiRequest(post, receiver);
-
-        return post;
+        return out.toString("UTF-8");
     }
 
     public PlaylistClient getNewPlaylistClient(QueueUp.CallReceiver<PlaylistClient> receiver, PlaybackReceiver playbackReceiver) {

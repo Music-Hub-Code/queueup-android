@@ -255,7 +255,7 @@ public class AddTrackFragment extends Fragment {
     public void doSearch(String query, int offset, QueueUp.CallReceiver<List<SpotifyTrack>> receiver) {
         Log.d(QueueUp.LOG_TAG, "Searching for " + query + " at offset " + offset);
 
-        QueueUpClient.searchTracks(query, offset, receiver);
+        mActivity.getQueueUpClient().searchTracks(query, offset, receiver);
 
     }
     public static class TrackSearchListAdapter extends BaseAdapter {

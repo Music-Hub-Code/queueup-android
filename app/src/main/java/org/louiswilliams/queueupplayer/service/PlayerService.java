@@ -22,6 +22,7 @@ import org.louiswilliams.queueupplayer.queueup.PlaylistClient;
 import org.louiswilliams.queueupplayer.queueup.PlaylistListener;
 import org.louiswilliams.queueupplayer.queueup.PlaylistPlayer;
 import org.louiswilliams.queueupplayer.queueup.QueueUp;
+import org.louiswilliams.queueupplayer.queueup.QueueUpException;
 import org.louiswilliams.queueupplayer.queueup.QueueUpStore;
 import org.louiswilliams.queueupplayer.queueup.SpotifyPlayer;
 import org.louiswilliams.queueupplayer.queueup.api.QueueUpClient;
@@ -55,7 +56,12 @@ public class PlayerService extends Service implements PlaybackController {
         mClientToken = mStore.getString(QueueUpStore.CLIENT_TOKEN);
         mUserId = mStore.getString(QueueUpStore.USER_ID);
 
-        queueUpClient = new QueueUpClient(mClientToken, mUserId);
+        try {
+            queueUpClient = new QueueUpClient(getApplicationContext(), mClientToken, mUserId);
+        } catch (QueueUpException e) {
+            Log.e(QueueUp.LOG_TAG, e.getMessage());
+
+        }
 
     }
 
