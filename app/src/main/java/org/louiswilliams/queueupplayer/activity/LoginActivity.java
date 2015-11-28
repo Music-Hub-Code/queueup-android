@@ -20,15 +20,13 @@ import com.facebook.login.LoginResult;
 import com.facebook.login.widget.LoginButton;
 
 import org.louiswilliams.queueupplayer.R;
-
 import org.louiswilliams.queueupplayer.queueup.QueueUp;
 import org.louiswilliams.queueupplayer.queueup.QueueUpException;
-import org.louiswilliams.queueupplayer.queueup.api.QueueUpClient;
 import org.louiswilliams.queueupplayer.queueup.QueueUpStore;
+import org.louiswilliams.queueupplayer.queueup.api.QueueUpClient;
 import org.louiswilliams.queueupplayer.queueup.objects.QueueUpApiCredential;
 
 import java.util.Arrays;
-import java.util.Collection;
 
 public class LoginActivity extends Activity {
 

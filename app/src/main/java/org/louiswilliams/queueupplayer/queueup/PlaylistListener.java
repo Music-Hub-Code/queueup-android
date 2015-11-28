@@ -1,9 +1,9 @@
 package org.louiswilliams.queueupplayer.queueup;
 
-import java.util.List;
-
 import org.louiswilliams.queueupplayer.queueup.objects.QueueUpTrack;
 import org.louiswilliams.queueupplayer.queueup.objects.SpotifyTrack;
+
+import java.util.List;
 
 
 public interface PlaylistListener {

@@ -22,17 +22,15 @@ import android.widget.TextView;
 import com.squareup.picasso.Picasso;
 
 import org.json.JSONObject;
-import org.louiswilliams.queueupplayer.activity.MainActivity;
 import org.louiswilliams.queueupplayer.R;
+import org.louiswilliams.queueupplayer.activity.MainActivity;
+import org.louiswilliams.queueupplayer.queueup.QueueUp;
+import org.louiswilliams.queueupplayer.queueup.objects.SpotifyTrack;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
-
-import org.louiswilliams.queueupplayer.queueup.QueueUp;
-import org.louiswilliams.queueupplayer.queueup.api.QueueUpClient;
-import org.louiswilliams.queueupplayer.queueup.objects.SpotifyTrack;
 
 
 public class AddTrackFragment extends Fragment {

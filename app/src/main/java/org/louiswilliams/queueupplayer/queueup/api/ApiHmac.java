@@ -3,7 +3,6 @@ package org.louiswilliams.queueupplayer.queueup.api;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.http.client.methods.HttpRequestBase;
-import org.louiswilliams.queueupplayer.queueup.QueueUp;
 
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;

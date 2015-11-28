@@ -5,11 +5,10 @@ import android.util.Log;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.louiswilliams.queueupplayer.queueup.QueueUp;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import org.louiswilliams.queueupplayer.queueup.QueueUp;
 
 /**
  * Created by Louis on 6/1/2015.

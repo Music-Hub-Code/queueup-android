@@ -2,10 +2,8 @@ package org.louiswilliams.queueupplayer.queueup;
 
 import android.util.Log;
 
-
 import org.json.JSONException;
 import org.json.JSONObject;
-
 import org.louiswilliams.queueupplayer.queueup.objects.QueueUpStateChange;
 
 import io.socket.emitter.Emitter;

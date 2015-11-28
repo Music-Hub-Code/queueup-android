@@ -12,7 +12,6 @@ import android.widget.ProgressBar;
 
 import org.louiswilliams.queueupplayer.R;
 import org.louiswilliams.queueupplayer.queueup.QueueUp;
-import org.louiswilliams.queueupplayer.queueup.api.QueueUpClient;
 import org.louiswilliams.queueupplayer.queueup.objects.QueueUpPlaylist;
 
 import java.util.List;

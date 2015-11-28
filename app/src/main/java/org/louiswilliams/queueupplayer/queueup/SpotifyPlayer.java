@@ -7,13 +7,13 @@ import com.spotify.sdk.android.player.PlayerNotificationCallback;
 import com.spotify.sdk.android.player.PlayerState;
 import com.spotify.sdk.android.player.PlayerStateCallback;
 
-import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
-
 import org.louiswilliams.queueupplayer.queueup.objects.QueueUpStateChange;
 import org.louiswilliams.queueupplayer.queueup.objects.QueueUpTrack;
 import org.louiswilliams.queueupplayer.queueup.objects.SpotifyTrack;
+
+import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class SpotifyPlayer implements PlaylistListener, PlayerNotificationCallback {
 

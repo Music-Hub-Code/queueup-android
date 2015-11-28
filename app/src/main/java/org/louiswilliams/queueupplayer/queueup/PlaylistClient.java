@@ -2,18 +2,17 @@ package org.louiswilliams.queueupplayer.queueup;
 
 import android.util.Log;
 
-import io.socket.client.Socket;
-import io.socket.client.IO;
-import io.socket.emitter.Emitter;
-
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.louiswilliams.queueupplayer.queueup.objects.QueueUpStateChange;
 
 import java.net.URISyntaxException;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-import org.louiswilliams.queueupplayer.queueup.objects.QueueUpStateChange;
+import io.socket.client.IO;
+import io.socket.client.Socket;
+import io.socket.emitter.Emitter;
 
 public class PlaylistClient  {
 

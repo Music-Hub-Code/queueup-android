@@ -4,10 +4,10 @@ import android.app.SearchManager;
 import android.content.Context;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.SearchView;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.support.v7.widget.SearchView;
 
 import org.louiswilliams.queueupplayer.R;
 import org.louiswilliams.queueupplayer.queueup.QueueUp;

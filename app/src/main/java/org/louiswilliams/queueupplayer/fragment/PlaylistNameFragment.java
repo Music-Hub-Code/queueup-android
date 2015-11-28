@@ -12,7 +12,6 @@ import android.widget.EditText;
 
 import org.louiswilliams.queueupplayer.R;
 import org.louiswilliams.queueupplayer.activity.MainActivity;
-
 import org.louiswilliams.queueupplayer.queueup.QueueUp;
 
 public class PlaylistNameFragment extends DialogFragment {

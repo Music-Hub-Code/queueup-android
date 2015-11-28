@@ -1,6 +1,5 @@
 package org.louiswilliams.queueupplayer.queueup;
 
-import android.app.LoaderManager;
 import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationListener;

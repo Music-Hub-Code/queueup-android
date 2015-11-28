@@ -1,7 +1,12 @@
 package org.louiswilliams.queueupplayer;
 
 import android.util.Log;
-import java.util.logging.*;
+
+import java.util.logging.Handler;
+import java.util.logging.Level;
+import java.util.logging.LogManager;
+import java.util.logging.LogRecord;
+import java.util.logging.Logger;
 
 /**
  * Make JUL work on Android.
