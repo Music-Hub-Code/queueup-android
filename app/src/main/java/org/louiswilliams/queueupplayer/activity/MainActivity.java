@@ -117,13 +117,13 @@ public class MainActivity
 
         mStore = QueueUpStore.with(this);
 
-        mSpotifyClientId = getString(R.string.spotify_client_id);
-        mSpotifyTokenManager = SpotifyTokenManager.with(mStore);
+
 
         mClientToken = mStore.getString(QueueUpStore.CLIENT_TOKEN);
         mUserId = mStore.getString(QueueUpStore.USER_ID);
         mFacebookId = mStore.getString(QueueUpStore.FACEBOOK_ID);
         mEmailAddress = mStore.getString(QueueUpStore.EMAIL_ADDRESS);
+        mSpotifyClientId = getString(R.string.spotify_client_id);
 
         /* If we are registered non-anonymously, proceed, otherwise login anonymously */
         try {
@@ -139,6 +139,7 @@ public class MainActivity
             toast(e.getMessage());
         }
 
+        mSpotifyTokenManager = SpotifyTokenManager.with(mQueueUpClient, mStore);
 
         /* Set up out layout */
         doSetup(savedInstanceState);

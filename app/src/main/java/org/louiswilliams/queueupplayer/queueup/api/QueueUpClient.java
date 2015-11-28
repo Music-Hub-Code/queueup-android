@@ -10,10 +10,15 @@ import org.json.JSONObject;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.security.KeyManagementException;
@@ -56,34 +61,36 @@ public class QueueUpClient {
         this.clientToken = clientToken;
         this.userId = userId;
 
-        createSslContext(context);
+        if (sslContext == null) {
+            sslContext = getSslContext(context);
+        }
     }
 
-    public static void createSslContext(Context applicationContext) throws QueueUpException {
-        if (sslContext == null) {
-            try {
-                CertificateFactory cf = CertificateFactory.getInstance(CF_CSR);
-                InputStream in = applicationContext.getResources().openRawResource(R.raw.queueup_crt);
-                Certificate ca = cf.generateCertificate(in);
-                in.close();
+    public static SSLContext getSslContext(Context applicationContext) throws QueueUpException {
+        SSLContext sslContext = null;
+        try {
+            CertificateFactory cf = CertificateFactory.getInstance(CF_CSR);
+            InputStream in = applicationContext.getResources().openRawResource(R.raw.queueup_crt);
+            Certificate ca = cf.generateCertificate(in);
+            in.close();
 
-                String keyStoreType = KeyStore.getDefaultType();
-                KeyStore keyStore = KeyStore.getInstance(keyStoreType);
-                keyStore.load(null, null);
-                keyStore.setCertificateEntry("ca", ca);
+            String keyStoreType = KeyStore.getDefaultType();
+            KeyStore keyStore = KeyStore.getInstance(keyStoreType);
+            keyStore.load(null, null);
+            keyStore.setCertificateEntry("ca", ca);
 
-                String tmfAlgorithm = TrustManagerFactory.getDefaultAlgorithm();
-                TrustManagerFactory tmf = TrustManagerFactory.getInstance(tmfAlgorithm);
-                tmf.init(keyStore);
+            String tmfAlgorithm = TrustManagerFactory.getDefaultAlgorithm();
+            TrustManagerFactory tmf = TrustManagerFactory.getInstance(tmfAlgorithm);
+            tmf.init(keyStore);
 
-                sslContext = SSLContext.getInstance(TLS);
-                sslContext.init(null, tmf.getTrustManagers(), null);
+            sslContext = SSLContext.getInstance(TLS);
+            sslContext.init(null, tmf.getTrustManagers(), null);
 
-            } catch (CertificateException | IOException | KeyStoreException | NoSuchAlgorithmException | KeyManagementException e) {
-                e.printStackTrace();
-                throw new QueueUpException("Error loading SSL certificate!", e);
-            }
+        } catch (CertificateException | IOException | KeyStoreException | NoSuchAlgorithmException | KeyManagementException e) {
+            e.printStackTrace();
+            throw new QueueUpException("Error loading SSL certificate!", e);
         }
+        return sslContext;
     }
 
     public void login(JSONObject json, final QueueUp.CallReceiver<QueueUpApiCredential> receiver){
@@ -600,7 +607,7 @@ public class QueueUpClient {
         return sendRequest(connection, data, receiver);
     }
 
-    private HttpsURLConnection sendRequest(final HttpsURLConnection connection, final JSONObject data, final QueueUp.CallReceiver<JSONObject> receiver) {
+    public HttpsURLConnection sendRequest(final HttpsURLConnection connection, final JSONObject data, final QueueUp.CallReceiver<JSONObject> receiver) {
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -611,31 +618,19 @@ public class QueueUpClient {
 
                     /* POST data */
                     if (isPost) {
-                        String dataOut = data.toString();
-                        connection.setDoOutput(true);
-                        connection.setRequestProperty("Content-Type", "application/json");
-                        connection.setFixedLengthStreamingMode(dataOut.length());
-
-                        BufferedOutputStream out = new BufferedOutputStream(connection.getOutputStream());
-                        out.write(dataOut.getBytes(), 0, dataOut.length());
-                        out.close();
+                        writeJsonToConnection(data, connection);
                     } else {
                         connection.connect();
                     }
 
+                    JSONObject response = readJsonFromConnection(connection);
                     if (connection.getResponseCode() == 200) {
-                        String response = readStream(connection.getInputStream());
 
-                        JSONObject json = new JSONObject(response);
-
-                        receiver.onResult(json);
+                        receiver.onResult(response);
                     } else {
-                        String response = readStream(connection.getErrorStream());
-
-                        JSONObject json = new JSONObject(response);
 
                         /* Attempt to getString the error message */
-                        JSONObject error = json.optJSONObject("error");
+                        JSONObject error = response.optJSONObject("error");
                         String message = "Error (" + connection.getResponseCode() + "): ";
                         if (error != null) {
                             message += error.optString("message", "UNKNOWN");
@@ -659,17 +654,38 @@ public class QueueUpClient {
         return connection;
     }
 
-    private String readStream(InputStream inputStream) throws IOException {
-        BufferedInputStream in = new BufferedInputStream(inputStream);
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
+    public JSONObject readJsonFromConnection(HttpURLConnection connection) throws IOException, JSONException {
+        InputStream inputStream;
+        try {
+            inputStream = connection.getInputStream();
+        } catch (FileNotFoundException e) {
 
-        byte buffer[] = new byte[1024];
-        int len;
-        while ((len = in.read(buffer)) != -1) {
-            out.write(buffer, 0, len);
+            /* In the case the server sent data on an error */
+            inputStream = connection.getErrorStream();
         }
-        return out.toString("UTF-8");
+        if (inputStream == null) return new JSONObject();
+
+        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+        StringBuilder response = new StringBuilder();
+        String line;
+        while ((line = reader.readLine()) != null) {
+            response.append(line);
+        }
+        reader.close();
+        return new JSONObject(response.toString());
     }
+
+    public void writeJsonToConnection(JSONObject json, HttpURLConnection connection) throws IOException {
+        String content = json.toString();
+        connection.setDoOutput(true);
+        connection.setFixedLengthStreamingMode(content.length());
+        connection.setRequestProperty("Content-Type", "application/json");
+
+        DataOutputStream writer = new DataOutputStream(connection.getOutputStream());
+        writer.write(content.getBytes());
+        writer.close();
+    }
+
 
     public PlaylistClient getNewPlaylistClient(QueueUp.CallReceiver<PlaylistClient> receiver, PlaybackReceiver playbackReceiver) {
         return new PlaylistPlayer(clientToken, userId, receiver, playbackReceiver);

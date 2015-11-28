@@ -1,21 +1,16 @@
 package org.louiswilliams.queueupplayer.service;
 
-import android.app.Activity;
 import android.app.Service;
 import android.content.Intent;
 import android.os.Binder;
 import android.os.IBinder;
 import android.util.Log;
 
-import com.spotify.sdk.android.authentication.AuthenticationClient;
-import com.spotify.sdk.android.authentication.AuthenticationRequest;
-import com.spotify.sdk.android.authentication.AuthenticationResponse;
 import com.spotify.sdk.android.player.Config;
 import com.spotify.sdk.android.player.Player;
 import com.spotify.sdk.android.player.Spotify;
 
 import org.louiswilliams.queueupplayer.R;
-import org.louiswilliams.queueupplayer.activity.MainActivity;
 import org.louiswilliams.queueupplayer.queueup.PlaybackController;
 import org.louiswilliams.queueupplayer.queueup.PlaybackReceiver;
 import org.louiswilliams.queueupplayer.queueup.PlaylistClient;
@@ -26,7 +21,6 @@ import org.louiswilliams.queueupplayer.queueup.QueueUpException;
 import org.louiswilliams.queueupplayer.queueup.QueueUpStore;
 import org.louiswilliams.queueupplayer.queueup.SpotifyPlayer;
 import org.louiswilliams.queueupplayer.queueup.api.QueueUpClient;
-import org.louiswilliams.queueupplayer.queueup.api.SpotifyTokenManager;
 import org.louiswilliams.queueupplayer.queueup.objects.QueueUpStateChange;
 import org.louiswilliams.queueupplayer.widget.PlayerNotification;
 

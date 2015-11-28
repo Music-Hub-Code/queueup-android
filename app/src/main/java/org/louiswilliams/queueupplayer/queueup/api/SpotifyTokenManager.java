@@ -3,18 +3,12 @@ package org.louiswilliams.queueupplayer.queueup.api;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.louiswilliams.queueupplayer.queueup.QueueUp;
-import org.louiswilliams.queueupplayer.queueup.QueueUpException;
 import org.louiswilliams.queueupplayer.queueup.QueueUpStore;
 
-import java.io.BufferedReader;
-import java.io.DataOutputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+
+import javax.net.ssl.HttpsURLConnection;
 
 
 public class SpotifyTokenManager{
@@ -23,13 +17,15 @@ public class SpotifyTokenManager{
     private static final String REFRESH_URL = QueueUp.API_URL + "/spotify/refresh";
 
     private QueueUpStore store;
+    private QueueUpClient client;
 
-    public SpotifyTokenManager(QueueUpStore store) {
+    public SpotifyTokenManager(QueueUpClient client, QueueUpStore store) {
         this.store = store;
+        this.client = client;
     }
 
-    public static SpotifyTokenManager with(QueueUpStore store) {
-        return new SpotifyTokenManager(store);
+    public static SpotifyTokenManager with(QueueUpClient client, QueueUpStore store) {
+        return new SpotifyTokenManager(client, store);
     }
 
     /* If there is an access token at all */
@@ -61,40 +57,42 @@ public class SpotifyTokenManager{
         new Thread(new Runnable() {
             @Override
             public void run() {
-                HttpURLConnection connection = null;
+                HttpsURLConnection connection = null;
                 try {
-                    connection = (HttpURLConnection) swapUrl.openConnection();
+                    connection = (HttpsURLConnection) swapUrl.openConnection();
+
                     JSONObject postJSON = new JSONObject();
                     postJSON.put("code", code);
 
-                    writeJsonToConnection(postJSON, connection);
+                    client.sendRequest(connection, postJSON, new QueueUp.CallReceiver<JSONObject>() {
+                        @Override
+                        public void onResult(JSONObject response) {
 
-                    JSONObject response = readJsonFromConnection(connection);
+                            try {
+                                String accessToken = response.getString("access_token");
+                                String refreshToken = response.getString("refresh_token");
+                                long expiresIn = response.getLong("expires_in");
 
-                    if (connection.getResponseCode() == 200) {
+                                storeAccessToken(accessToken);
+                                storeEncryptedRefreshToken(refreshToken);
+                                storeTokenExpiresIn(expiresIn);
 
-                        String accessToken = response.getString("access_token");
-                        String refreshToken = response.getString("refresh_token");
-                        long expiresIn = response.getLong("expires_in");
+                                receiver.onResult(accessToken);
+                            } catch (JSONException e) {
+                                receiver.onException(e);
+                            }
 
-                        /* We store these tokens to cache future Spotify logins */
-                        storeAccessToken(accessToken);
-                        storeEncryptedRefreshToken(refreshToken);
-                        storeTokenExpiresIn(expiresIn);
+                        }
 
-                        receiver.onResult(accessToken);
-                    } else {
+                        @Override
+                        public void onException(Exception e) {
+                            receiver.onException(e);
+                        }
+                    });
 
-                        receiver.onException(new QueueUpException("Bad request: " + response));
-                    }
-
-                    connection.disconnect();
                 } catch (Exception e) {
                     receiver.onException(e);
-                } finally {
-                    if (connection != null) connection.disconnect();
                 }
-
             }
         }).start();
     }
@@ -112,70 +110,41 @@ public class SpotifyTokenManager{
             @Override
             public void run() {
 
-                HttpURLConnection connection = null;
+                HttpsURLConnection connection = null;
                 try {
-                    connection = (HttpURLConnection) refreshUrl.openConnection();
+                    connection = (HttpsURLConnection) refreshUrl.openConnection();
+
                     JSONObject postJSON = new JSONObject();
                     postJSON.put("refresh_token", getEncryptedRefreshToken());
 
-                    writeJsonToConnection(postJSON, connection);
+                    client.sendRequest(connection, postJSON, new QueueUp.CallReceiver<JSONObject>() {
+                        @Override
+                        public void onResult(JSONObject response) {
+                            try {
+                                String accessToken = response.getString("access_token");
+                                long expiresIn = response.getLong("expires_in");
 
-                    JSONObject response = readJsonFromConnection(connection);
+                                storeAccessToken(accessToken);
+                                storeTokenExpiresIn(expiresIn);
 
-                    if (connection.getResponseCode() == 200) {
+                                receiver.onResult(accessToken);
+                            } catch (JSONException e) {
+                                receiver.onException(e);
+                            }
+                        }
 
-                        String accessToken = response.getString("access_token");
-                        long expiresIn = response.getLong("expires_in");
+                        @Override
+                        public void onException(Exception e) {
+                            receiver.onException(e);
+                        }
+                    });
 
-                        storeAccessToken(accessToken);
-                        storeTokenExpiresIn(expiresIn);
-
-                        receiver.onResult(accessToken);
-                    } else {
-                        receiver.onException(new QueueUpException("Bad request: " + response));
-                    }
-
-                    connection.disconnect();
                 } catch (Exception e) {
                     receiver.onException(e);
-                } finally {
-                    if (connection != null) connection.disconnect();
                 }
 
             }
         }).start();
-    }
-
-    public JSONObject readJsonFromConnection(HttpURLConnection connection) throws IOException, JSONException {
-        InputStream inputStream;
-        try {
-            inputStream = connection.getInputStream();
-        } catch (FileNotFoundException e) {
-
-            /* In the case the server sent data on an error */
-            inputStream = connection.getErrorStream();
-        }
-        if (inputStream == null) return new JSONObject();
-
-        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
-        StringBuilder response = new StringBuilder();
-        String line;
-        while ((line = reader.readLine()) != null) {
-            response.append(line);
-        }
-        reader.close();
-        return new JSONObject(response.toString());
-    }
-
-    public void writeJsonToConnection(JSONObject json, HttpURLConnection connection) throws IOException {
-        String content = json.toString();
-        connection.setDoOutput(true);
-        connection.setFixedLengthStreamingMode(content.length());
-        connection.setRequestProperty("Content-Type", "application/json");
-
-        DataOutputStream writer = new DataOutputStream(connection.getOutputStream());
-        writer.write(content.getBytes());
-        writer.close();
     }
 
     public String getAccessToken() {

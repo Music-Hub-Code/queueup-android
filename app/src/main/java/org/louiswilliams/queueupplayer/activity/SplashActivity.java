@@ -6,8 +6,6 @@ import android.provider.Settings;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.widget.Toast;
 
 import org.louiswilliams.queueupplayer.R;
@@ -15,7 +13,6 @@ import org.louiswilliams.queueupplayer.queueup.QueueUp;
 import org.louiswilliams.queueupplayer.queueup.QueueUpException;
 import org.louiswilliams.queueupplayer.queueup.QueueUpStore;
 import org.louiswilliams.queueupplayer.queueup.api.QueueUpClient;
-import org.louiswilliams.queueupplayer.queueup.api.SpotifyTokenManager;
 import org.louiswilliams.queueupplayer.queueup.objects.QueueUpApiCredential;
 
 public class SplashActivity extends AppCompatActivity {
