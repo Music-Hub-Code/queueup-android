@@ -60,10 +60,17 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
     private MainActivity mActivity;
 
     @Override
+    public void onAttach(Context activity) {
+        mActivity = (MainActivity) activity;
+        super.onAttach(activity);
+    }
+
+    @Override
     public void onAttach(Activity activity) {
         mActivity = (MainActivity) activity;
         super.onAttach(activity);
     }
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {

@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.DialogFragment;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import android.util.Log;
@@ -37,6 +38,16 @@ public class PlaylistNameFragment extends DialogFragment {
     }
 
     @Override
+    public void onAttach(Context activity) {
+        if (activity instanceof MainActivity) {
+            mainActivity = (MainActivity) activity;
+        } else {
+            throw new RuntimeException("Activity must be MainActivity, is " + activity.getClass().getName());
+        }
+        super.onAttach(activity);
+    }
+
+    @Override
     public void onAttach(Activity activity) {
         if (activity instanceof MainActivity) {
             mainActivity = (MainActivity) activity;
@@ -45,6 +56,7 @@ public class PlaylistNameFragment extends DialogFragment {
         }
         super.onAttach(activity);
     }
+
 
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {

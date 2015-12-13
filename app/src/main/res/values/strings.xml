@@ -34,7 +34,7 @@
     <string name="playlist_invite">Invite Friends</string>
     <string name="title_activity_invite_contacts">InviteContactsActivity</string>
 
-    <string name="top_playlists">Top Playlists</string>
+    <string name="top_playlists">All Playlists</string>
     <string name="friends_playlists">Friends\' Playlists</string>
     <string name="my_playlists">My Playlists</string>
     <string name="trending_playlists">Search</string>
@@ -42,9 +42,13 @@
     <string name="full_name">Full name</string>
     <string name="title_activity_splash">SplashActivity</string>
     <string name="facebook_notification">Log in with Facebook to see your friends\' playlists</string>
+    <string name="no_friends_playlists">Your friends don\'t have any playlists yet.</string>
+    <string name="no_playlists_nearby">There are no playlists nearby.</string>
+    <string name="waiting_for_location">Waiting for your location…</string>
     <string name="create_playlist_notification">You don\'t have any playlists yet.</string>
     <string name="location_not_found_title">Location not enabled</string>
     <string name="location_not_found_message">We use your location so your friends can find your playlists. Do you want to enable Location?</string>
     <string name="yes">Yes</string>
     <string name="no">No</string>
+    <string name="nearby_playlists">Nearby Playlists</string>
 </resources>

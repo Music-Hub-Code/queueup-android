@@ -386,6 +386,38 @@ public class QueueUpClient {
         }
     }
 
+    public void getNearbyPlaylists(Location location, final QueueUp.CallReceiver<List<QueueUpPlaylist>> receiver) {
+
+        JSONObject locationJson = new JSONObject();
+
+        try {
+            locationJson.put("longitude", location.getLongitude());
+            locationJson.put("latitude", location.getLatitude());
+            JSONObject request = new JSONObject();
+            request.put("location", locationJson);
+            sendApiPost("/playlists/nearby", request, new QueueUp.CallReceiver<JSONObject>() {
+                @Override
+                public void onResult(JSONObject result) {
+                    JSONArray jsonPlaylists = result.optJSONArray("playlists");
+                    List<QueueUpPlaylist> playlists = new ArrayList<QueueUpPlaylist>();
+                    if (jsonPlaylists != null) {
+                        for (int i = 0; i < jsonPlaylists.length(); i++) {
+                            playlists.add(new QueueUpPlaylist(jsonPlaylists.optJSONObject(i)));
+                        }
+                    }
+                    receiver.onResult(playlists);
+                }
+
+                @Override
+                public void onException(Exception e) {
+                    receiver.onException(e);
+                }
+            });
+        } catch (JSONException e) {
+            Log.e(QueueUp.LOG_TAG, "JSON error adding location: " + e.getMessage());
+        }
+    }
+
     public void getFriendsPlaylists(List<String> fbIds, final QueueUp.CallReceiver<List<QueueUpPlaylist>> receiver) {
 
         JSONArray jsonIds = new JSONArray();

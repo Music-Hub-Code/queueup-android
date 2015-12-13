@@ -2,7 +2,6 @@ package org.louiswilliams.queueupplayer.queueup.api;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.binary.Hex;
-import org.apache.http.client.methods.HttpRequestBase;
 
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -61,23 +60,6 @@ public class ApiHmac {
             }
         }
         return digestMessage(message);
-    }
-
-    public void setHeadersForUser(HttpRequestBase request, String userId) {
-        String method = request.getMethod();
-        String hostname = request.getURI().getHost();
-        String uri = request.getURI().getPath();
-        Date now = new Date();
-        DateFormat df = new SimpleDateFormat("yyy-MM-dd'T'HH:mm:ssZ");
-
-        String unixSeconds = String.valueOf(now.getTime() / 1000);
-        String digest = digestMessage(method, hostname, uri, unixSeconds);
-
-        String authHeader = new String(Base64.encodeBase64((userId + ":" + digest).getBytes()));
-
-        request.setHeader("Date", df.format(now));
-        request.setHeader("Authorization", "Basic " +authHeader);
-
     }
 
     public void setAuthHeadersForUser(HttpsURLConnection connection, String userId) {

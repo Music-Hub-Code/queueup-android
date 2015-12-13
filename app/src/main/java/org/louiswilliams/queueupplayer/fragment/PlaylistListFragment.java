@@ -1,5 +1,6 @@
 package org.louiswilliams.queueupplayer.fragment;
 
+import android.location.Location;
 import android.os.Bundle;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.util.Log;
@@ -16,14 +17,16 @@ import com.facebook.GraphResponse;
 import org.json.JSONArray;
 import org.louiswilliams.queueupplayer.R;
 import org.louiswilliams.queueupplayer.activity.MainActivity;
+import org.louiswilliams.queueupplayer.queueup.LocationUpdateListener;
 import org.louiswilliams.queueupplayer.queueup.PlaylistListener;
 import org.louiswilliams.queueupplayer.queueup.QueueUp;
 import org.louiswilliams.queueupplayer.queueup.objects.QueueUpPlaylist;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
-public class PlaylistListFragment extends AbstractPlaylistListFragment implements PlaylistListener, SwipeRefreshLayout.OnRefreshListener {
+public class PlaylistListFragment extends AbstractPlaylistListFragment implements PlaylistListener, SwipeRefreshLayout.OnRefreshListener, LocationUpdateListener {
 
     private String mAction;
 
@@ -53,6 +56,9 @@ public class PlaylistListFragment extends AbstractPlaylistListFragment implement
         switch (mAction) {
             case MainActivity.PLAYLISTS_ALL:
                 populateAll();
+                break;
+            case MainActivity.PLAYLISTS_NEARBY:
+                populateNearby();
                 break;
             case MainActivity.PLAYLISTS_FRIENDS:
                 populateFriends();
@@ -95,6 +101,75 @@ public class PlaylistListFragment extends AbstractPlaylistListFragment implement
         });
     }
 
+    public void populateNearby() {
+         /* Find nearby playlists */
+        /* If the user hasn't enabled location services... */
+        if (mActivity.getLocationListener() == null || !mActivity.isLocationEnabled()) {
+            mActivity.alertLocationEnable();
+            mActivity.navigateDrawer(MainActivity.NAVIGATION_ACTIONS.length - 1); // Display "All" instead of nearby
+            return;
+        }
+        Location location = mActivity.getLocationListener().getCurrentBestLocation();
+
+        /* If we don't have a location yet, let the user know*/
+        final TextView notification = (TextView) mView.findViewById(R.id.playlist_notification);
+        if (location == null) {
+            mActivity.getLocationListener().getLocationUpdate(this);
+
+            mActivity.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    notification.setText(R.string.waiting_for_location);
+                    notification.setVisibility(View.VISIBLE);
+                }
+            });
+            return;
+        } else {
+            notification.setVisibility(View.GONE);
+        }
+
+        mActivity.getQueueUpClient().getNearbyPlaylists(location, new QueueUp.CallReceiver<List<QueueUpPlaylist>>() {
+            @Override
+            public void onResult(List<QueueUpPlaylist> playlists) {
+                mPlaylists = playlists;
+
+                adapter = new PlaylistGridAdapter(mActivity, mPlaylists, R.layout.playlist_item);
+                final ProgressBar progress = (ProgressBar) mView.findViewById(R.id.loading_progress_bar);
+
+                if (playlists.size() > 0) {
+                    mPlaylists = playlists;
+                    adapter = new PlaylistGridAdapter(mActivity, mPlaylists, R.layout.playlist_item);
+
+                    mActivity.runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            progress.setVisibility(View.GONE);
+                            playlistGrid.setAdapter(adapter);
+                        }
+                    });
+                } else {
+
+
+                    mActivity.runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            progress.setVisibility(View.GONE);
+                            notification.setText(getString(R.string.no_playlists_nearby));
+                            notification.setVisibility(View.VISIBLE);
+                        }
+                    });
+                }
+
+            }
+
+            @Override
+            public void onException(Exception e) {
+                mActivity.toast(e.getMessage());
+                e.printStackTrace();
+            }
+        });
+    }
+
     public void populateFriends() {
         /* If the user is logged in with Facebook, do a graph request to get their FB friends*/
         AccessToken accessToken = mActivity.getAccessToken();
@@ -110,21 +185,35 @@ public class PlaylistListFragment extends AbstractPlaylistListFragment implement
                     /* Now do a request to QueueUp to show us our friend's playlists*/
                     mActivity.getQueueUpClient().getFriendsPlaylists(ids, new QueueUp.CallReceiver<List<QueueUpPlaylist>>() {
                         @Override
-                        public void onResult(List<QueueUpPlaylist> result) {
-                            mPlaylists  = result;
+                        public void onResult(List<QueueUpPlaylist> playlists) {
+                            mPlaylists  = playlists;
 
-                            adapter = new PlaylistGridAdapter(mActivity, mPlaylists, R.layout.playlist_item);
                             final ProgressBar progress = (ProgressBar) mView.findViewById(R.id.loading_progress_bar);
+                            final TextView notification = (TextView) mView.findViewById(R.id.playlist_notification);
 
-                            mActivity.runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    progress.setVisibility(View.GONE);
-                                    playlistGrid.setAdapter(adapter);
-                                }
-                            });
+                            if (playlists.size() > 0) {
+                                mPlaylists = playlists;
+                                adapter = new PlaylistGridAdapter(mActivity, mPlaylists, R.layout.playlist_item);
+
+                                mActivity.runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        progress.setVisibility(View.GONE);
+                                        playlistGrid.setAdapter(adapter);
+                                    }
+                                });
+                            } else {
 
 
+                                mActivity.runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        progress.setVisibility(View.GONE);
+                                        notification.setText(getString(R.string.no_friends_playlists));
+                                        notification.setVisibility(View.VISIBLE);
+                                    }
+                                });
+                            }
                         }
 
                         @Override
@@ -188,11 +277,6 @@ public class PlaylistListFragment extends AbstractPlaylistListFragment implement
                         }
                     });
                 }
-
-
-
-
-
             }
 
             @Override
@@ -201,5 +285,12 @@ public class PlaylistListFragment extends AbstractPlaylistListFragment implement
                 Log.e(QueueUp.LOG_TAG, "Failed to getString playlist list: " + e.getMessage());
             }
         });
+    }
+
+    @Override
+    public void onLocation(Location location) {
+        if (mAction.equals(MainActivity.PLAYLISTS_NEARBY)) {
+            populateNearby();
+        }
     }
 }

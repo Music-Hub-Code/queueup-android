@@ -43,9 +43,11 @@ public class DrawerListAdapter extends BaseAdapter {
         title.setText(mListItems.get(position));
 
         if (position == mSelection) {
-            view.setBackgroundColor(mContext.getResources().getColor(R.color.primary_dark_material_light));
+            view.setBackgroundColor(mContext.getResources().getColor(R.color.primary_material_light));
+            title.setTextColor(mContext.getResources().getColor(R.color.primary_dark_material_light));
         } else {
-            view.setBackgroundColor(mContext.getResources().getColor(R.color.background_material_dark));
+            view.setBackgroundColor(mContext.getResources().getColor(R.color.background_material_light));
+            title.setTextColor(mContext.getResources().getColor(R.color.primary_material_dark));
         }
 
         return view;

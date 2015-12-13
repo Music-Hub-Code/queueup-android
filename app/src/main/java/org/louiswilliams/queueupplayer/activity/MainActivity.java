@@ -1,5 +1,6 @@
 package org.louiswilliams.queueupplayer.activity;
 
+import android.Manifest;
 import android.app.ActivityManager;
 import android.app.AlertDialog;
 import android.app.Fragment;
@@ -11,12 +12,15 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.location.Location;
 import android.location.LocationManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
@@ -73,10 +77,11 @@ public class MainActivity
         FragmentManager.OnBackStackChangedListener {
 
     public static final String PLAYLISTS_ALL = "all";
+    public static final String PLAYLISTS_NEARBY = "nearby";
     public static final String PLAYLISTS_FRIENDS = "friends";
     public static final String PLAYLISTS_MINE = "mine";
-    public static final int[] NAVIGATION_TITLES = {R.string.top_playlists, R.string.friends_playlists, R.string.my_playlists};
-    public static final String[] NAVIGATION_ACTIONS = {PLAYLISTS_ALL, PLAYLISTS_FRIENDS, PLAYLISTS_MINE};
+    public static final int[] NAVIGATION_TITLES = {R.string.nearby_playlists, R.string.friends_playlists, R.string.my_playlists};
+    public static final String[] NAVIGATION_ACTIONS = {PLAYLISTS_NEARBY, PLAYLISTS_FRIENDS, PLAYLISTS_MINE};
     private static final String REDIRECT_URI = "queueup://callback";
     private static final String LOG_TAG = QueueUp.LOG_TAG;
 
@@ -105,19 +110,31 @@ public class MainActivity
         super.onCreate(savedInstanceState);
 
         /* Set up Google analytics for uncaught exceptions */
-        Tracker tracker = ((QueueUpApplication)getApplication()).getDefaultTracker();
-        Thread.UncaughtExceptionHandler uncaughtExceptionHandler = new ExceptionReporter(
-                tracker,
-                Thread.getDefaultUncaughtExceptionHandler(),
-                getApplicationContext()
-        );
-        Thread.setDefaultUncaughtExceptionHandler(uncaughtExceptionHandler);
+//        Tracker tracker = ((QueueUpApplication)getApplication()).getDefaultTracker();
+//        Thread.UncaughtExceptionHandler uncaughtExceptionHandler = new ExceptionReporter(
+//                tracker,
+//                Thread.getDefaultUncaughtExceptionHandler(),
+//                getApplicationContext()
+//        );
+//        Thread.setDefaultUncaughtExceptionHandler(uncaughtExceptionHandler);
 
+        /* Handle certain navigation actions with the action bar back button*/
         getFragmentManager().addOnBackStackChangedListener(this);
 
+        /* Start listening for location updates until we get a decent and fresh and decently accurate location */
+        if (locationListener == null) {
+            LocationManager locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+
+            if (ensureAndRequestPermission(Manifest.permission.ACCESS_COARSE_LOCATION) && ensureAndRequestPermission(Manifest.permission.ACCESS_FINE_LOCATION)) {
+                locationListener = new QueueUpLocationListener(locationManager);
+                locationListener.startUpdatesUntilBest();
+            }
+        } else {
+            locationListener.stopUpdates();
+            locationListener.startUpdatesUntilBest();
+        }
+
         mStore = QueueUpStore.with(this);
-
-
 
         mClientToken = mStore.getString(QueueUpStore.CLIENT_TOKEN);
         mUserId = mStore.getString(QueueUpStore.USER_ID);
@@ -143,18 +160,10 @@ public class MainActivity
 
         /* Set up out layout */
         doSetup(savedInstanceState);
-
     }
 
     @Override
     public void onResume() {
-        if (locationListener == null) {
-            LocationManager locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
-            locationListener = new QueueUpLocationListener(locationManager);
-        } else {
-            locationListener.stopUpdates();
-        }
-        locationListener.startUpdatesUntilBest();
         super.onResume();
     }
 
@@ -197,10 +206,7 @@ public class MainActivity
 
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                currentNavigationAction = position - 1;
-                mDrawerAdapter.setSelection(currentNavigationAction);
-                handleDrawerClickAction(currentNavigationAction);
-
+                navigateDrawer(position - 1);
             }
         });
 
@@ -381,6 +387,12 @@ public class MainActivity
 
     public QueueUpClient getQueueUpClient() {
         return mQueueUpClient;
+    }
+
+    public void navigateDrawer(int index) {
+        currentNavigationAction = index;
+        mDrawerAdapter.setSelection(currentNavigationAction);
+        handleDrawerClickAction(currentNavigationAction);
     }
 
     private void handleDrawerClickAction(int index) {
@@ -583,6 +595,19 @@ public class MainActivity
         builder.create().show();
     }
 
+    public boolean ensureAndRequestPermission(String permission) {
+        boolean disabled = false;
+
+        /* Only in marshmallow do we need to do this */
+        if (Build.VERSION.SDK_INT >= 23) {
+            disabled= (ActivityCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED);
+            if (disabled) {
+                ActivityCompat.requestPermissions(this, new String[]{permission}, 1);
+            }
+        }
+        return !disabled;
+    }
+
     public void displayHomeUp() {
         mDrawerToggle.setDrawerIndicatorEnabled(getFragmentManager().getBackStackEntryCount() == 0);
 
@@ -750,7 +775,9 @@ public class MainActivity
 
     @Override
     protected void onPause() {
-        locationListener.startPassiveUpdates();
+        if (locationListener != null) {
+            locationListener.startPassiveUpdates();
+        }
         super.onPause();
     }
 
@@ -766,11 +793,10 @@ public class MainActivity
     protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
         if (requestCode == LoginActivity.QUEUEUP_LOGIN_REQUEST_CODE) {
             if (resultCode == RESULT_OK) {
-                toast("Login successful");
-
+//                toast("Login successful");
                 recreate();
             } else if (resultCode == RESULT_CANCELED) {
-                toast("Login cancelled");
+//                toast("Login cancelled");
             } else if (resultCode == LoginActivity.RESULT_LOGIN_FAILURE) {
                 Exception e = (Exception) intent.getSerializableExtra(LoginActivity.EXTRA_LOGIN_EXCEPTION);
                 String message = "Login unsuccessful";

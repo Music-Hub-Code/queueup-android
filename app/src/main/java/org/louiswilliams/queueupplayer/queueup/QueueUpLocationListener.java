@@ -1,13 +1,19 @@
 package org.louiswilliams.queueupplayer.queueup;
 
+import android.Manifest;
+import android.content.pm.PackageManager;
 import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
+import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 
+import java.util.Iterator;
 import java.util.List;
+import java.util.ServiceConfigurationError;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class QueueUpLocationListener implements LocationListener {
 
@@ -17,6 +23,7 @@ public class QueueUpLocationListener implements LocationListener {
 
     private LocationManager locationManager;
     private Location currentBestLocation;
+    private ConcurrentLinkedQueue<LocationUpdateListener> listeners;
 
     private Criteria bestProviderCriteria;
 
@@ -24,16 +31,22 @@ public class QueueUpLocationListener implements LocationListener {
 
     public QueueUpLocationListener(LocationManager locationManager) {
         this.locationManager = locationManager;
+        listeners = new ConcurrentLinkedQueue<>();
+
         bestProviderCriteria = new Criteria();
         bestProviderCriteria.setAccuracy(Criteria.ACCURACY_FINE);
 
         /* Update the current best location */
         List<String> providers = locationManager.getProviders(true);
-        for (String provider : providers) {
-            Location location = locationManager.getLastKnownLocation(provider);
-            if (isBetterLocation(location, currentBestLocation)) {
-                currentBestLocation = location;
+        try {
+            for (String provider : providers) {
+                Location location = locationManager.getLastKnownLocation(provider);
+                if (isBetterLocation(location, currentBestLocation)) {
+                    setCurrentBestLocation(location);
+                }
             }
+        } catch (SecurityException e) {
+            Log.e(QueueUp.LOG_TAG, "Lost location permission");
         }
         Log.d(QueueUp.LOG_TAG, "Current best location: " + currentBestLocation);
     }
@@ -43,19 +56,48 @@ public class QueueUpLocationListener implements LocationListener {
         return currentBestLocation;
     }
 
+    public void getLocationUpdate(LocationUpdateListener listener) {
+        if (currentBestLocation != null) {
+            listener.onLocation(currentBestLocation);
+        } else {
+            listeners.add(listener);
+        }
+    }
+
+    public void setCurrentBestLocation(Location location) {
+        Iterator<LocationUpdateListener> it = listeners.iterator();
+        currentBestLocation = location;
+        while (it.hasNext()) {
+            it.next().onLocation(location);
+            it.remove();
+        }
+    }
+
     public void startPassiveUpdates() {
-        locationManager.requestLocationUpdates(LocationManager.PASSIVE_PROVIDER,
-                MAX_UPDATE_TIME, MIN_DISTANCE, this);
+        try {
+            locationManager.requestLocationUpdates(LocationManager.PASSIVE_PROVIDER,
+                    MAX_UPDATE_TIME, MIN_DISTANCE, this);
+        } catch (SecurityException e) {
+            Log.e(QueueUp.LOG_TAG, "Lost location permission");
+        }
     }
 
     public void startUpdates() {
         Log.d(QueueUp.LOG_TAG, "Starting location updates");
-        locationManager.requestLocationUpdates(0, 0, bestProviderCriteria, this, null);
+        try {
+            locationManager.requestLocationUpdates(0, 0, bestProviderCriteria, this, null);
+        } catch (SecurityException e) {
+            Log.e(QueueUp.LOG_TAG, "Lost location permission");
+        }
     }
 
     public void stopUpdates() {
         Log.d(QueueUp.LOG_TAG, "Stopping location updates");
-        locationManager.removeUpdates(this);
+        try {
+            locationManager.removeUpdates(this);
+        } catch (SecurityException e) {
+            Log.e(QueueUp.LOG_TAG, "Lost location permission");
+        }
     }
 
     public void startUpdatesUntilBest() {
@@ -67,20 +109,12 @@ public class QueueUpLocationListener implements LocationListener {
     public void onLocationChanged(Location location) {
         if (isBetterLocation(location, currentBestLocation)) {
             Log.d(QueueUp.LOG_TAG, "Found better location: " + location);
-            currentBestLocation = location;
+            setCurrentBestLocation(location);
 
             if (stopOnBest) {
                 stopOnBest = false;
                 stopUpdates();
             }
-            /* If we have our best location and it is from the GPS, then stop updates*/
-//            String bestProvider = locationManager.getBestProvider(bestProviderCriteria, true);
-//            if (stopOnBest && location.getProvider().equals(bestProvider)){
-//                stopUpdates();
-//                stopOnBest = false;
-//            } else {
-//                Log.d(QueueUp.LOG_TAG, "Best provider: " + bestProvider);
-//            }
         }
 
     }
@@ -101,6 +135,9 @@ public class QueueUpLocationListener implements LocationListener {
     }
 
     public boolean isBetterLocation(Location location, Location currentBestLocation) {
+        if (location == null) {
+            return false;
+        }
         if (currentBestLocation == null) {
             // A new location is always better than no location
             return true;

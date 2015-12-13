@@ -45,6 +45,14 @@ public class AddTrackFragment extends Fragment {
     private String mPlaylistId;
 
     @Override
+    public void onAttach(Context activity) {
+        mActivity = (MainActivity) activity;
+        mActivity.setTitle("Add Track");
+
+        super.onAttach(activity);
+    }
+
+    @Override
     public void onAttach(Activity activity) {
         mActivity = (MainActivity) activity;
         mActivity.setTitle("Add Track");

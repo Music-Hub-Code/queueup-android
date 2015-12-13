@@ -28,6 +28,19 @@
         >
 
         <TextView
+            android:padding="4dp"
+            android:textColor="@color/primary_material_light"
+            android:layout_gravity="center_vertical"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="12sp"
+            android:id="@+id/playlist_list_item_distance"
+            android:singleLine="true"
+            android:gravity="center_horizontal"
+            android:layout_centerHorizontal="true"
+            />
+
+        <TextView
             android:padding="8dp"
             android:textStyle="bold"
             android:textColor="@color/primary_material_light"

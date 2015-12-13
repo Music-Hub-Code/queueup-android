@@ -37,8 +37,8 @@ import org.louiswilliams.queueupplayer.queueup.objects.QueueUpStateChange;
 import org.louiswilliams.queueupplayer.queueup.objects.QueueUpTrack;
 import org.louiswilliams.queueupplayer.queueup.objects.SpotifyTrack;
 
+import java.text.DecimalFormat;
 import java.util.List;
-
 
 public abstract class AbstractPlaylistListFragment extends Fragment implements PlaylistListener, SwipeRefreshLayout.OnRefreshListener {
 
@@ -49,6 +49,13 @@ public abstract class AbstractPlaylistListFragment extends Fragment implements P
     protected PlaylistGridAdapter adapter;
     protected MainActivity mActivity;
     protected SwipeRefreshLayout mView;
+
+    @Override
+    public void onAttach(Context activity) {
+        mActivity = (MainActivity) activity;
+
+        super.onAttach(activity);
+    }
 
     @Override
     public void onAttach(Activity activity) {
@@ -371,6 +378,7 @@ public abstract class AbstractPlaylistListFragment extends Fragment implements P
             }
 
             TextView title = (TextView) playlistItem.findViewById(R.id.playlist_list_item_title);
+            TextView distance = (TextView) playlistItem.findViewById(R.id.playlist_list_item_distance);
             TextView adminName = (TextView) playlistItem.findViewById(R.id.playlist_list_item_admin);
             ImageView adminIcon = (ImageView) playlistItem.findViewById(R.id.playlist_list_item_admin_icon);
 
@@ -380,6 +388,19 @@ public abstract class AbstractPlaylistListFragment extends Fragment implements P
                 adminName.setText(playlist.adminName);
             } else {
                 adminName.setText("QueueUp User");
+            }
+
+            if (playlist.distance > 0) {
+                /* Convert to miles, if it's less than 0.1 mi, then feet */
+                double dist = playlist.distance / 1609.34;
+                DecimalFormat df = new DecimalFormat("###.# mi");
+                if (dist < 0.1) {
+                    dist *=  5280;
+                    dist = 10 * Math.round(dist / 10);
+                    df = new DecimalFormat("### ft");
+                }
+                distance.setText(df.format(dist));
+
             }
 
             if (playlist.current != null && playlist.current.album != null && playlist.current.album.imageUrls != null) {

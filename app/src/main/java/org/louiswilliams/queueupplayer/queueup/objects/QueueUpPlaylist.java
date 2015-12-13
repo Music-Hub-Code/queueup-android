@@ -15,10 +15,9 @@ public class QueueUpPlaylist extends QueueUpObject {
     public String adminId;
     public String adminName;
     public SpotifyTrack current;
-    public double latitude;
-    public double longitude;
-    public double altitude;
-    public double accuracy;
+    public double latitude = -1;
+    public double longitude = -1;
+    public double distance = - 1;
     public List<QueueUpTrack> tracks;
     public boolean playing;
 
@@ -32,10 +31,15 @@ public class QueueUpPlaylist extends QueueUpObject {
             adminName = obj.optString("admin_name");
             playing = obj.optBoolean("play", false);
 
-            latitude = obj.optDouble("latitude", -1);
-            longitude = obj.optDouble("longitude", -1);
-            altitude = obj.optDouble("altitude", -1);
-            accuracy = obj.optDouble("accuracy", -1);
+            JSONObject location = obj.optJSONObject("location");
+            if (location != null) {
+                JSONArray coordinates = location.optJSONArray("coordinates");
+                if (coordinates != null) {
+                    longitude= coordinates.getDouble(0);
+                    latitude = coordinates.getDouble(1);
+                }
+            }
+            distance = obj.optDouble("distance");
 
             JSONObject currentJson = obj.optJSONObject("current");
             if (currentJson != null ) {
