@@ -155,6 +155,7 @@ public class PlayerService extends Service implements PlaybackController {
     @Override
     public void onDestroy() {
         removeAllPlaylistListeners();
+        updateTrackPlaying(false);
         mPlaylistPlayer.disconnect();
         mNotification.cancel();
         if (mSpotifyPlayer != null) {

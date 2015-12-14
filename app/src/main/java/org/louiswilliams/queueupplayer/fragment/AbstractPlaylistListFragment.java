@@ -383,7 +383,14 @@ public abstract class AbstractPlaylistListFragment extends Fragment implements P
             ImageView adminIcon = (ImageView) playlistItem.findViewById(R.id.playlist_list_item_admin_icon);
 
             title.setText(playlist.name.toUpperCase());
-            adminIcon.setImageDrawable(getResources().getDrawable(R.mipmap.ic_queueup));
+
+            /* Include icon to indicate if a playlist is currently playing */
+            if (playlist.playing) {
+                adminIcon.setImageResource(R.drawable.ic_volume_up_black);
+                adminIcon.setVisibility(View.VISIBLE);
+            } else {
+                adminIcon.setVisibility(View.GONE);
+            }
             if (!playlist.adminName.isEmpty()) {
                 adminName.setText(playlist.adminName);
             } else {
@@ -411,7 +418,7 @@ public abstract class AbstractPlaylistListFragment extends Fragment implements P
                 }
             } else {
                 ImageView image = (ImageView) playlistItem.findViewById(R.id.playlist_list_item_image);
-                image.setImageDrawable(mContext.getResources().getDrawable(R.drawable.background_opaque_gray));
+                image.setImageResource(R.drawable.background_opaque_gray);
             }
 
             return playlistItem;

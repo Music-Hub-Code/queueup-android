@@ -249,7 +249,6 @@ public class PlaylistListFragment extends AbstractPlaylistListFragment implement
             mActivity.getQueueUpClient().getUserPlaylists(mActivity.getCurrentUserId(), new QueueUp.CallReceiver<List<QueueUpPlaylist>>() {
             @Override
             public void onResult(List<QueueUpPlaylist> playlists) {
-                Log.d(QueueUp.LOG_TAG, "Playlist all success");
 
                 final ProgressBar progress = (ProgressBar) mView.findViewById(R.id.loading_progress_bar);
                 final TextView notification = (TextView) mView.findViewById(R.id.playlist_notification);

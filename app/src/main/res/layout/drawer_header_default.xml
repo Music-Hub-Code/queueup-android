@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="@color/background_material_light"
+    android:background="@color/background_primary_light"
     >
 
     <Button
@@ -12,7 +12,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="@string/log_in"
-        android:textColor="@color/accent_material_light"
+        android:textColor="@color/accent_light"
         style="?android:attr/borderlessButtonStyle"
 
         />

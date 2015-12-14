@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="@color/background_material_light"
+    android:background="@color/background_primary_light"
     android:translationX="-2dp"
     android:elevation="2dp"
     >
@@ -34,7 +34,7 @@
             >
             <TextView
                 android:id="@+id/playlist_current_track"
-                android:textColor="@color/primary_dark_material_dark"
+                android:textColor="@color/secondary_dark"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:textSize="16sp"
@@ -42,7 +42,7 @@
                 />
             <TextView
                 android:id="@+id/playlist_current_artist"
-                android:textColor="@color/primary_dark_material_light"
+                android:textColor="@color/secondary_light"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:textSize="14sp"
@@ -63,7 +63,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
-                android:textColor="@color/accent_material_light"
+                android:textColor="@color/accent_light"
                 style="?android:attr/borderlessButtonStyle"
                 android:text="@string/play_with_spotify"
                 />

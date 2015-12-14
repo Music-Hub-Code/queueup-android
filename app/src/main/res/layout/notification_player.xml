@@ -14,7 +14,7 @@
         android:layout_width="54dp"
         android:layout_height="54dp"
         android:scaleType="fitCenter"
-        android:background="@color/primary_dark_material_dark"
+        android:background="@color/secondary_dark"
         />
 
     <LinearLayout
@@ -28,7 +28,7 @@
         >
         <TextView
             android:id="@+id/playlist_current_track"
-            android:textColor="@color/primary_material_dark"
+            android:textColor="@color/primary_dark"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textSize="15sp"
@@ -41,7 +41,7 @@
             />
         <TextView
             android:id="@+id/playlist_current_artist"
-            android:textColor="@color/primary_dark_material_light"
+            android:textColor="@color/secondary_light"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textSize="13sp"

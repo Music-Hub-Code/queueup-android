@@ -20,7 +20,7 @@
             android:layout_marginRight="16dp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="@color/primary_dark_material_light"
+            android:textColor="@color/secondary_light"
             android:textSize="12sp"
             android:text="@string/no_progress"/>
 

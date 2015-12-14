@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="@color/background_material_light"
+    android:background="@color/background_primary_light"
     android:layout_marginTop="36dp"
     android:padding="8dp"
     >
@@ -19,8 +19,8 @@
         android:text="powered by"
         android:textSize="14sp"
         android:textColor="#ff888888"
-        android:paddingTop="8dp"
-        android:paddingBottom="12dp"
+        android:paddingTop="0dp"
+        android:paddingBottom="4dp"
         android:layout_gravity="center_horizontal"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content" />

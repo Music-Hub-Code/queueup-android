@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:background="@color/background_material_light"
+    android:background="@color/background_primary_light"
     >
 
     <LinearLayout
@@ -25,7 +25,7 @@
         <TextView
             android:id="@+id/drawer_user_name"
             android:textSize="18sp"
-            android:textColor="@color/primary_material_dark"
+            android:textColor="@color/primary_dark"
             android:padding="18dp"
             android:layout_width="0dp"
             android:layout_weight="1"
@@ -38,7 +38,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="@string/logout"
-        android:textColor="@color/accent_material_light"
+        android:textColor="@color/accent_light"
         style="?android:attr/borderlessButtonStyle"
 
         />

@@ -6,7 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:textAppearance="?android:attr/textAppearanceLarge"
-    android:textColor="@color/primary_material_dark"
+    android:textColor="@color/primary_dark"
     android:textSize="16sp"
     android:layout_gravity="center_horizontal"
     android:paddingTop="14dp"

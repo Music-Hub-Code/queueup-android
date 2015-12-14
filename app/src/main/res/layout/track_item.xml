@@ -7,7 +7,7 @@
     android:elevation="2dp"
     android:translationX="-2dp"
     android:gravity="center_horizontal"
-    android:background="@color/primary_material_dark"
+    android:background="@color/primary_dark"
     android:layout_marginLeft="16dp"
     android:layout_marginRight="16dp"
     android:clipToPadding="false"
@@ -28,7 +28,7 @@
             android:gravity="center"
             android:textSize="12sp"
             android:text="Remove"
-            android:textColor="@color/primary_material_light"
+            android:textColor="@color/primary_light"
             />
     </LinearLayout>
 
@@ -46,7 +46,7 @@
             android:layout_height="match_parent"
             android:gravity="center"
             android:src="@drawable/spotify_logo_black"
-            android:textColor="@color/primary_material_light"
+            android:textColor="@color/primary_light"
             />
     </LinearLayout>
 
@@ -59,7 +59,7 @@
 
         <ImageView
             android:id="@+id/track_list_item_image"
-            android:background="@color/primary_dark_material_light"
+            android:background="@color/secondary_light"
             android:layout_width="64dp"
             android:layout_height="64dp"
             android:scaleType="fitStart"/>
@@ -68,8 +68,7 @@
             android:layout_width="0dp"
             android:layout_weight="1"
             android:layout_height="match_parent"
-            android:layout_toRightOf="@+id/track_list_item_image"
-            android:background="@color/primary_material_dark"
+            android:background="@color/primary_dark"
             android:orientation="vertical"
             android:paddingTop="4dp"
             android:paddingBottom="8dp"
@@ -80,7 +79,7 @@
 
             <TextView
                 android:paddingTop="4dp"
-                android:textColor="@color/primary_material_light"
+                android:textColor="@color/primary_light"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:textSize="16sp"
@@ -91,7 +90,7 @@
                 />
             <TextView
                 android:paddingTop="4dp"
-                android:textColor="@color/primary_dark_material_light"
+                android:textColor="@color/secondary_light"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:textSize="14sp"

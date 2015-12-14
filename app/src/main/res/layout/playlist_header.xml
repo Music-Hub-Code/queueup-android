@@ -5,7 +5,7 @@
     android:translationX="-2dp"
     android:orientation="vertical"
     android:padding="8dp"
-    android:background="@color/background_material_light">
+    android:background="@color/background_primary_light">
 
     <LinearLayout
         android:orientation="horizontal"
@@ -30,8 +30,8 @@
             >
             <TextView
                 android:id="@+id/playlist_current_track"
-                android:textColor="@color/primary_material_dark"
-                android:textColorLink="@color/primary_material_dark"
+                android:textColor="@color/primary_dark"
+                android:textColorLink="@color/primary_dark"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:textSize="16sp"
@@ -40,8 +40,8 @@
                 />
             <TextView
                 android:id="@+id/playlist_current_artist"
-                android:textColor="@color/primary_dark_material_light"
-                android:textColorLink="@color/primary_dark_material_light"
+                android:textColor="@color/secondary_light"
+                android:textColorLink="@color/secondary_light"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:textSize="14sp"
@@ -59,7 +59,7 @@
         android:layout_marginBottom="2dp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textColor="@color/primary_dark_material_light"
+        android:textColor="@color/secondary_light"
         android:id="@+id/track_progress_text"
         android:text="@string/no_progress"/>
 

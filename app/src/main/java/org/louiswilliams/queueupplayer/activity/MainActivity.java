@@ -41,14 +41,12 @@ import com.facebook.AccessToken;
 import com.facebook.FacebookSdk;
 import com.facebook.Profile;
 import com.facebook.login.LoginManager;
-import com.google.android.gms.analytics.ExceptionReporter;
-import com.google.android.gms.analytics.Tracker;
+import com.google.android.gms.common.api.GoogleApiClient;
 import com.spotify.sdk.android.authentication.AuthenticationClient;
 import com.spotify.sdk.android.authentication.AuthenticationRequest;
 import com.spotify.sdk.android.authentication.AuthenticationResponse;
 import com.squareup.picasso.Picasso;
 
-import org.louiswilliams.queueupplayer.QueueUpApplication;
 import org.louiswilliams.queueupplayer.R;
 import org.louiswilliams.queueupplayer.fragment.AddTrackFragment;
 import org.louiswilliams.queueupplayer.fragment.PlaylistFragment;
@@ -84,6 +82,7 @@ public class MainActivity
     public static final String[] NAVIGATION_ACTIONS = {PLAYLISTS_NEARBY, PLAYLISTS_FRIENDS, PLAYLISTS_MINE};
     private static final String REDIRECT_URI = "queueup://callback";
     private static final String LOG_TAG = QueueUp.LOG_TAG;
+    private static final int LOCATION_SETTINGS_CODE = 4444;
 
 
     private boolean showNewTrackOnPlaylistLoad;
@@ -584,11 +583,13 @@ public class MainActivity
 
     public void alertLocationEnable() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        final Intent intent = new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+
         builder.setTitle(R.string.location_not_found_title);  // GPS not found
         builder.setMessage(R.string.location_not_found_message); // Want to enable?
         builder.setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialogInterface, int i) {
-                startActivity(new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS));
+                startActivityForResult(intent, LOCATION_SETTINGS_CODE);
             }
         });
         builder.setNegativeButton(R.string.no, null);
@@ -793,7 +794,6 @@ public class MainActivity
     protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
         if (requestCode == LoginActivity.QUEUEUP_LOGIN_REQUEST_CODE) {
             if (resultCode == RESULT_OK) {
-//                toast("Login successful");
                 recreate();
             } else if (resultCode == RESULT_CANCELED) {
 //                toast("Login cancelled");
@@ -804,6 +804,12 @@ public class MainActivity
                     message += ": " + e.getMessage();
                 }
                 toast(message);
+            }
+        } else if (requestCode == LOCATION_SETTINGS_CODE) {
+            if (!isLocationEnabled()) {
+                alertLocationEnable();
+            } else {
+                navigateDrawer(0);
             }
         }
     }
