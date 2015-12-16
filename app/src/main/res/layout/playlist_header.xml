@@ -5,7 +5,7 @@
     android:translationX="-2dp"
     android:orientation="vertical"
     android:padding="8dp"
-    android:background="@color/background_primary_light">
+    android:background="@color/primary_light">
 
     <LinearLayout
         android:orientation="horizontal"

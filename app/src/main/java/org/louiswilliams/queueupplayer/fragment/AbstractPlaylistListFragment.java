@@ -254,20 +254,20 @@ public abstract class AbstractPlaylistListFragment extends Fragment implements P
         final TextView trackName = (TextView) mView.findViewById(R.id.playlist_current_track);
         final TextView trackArtist = (TextView) mView.findViewById(R.id.playlist_current_artist);
 
-        mActivity.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                List<String> imageUrls = track.album.imageUrls;
-                Picasso.with(mActivity).load(imageUrls.get(imageUrls.size() - 1)).into(albumArt);
+        if (track != null) {
+            mActivity.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    List<String> imageUrls = track.album.imageUrls;
+                    Picasso.with(mActivity).load(imageUrls.get(imageUrls.size() - 1)).into(albumArt);
 
-                trackName.setText(track.name);
-                trackArtist.setText(track.artists.get(0).name);
-                trackName.setSelected(true);
-                trackArtist.setSelected(true);
-            }
-        });
-
-
+                    trackName.setText(track.name);
+                    trackArtist.setText(track.artists.get(0).name);
+                    trackName.setSelected(true);
+                    trackArtist.setSelected(true);
+                }
+            });
+        }
     }
 
     private void updatePlayButton(final boolean playing) {
