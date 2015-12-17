@@ -6,7 +6,9 @@
         <item name="colorPrimary">#ff212121</item>
         <item name="colorPrimaryDark">@android:color/black</item>
         <item name="colorAccent">#ff80cbc4</item>
+
     </style>
+
 
     <color name="background_primary_light">#fffafafa</color>
     <color name="primary_light">#fff5f5f5</color>

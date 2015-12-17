@@ -243,10 +243,10 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
                 if (!playlist.adminName.isEmpty()) {
                     replacement.setText("Created by " + playlist.adminName);
                 } else {
-                    replacement.setText("Created by a Queueup user");
+                    replacement.setText("Created by a QueueUp user");
                 }
                 replacement.setGravity(Gravity.CENTER);
-                replacement.setTextColor(getResources().getColor(R.color.material_deep_teal_200));
+                replacement.setTextColor(getResources().getColor(R.color.accent_dark));
                 replacement.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT));
 
 

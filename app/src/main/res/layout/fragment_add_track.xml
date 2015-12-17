@@ -1,14 +1,20 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="10dp"
     android:orientation="vertical"
     tools:context="org.louiswilliams.queueupplayer.fragment.AddTrackFragment">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        android:paddingTop="4dp"
+        android:paddingLeft="2dp"
+        android:paddingRight="2dp"
+        android:paddingBottom="4dp"
+        android:background="@drawable/edit_text_background"
+
+        >
 
         <!--<ImageView-->
             <!--android:id="@+id/search_mag_icon"-->
@@ -19,18 +25,19 @@
 
         <EditText
             android:id="@+id/track_search_box"
-            android:textSize="18sp"
+            android:textSize="16sp"
             android:hint="@string/search_tracks"
-            android:drawableBottom="@drawable/background_transparent"
+            android:padding="8dp"
+            android:background="@drawable/background_transparent"
             android:layout_weight="1"
             android:layout_width="0dp"
             android:layout_height="wrap_content" />
 
         <ImageButton
-            android:visibility="gone"
             android:id="@+id/track_search_clear"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:scaleType="centerInside"
+            android:layout_width="30dp"
+            android:layout_height="match_parent"
             android:background="@drawable/background_transparent"
             android:src="@drawable/ic_action_clear" />
 
@@ -45,6 +52,9 @@
         android:dividerHeight="6dp"
         android:divider="@android:color/transparent"
         android:drawSelectorOnTop="true"
+        android:paddingTop="8dp"
+        android:paddingLeft="8dp"
+        android:paddingRight="6dp"
         >
     </ListView>
 </LinearLayout>

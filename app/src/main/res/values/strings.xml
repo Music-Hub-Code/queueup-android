@@ -28,7 +28,7 @@
     <string name="queueup_user_placeholder">QueueUp User</string>
     <string name="play_with_spotify">Play with Spotify</string>
     <string name="no_votes">0</string>
-    <string name="search_tracks">Search tracks</string>
+    <string name="search_tracks">Search tracks by name, artist, or album</string>
     <string name="playlist_rename">Rename</string>
     <string name="playlist_delete">Delete</string>
     <string name="playlist_invite">Invite Friends</string>

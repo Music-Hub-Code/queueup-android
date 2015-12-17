@@ -74,7 +74,9 @@ public abstract class AbstractPlaylistListFragment extends Fragment implements P
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
-        container.removeAllViews();
+        if (container != null) {
+            container.removeAllViews();
+        }
         mView = (SwipeRefreshLayout) inflater.inflate(R.layout.fragment_playlist_list, container, false);
         mView.setOnRefreshListener(this);
 

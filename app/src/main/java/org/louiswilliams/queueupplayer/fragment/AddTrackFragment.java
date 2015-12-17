@@ -112,7 +112,7 @@ public class AddTrackFragment extends Fragment {
         mActivity.showKeyboard();
 
         final ImageButton searchClear = (ImageButton) mView.findViewById(R.id.track_search_clear);
-
+        searchClear.setVisibility(View.GONE);
 
         mSearchBox.addTextChangedListener(new TextWatcher() {
             @Override
