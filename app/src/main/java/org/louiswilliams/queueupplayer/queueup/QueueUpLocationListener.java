@@ -24,6 +24,7 @@ public class QueueUpLocationListener implements LocationListener {
     private LocationManager locationManager;
     private Location currentBestLocation;
     private ConcurrentLinkedQueue<LocationUpdateListener> listeners;
+    private ConcurrentLinkedQueue<LocationUpdateListener> singleUpdateListeners;
 
     private Criteria bestProviderCriteria;
 
@@ -32,6 +33,7 @@ public class QueueUpLocationListener implements LocationListener {
     public QueueUpLocationListener(LocationManager locationManager) {
         this.locationManager = locationManager;
         listeners = new ConcurrentLinkedQueue<>();
+        singleUpdateListeners = new ConcurrentLinkedQueue<>();
 
         bestProviderCriteria = new Criteria();
         bestProviderCriteria.setAccuracy(Criteria.ACCURACY_FINE);
@@ -56,7 +58,15 @@ public class QueueUpLocationListener implements LocationListener {
         return currentBestLocation;
     }
 
-    public void getLocationUpdate(LocationUpdateListener listener) {
+    public void getSingleLocationUpdate(LocationUpdateListener listener) {
+        if (currentBestLocation != null) {
+            listener.onLocation(currentBestLocation);
+        } else {
+            singleUpdateListeners.add(listener);
+        }
+    }
+
+    public void getLocationUpdates(LocationUpdateListener listener) {
         if (currentBestLocation != null) {
             listener.onLocation(currentBestLocation);
         } else {
@@ -64,12 +74,20 @@ public class QueueUpLocationListener implements LocationListener {
         }
     }
 
+    public void stopLocationUpdates(LocationUpdateListener listener) {
+        listeners.remove(listener);
+    }
+
     public void setCurrentBestLocation(Location location) {
-        Iterator<LocationUpdateListener> it = listeners.iterator();
         currentBestLocation = location;
-        while (it.hasNext()) {
-            it.next().onLocation(location);
-            it.remove();
+        Iterator<LocationUpdateListener> singleUpdate = singleUpdateListeners.iterator();
+        while (singleUpdate.hasNext()) {
+            singleUpdate.next().onLocation(location);
+            singleUpdate.remove();
+        }
+        Iterator<LocationUpdateListener> updates = listeners.iterator();
+        while (updates.hasNext()) {
+            updates.next().onLocation(location);
         }
     }
 

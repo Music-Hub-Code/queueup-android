@@ -11,6 +11,10 @@
         android:icon="@drawable/ic_action_create_white"
         app:showAsAction="never"
         />
+    <item android:id="@+id/action_playlist_relocate" android:title="@string/playlist_relocate"
+        android:icon="@drawable/ic_pin_drop_white"
+        app:showAsAction="never"
+        />
     <item android:id="@+id/action_playlist_delete" android:title="@string/playlist_delete"
         android:icon="@drawable/ic_action_delete_white"
         app:showAsAction="never"

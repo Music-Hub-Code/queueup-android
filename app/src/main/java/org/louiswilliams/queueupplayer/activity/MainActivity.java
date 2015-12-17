@@ -41,14 +41,17 @@ import com.facebook.AccessToken;
 import com.facebook.FacebookSdk;
 import com.facebook.Profile;
 import com.facebook.login.LoginManager;
-import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.analytics.ExceptionReporter;
+import com.google.android.gms.analytics.Tracker;
 import com.spotify.sdk.android.authentication.AuthenticationClient;
 import com.spotify.sdk.android.authentication.AuthenticationRequest;
 import com.spotify.sdk.android.authentication.AuthenticationResponse;
 import com.squareup.picasso.Picasso;
 
+import org.louiswilliams.queueupplayer.QueueUpApplication;
 import org.louiswilliams.queueupplayer.R;
 import org.louiswilliams.queueupplayer.fragment.AddTrackFragment;
+import org.louiswilliams.queueupplayer.fragment.LocationSelectFragment;
 import org.louiswilliams.queueupplayer.fragment.PlaylistFragment;
 import org.louiswilliams.queueupplayer.fragment.PlaylistListFragment;
 import org.louiswilliams.queueupplayer.fragment.PlaylistSearchResultsFragment;
@@ -78,8 +81,8 @@ public class MainActivity
     public static final String PLAYLISTS_NEARBY = "nearby";
     public static final String PLAYLISTS_FRIENDS = "friends";
     public static final String PLAYLISTS_MINE = "mine";
-    public static final int[] NAVIGATION_TITLES = {R.string.nearby_playlists, R.string.friends_playlists, R.string.my_playlists};
-    public static final String[] NAVIGATION_ACTIONS = {PLAYLISTS_NEARBY, PLAYLISTS_FRIENDS, PLAYLISTS_MINE};
+    public static final int[] NAVIGATION_TITLES = {R.string.nearby_playlists, R.string.top_playlists, R.string.friends_playlists, R.string.my_playlists};
+    public static final String[] NAVIGATION_ACTIONS = {PLAYLISTS_NEARBY, PLAYLISTS_ALL, PLAYLISTS_FRIENDS, PLAYLISTS_MINE};
     private static final String REDIRECT_URI = "queueup://callback";
     private static final String LOG_TAG = QueueUp.LOG_TAG;
     private static final int LOCATION_SETTINGS_CODE = 4444;
@@ -109,13 +112,13 @@ public class MainActivity
         super.onCreate(savedInstanceState);
 
         /* Set up Google analytics for uncaught exceptions */
-//        Tracker tracker = ((QueueUpApplication)getApplication()).getDefaultTracker();
-//        Thread.UncaughtExceptionHandler uncaughtExceptionHandler = new ExceptionReporter(
-//                tracker,
-//                Thread.getDefaultUncaughtExceptionHandler(),
-//                getApplicationContext()
-//        );
-//        Thread.setDefaultUncaughtExceptionHandler(uncaughtExceptionHandler);
+        Tracker tracker = ((QueueUpApplication)getApplication()).getDefaultTracker();
+        Thread.UncaughtExceptionHandler uncaughtExceptionHandler = new ExceptionReporter(
+                tracker,
+                Thread.getDefaultUncaughtExceptionHandler(),
+                getApplicationContext()
+        );
+        Thread.setDefaultUncaughtExceptionHandler(uncaughtExceptionHandler);
 
         /* Handle certain navigation actions with the action bar back button*/
         getFragmentManager().addOnBackStackChangedListener(this);
@@ -338,6 +341,34 @@ public class MainActivity
         bundle.putString("playlist_id", playlistId);
 
         AddTrackFragment fragment = new AddTrackFragment();
+        fragment.setArguments(bundle);
+
+        transaction.replace(R.id.content_frame, fragment);
+        transaction.addToBackStack(fragment.getClass().getName());
+        transaction.commit();
+    }
+
+    public void showLocationSelectCreateFragment(String playlistName) {
+        FragmentTransaction transaction = getFragmentManager().beginTransaction();
+        Bundle bundle = new Bundle();
+        bundle.putString(LocationSelectFragment.ARG_PLAYLIST_NAME, playlistName);
+        bundle.putString(LocationSelectFragment.ARG_ACTION, LocationSelectFragment.ACTION_CREATE);
+
+        LocationSelectFragment fragment = new LocationSelectFragment();
+        fragment.setArguments(bundle);
+
+        transaction.replace(R.id.content_frame, fragment);
+        transaction.addToBackStack(fragment.getClass().getName());
+        transaction.commit();
+    }
+
+    public void showLocationSelectMoveFragment(String playlistId) {
+        FragmentTransaction transaction = getFragmentManager().beginTransaction();
+        Bundle bundle = new Bundle();
+        bundle.putString(LocationSelectFragment.ARG_PLAYLIST_ID, playlistId);
+        bundle.putString(LocationSelectFragment.ARG_ACTION, LocationSelectFragment.ACTION_MOVE);
+
+        LocationSelectFragment fragment = new LocationSelectFragment();
         fragment.setArguments(bundle);
 
         transaction.replace(R.id.content_frame, fragment);
@@ -806,9 +837,7 @@ public class MainActivity
                 toast(message);
             }
         } else if (requestCode == LOCATION_SETTINGS_CODE) {
-            if (!isLocationEnabled()) {
-                alertLocationEnable();
-            } else {
+            if (isLocationEnabled()) {
                 navigateDrawer(0);
             }
         }

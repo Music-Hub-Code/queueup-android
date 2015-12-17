@@ -168,9 +168,8 @@ public abstract class AbstractPlaylistListFragment extends Fragment implements P
             playlistNameFragment.setPlaylistNameListener(new PlaylistNameFragment.PlaylistNameListener() {
                 @Override
                 public void onPlaylistCreate(PlaylistNameFragment dialogFragment) {
-                    Location location = locationListener.getCurrentBestLocation();
                     locationListener.stopUpdates();
-                    mActivity.doCreatePlaylist(dialogFragment.getPlaylistName(), location);
+                    mActivity.showLocationSelectCreateFragment(dialogFragment.getPlaylistName());
                 }
 
                 @Override
@@ -397,7 +396,7 @@ public abstract class AbstractPlaylistListFragment extends Fragment implements P
                 adminName.setText("QueueUp User");
             }
 
-            if (playlist.distance > 0) {
+            if (playlist.distance >= 0) {
                 /* Convert to miles, if it's less than 0.1 mi, then feet */
                 double dist = playlist.distance / 1609.34;
                 DecimalFormat df = new DecimalFormat("###.# mi");

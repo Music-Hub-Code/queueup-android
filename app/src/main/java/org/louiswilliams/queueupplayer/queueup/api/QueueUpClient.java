@@ -311,6 +311,35 @@ public class QueueUpClient {
         }
     }
 
+    public void playlistRelocate(String playlistId, Location location, final QueueUp.CallReceiver<QueueUpPlaylist> receiver) {
+        try {
+            JSONObject locationJson = new JSONObject();
+            JSONObject request = new JSONObject();
+
+            locationJson.put("longitude", location.getLongitude());
+            locationJson.put("latitude", location.getLatitude());
+            request.put("location", locationJson);
+            sendApiPost("/playlists/" + playlistId + "/relocate", request, new QueueUp.CallReceiver<JSONObject>() {
+                @Override
+                public void onResult(JSONObject result) {
+                    try {
+                        QueueUpPlaylist playlist = new QueueUpPlaylist(result.getJSONObject("playlist"));
+                        receiver.onResult(playlist);
+                    } catch (JSONException e) {
+                        receiver.onException(e);
+                    }
+                }
+
+                @Override
+                public void onException(Exception e) {
+                    receiver.onException(e);
+                }
+            });
+        } catch (JSONException e) {
+            Log.e(QueueUp.LOG_TAG, "JSON error relocating: " + e.getMessage());
+        }
+    }
+
     public void playlistVoteOnTrack(String playlistId, String trackId, boolean vote, final QueueUp.CallReceiver<QueueUpPlaylist> receiver) {
         try {
             JSONObject request = new JSONObject();

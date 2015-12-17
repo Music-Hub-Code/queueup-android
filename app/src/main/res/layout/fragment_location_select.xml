@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:background="@color/primary_light"
+    android:orientation="vertical"
+    >
+
+    <fragment
+        android:id="@+id/google_map"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:name="com.google.android.gms.maps.MapFragment"
+        />
+
+    <TextView
+        android:id="@+id/set_location_message"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="@color/primary_dark"
+        android:padding="10dp"
+        android:textSize="14sp"
+        android:gravity="center_horizontal"
+        android:text="@string/current_location_create"
+        />
+
+    <Button
+        android:id="@+id/set_location_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="@color/accent_light"
+        android:text="@string/set_location"
+        android:textSize="16sp"
+        android:background="@drawable/white_rect_ripple"
+        style="?android:attr/borderlessButtonStyle"
+        />
+
+</LinearLayout>

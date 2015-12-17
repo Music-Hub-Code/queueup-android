@@ -51,4 +51,8 @@
     <string name="yes">Yes</string>
     <string name="no">No</string>
     <string name="nearby_playlists">Nearby Playlists</string>
+    <string name="playlist_relocate">Move Here</string>
+    <string name="set_location">Use Location</string>
+    <string name="current_location_create">Create the playlist at your current location</string>
+    <string name="current_location_move">Move the playlist to your current location</string>
 </resources>

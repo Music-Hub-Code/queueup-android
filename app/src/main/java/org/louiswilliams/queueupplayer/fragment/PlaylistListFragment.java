@@ -23,7 +23,6 @@ import org.louiswilliams.queueupplayer.queueup.QueueUp;
 import org.louiswilliams.queueupplayer.queueup.objects.QueueUpPlaylist;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class PlaylistListFragment extends AbstractPlaylistListFragment implements PlaylistListener, SwipeRefreshLayout.OnRefreshListener, LocationUpdateListener {
@@ -106,7 +105,7 @@ public class PlaylistListFragment extends AbstractPlaylistListFragment implement
         /* If the user hasn't enabled location services... */
         if (mActivity.getLocationListener() == null || !mActivity.isLocationEnabled()) {
             mActivity.alertLocationEnable();
-            mActivity.navigateDrawer(MainActivity.NAVIGATION_ACTIONS.length - 1); // Display "All" instead of nearby
+            mActivity.navigateDrawer(1); // Display "All" instead of nearby
             return;
         }
         Location location = mActivity.getLocationListener().getCurrentBestLocation();
@@ -114,7 +113,7 @@ public class PlaylistListFragment extends AbstractPlaylistListFragment implement
         /* If we don't have a location yet, let the user know*/
         final TextView notification = (TextView) mView.findViewById(R.id.playlist_notification);
         if (location == null) {
-            mActivity.getLocationListener().getLocationUpdate(this);
+            mActivity.getLocationListener().getSingleLocationUpdate(this);
 
             mActivity.runOnUiThread(new Runnable() {
                 @Override

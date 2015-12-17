@@ -9,11 +9,11 @@ import com.google.android.gms.analytics.Tracker;
 public class QueueUpApplication extends Application {
 
     private Tracker mTracker;
-//
-//    synchronized public Tracker getDefaultTracker() {
-//        GoogleAnalytics analytics = GoogleAnalytics.getInstance(this);
-//        mTracker = analytics.newTracker(R.xml.global_tracker);
-//        return mTracker;
-//    }
+
+    synchronized public Tracker getDefaultTracker() {
+        GoogleAnalytics analytics = GoogleAnalytics.getInstance(this);
+        mTracker = analytics.newTracker("UA-65320728-1");
+        return mTracker;
+    }
 
 }

@@ -6,6 +6,7 @@ import android.app.Fragment;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Looper;
@@ -129,6 +130,9 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
                 return true;
             case R.id.action_playlist_delete:
                 showDeleteDialog();
+                return true;
+            case R.id.action_playlist_relocate:
+                mActivity.showLocationSelectMoveFragment(getPlaylistId());
                 return true;
             case R.id.action_playlist_invite:
                 Intent inviteIntent = new Intent(mActivity.getBaseContext(), InviteContactsActivity.class);
@@ -461,6 +465,25 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
                     }
                 }).setNegativeButton("No", null)
                 .show();
+
+    }
+
+    public void showRelocateDialog() {
+        mActivity.getLocationListener().startUpdates();
+        AlertDialog.Builder builder = new AlertDialog.Builder(mActivity);
+        builder.setTitle("Move Playlist Here")
+                .setMessage("Do you want to move the playlist to your current location?")
+                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+//                        relocatePlaylist();
+                    }
+                }).setNegativeButton("No", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                mActivity.getLocationListener().stopUpdates();
+            }
+        }).show();
 
     }
 
