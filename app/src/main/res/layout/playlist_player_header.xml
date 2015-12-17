@@ -15,6 +15,7 @@
         android:layout_height="wrap_content"
         android:scaleType="fitCenter"
         android:src="@drawable/queueup_icon"
+        android:padding="25dp"
         />
 
     <LinearLayout

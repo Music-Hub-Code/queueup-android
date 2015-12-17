@@ -28,6 +28,7 @@ import com.squareup.picasso.Picasso;
 
 import org.louiswilliams.queueupplayer.R;
 import org.louiswilliams.queueupplayer.activity.MainActivity;
+import org.louiswilliams.queueupplayer.queueup.LocationUpdateListener;
 import org.louiswilliams.queueupplayer.queueup.PlaybackController;
 import org.louiswilliams.queueupplayer.queueup.PlaylistListener;
 import org.louiswilliams.queueupplayer.queueup.QueueUp;
@@ -73,7 +74,7 @@ public abstract class AbstractPlaylistListFragment extends Fragment implements P
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
-
+        container.removeAllViews();
         mView = (SwipeRefreshLayout) inflater.inflate(R.layout.fragment_playlist_list, container, false);
         mView.setOnRefreshListener(this);
 
@@ -167,9 +168,14 @@ public abstract class AbstractPlaylistListFragment extends Fragment implements P
             playlistNameFragment.setDialogTitle("New Playlist");
             playlistNameFragment.setPlaylistNameListener(new PlaylistNameFragment.PlaylistNameListener() {
                 @Override
-                public void onPlaylistCreate(PlaylistNameFragment dialogFragment) {
-                    locationListener.stopUpdates();
-                    mActivity.showLocationSelectCreateFragment(dialogFragment.getPlaylistName());
+                public void onPlaylistCreate(final PlaylistNameFragment dialogFragment) {
+                    mActivity.getLocationListener().getSingleLocationUpdate(new LocationUpdateListener() {
+                        @Override
+                        public void onLocation(Location location) {
+                            locationListener.stopUpdates();
+                            mActivity.doCreatePlaylist(dialogFragment.getPlaylistName(), location);
+                        }
+                    });
                 }
 
                 @Override

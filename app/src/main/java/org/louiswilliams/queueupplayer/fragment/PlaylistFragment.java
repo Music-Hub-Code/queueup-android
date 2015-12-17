@@ -132,7 +132,7 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
                 showDeleteDialog();
                 return true;
             case R.id.action_playlist_relocate:
-                mActivity.showLocationSelectMoveFragment(getPlaylistId());
+                showRelocateDialog();
                 return true;
             case R.id.action_playlist_invite:
                 Intent inviteIntent = new Intent(mActivity.getBaseContext(), InviteContactsActivity.class);
@@ -269,7 +269,7 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
 
                     if (playlist.current.album != null && playlist.current.album.imageUrls != null && playlist.current.album.imageUrls.size() > 0) {
                         Picasso.with(mActivity).load(playlist.current.album.imageUrls.get(0)).into(albumArt);
-
+                        albumArt.setPadding(0,0,0,0);
                         albumArt.setOnClickListener(new View.OnClickListener() {
                             @Override
                             public void onClick(View view) {
@@ -476,7 +476,8 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
                 .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-//                        relocatePlaylist();
+                        mActivity.getLocationListener().stopUpdates();
+                        relocatePlaylist();
                     }
                 }).setNegativeButton("No", new DialogInterface.OnClickListener() {
             @Override
@@ -551,6 +552,29 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
                     @Override
                     public void run() {
                         getFragmentManager().popBackStackImmediate();
+                    }
+                });
+            }
+
+            @Override
+            public void onException(Exception e) {
+                Log.e(QueueUp.LOG_TAG, e.getMessage());
+                mActivity.toast(e.getMessage());
+            }
+        });
+    }
+
+    public void relocatePlaylist() {
+        Location location = mActivity.getLocationListener().getCurrentBestLocation();
+        mActivity.getQueueUpClient().playlistRelocate(mPlaylistId, location, new QueueUp.CallReceiver<QueueUpPlaylist>() {
+
+            @Override
+            public void onResult(QueueUpPlaylist result) {
+                /* Recreate the fragment without adding it to the back stack */
+                mActivity.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        mActivity.toast("Moved successfully");
                     }
                 });
             }
