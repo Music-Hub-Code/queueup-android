@@ -20,7 +20,7 @@
             android:layout_marginRight="16dp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="@color/secondary_light"
+            android:textColor="@color/primary_light"
             android:textSize="12sp"
             android:text="@string/no_progress"/>
 
@@ -31,6 +31,7 @@
             android:layout_height="wrap_content"
             android:layout_marginLeft="16dp"
             android:layout_marginRight="16dp"
+            android:background="@color/accent_dark"
             />
 
         <LinearLayout
@@ -48,8 +49,8 @@
                 android:id="@+id/play_button"
                 android:layout_width="56dp"
                 android:layout_height="56dp"
-                android:src="@drawable/ic_action_play_arrow_36"
-                android:background="@drawable/dark_white_oval_ripple"
+                android:src="@drawable/ic_play_arrow_white"
+                android:background="@drawable/background_transparent"
                 />
 
 
@@ -58,10 +59,9 @@
                 android:id="@+id/skip_button"
                 android:layout_width="56dp"
                 android:layout_height="56dp"
-                android:src="@drawable/ic_action_skip_next_36"
-                android:background="@drawable/dark_white_oval_ripple"
-
+                android:src="@drawable/ic_skip_next_white"
                 android:layout_marginLeft="12dp"
+                android:background="@drawable/background_transparent"
                 />
 
             <ImageButton
@@ -69,10 +69,9 @@
                 android:id="@+id/stop_playback_button"
                 android:layout_width="56dp"
                 android:layout_height="56dp"
-                android:src="@drawable/ic_action_clear_36"
-                android:background="@drawable/dark_white_oval_ripple"
-
+                android:src="@drawable/ic_clear_white"
                 android:layout_marginLeft="12dp"
+                android:background="@drawable/background_transparent"
                 />
 
         </LinearLayout>

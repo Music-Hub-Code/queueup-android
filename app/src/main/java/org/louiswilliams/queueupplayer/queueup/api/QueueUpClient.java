@@ -340,6 +340,27 @@ public class QueueUpClient {
         }
     }
 
+    public void playlistReset(String playlistId, final QueueUp.CallReceiver<QueueUpPlaylist> receiver) {
+        JSONObject request = new JSONObject();
+
+        sendApiPost("/playlists/" + playlistId + "/reset", request, new QueueUp.CallReceiver<JSONObject>() {
+            @Override
+            public void onResult(JSONObject result) {
+                try {
+                    QueueUpPlaylist playlist = new QueueUpPlaylist(result.getJSONObject("playlist"));
+                    receiver.onResult(playlist);
+                } catch (JSONException e) {
+                    receiver.onException(e);
+                }
+            }
+
+            @Override
+            public void onException(Exception e) {
+                receiver.onException(e);
+            }
+        });
+    }
+
     public void playlistVoteOnTrack(String playlistId, String trackId, boolean vote, final QueueUp.CallReceiver<QueueUpPlaylist> receiver) {
         try {
             JSONObject request = new JSONObject();

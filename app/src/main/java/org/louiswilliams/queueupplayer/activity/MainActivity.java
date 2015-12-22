@@ -17,6 +17,7 @@ import android.content.res.Configuration;
 import android.location.Location;
 import android.location.LocationManager;
 import android.net.Uri;
+import android.net.http.HttpResponseCache;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
@@ -68,6 +69,8 @@ import org.louiswilliams.queueupplayer.queueup.objects.QueueUpPlaylist;
 import org.louiswilliams.queueupplayer.queueup.objects.QueueUpUser;
 import org.louiswilliams.queueupplayer.service.PlayerService;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -119,6 +122,15 @@ public class MainActivity
                 getApplicationContext()
         );
         Thread.setDefaultUncaughtExceptionHandler(uncaughtExceptionHandler);
+
+        /* Install a small cache */
+        try {
+            File httpCacheDir = new File(getCacheDir(), "queueUpHttp");
+            long httpCacheSize = 5 * 1024 * 1024; // 5MiB
+            HttpResponseCache.install(httpCacheDir, httpCacheSize);
+        } catch (IOException e) {
+            Log.e(QueueUp.LOG_TAG, "Could not install HTTP cache: " + e);
+        }
 
         /* Handle certain navigation actions with the action bar back button*/
         getFragmentManager().addOnBackStackChangedListener(this);
@@ -817,6 +829,12 @@ public class MainActivity
     protected void onDestroy() {
 
         unBindPlayerService();
+
+        /* Write out cache to FS before exiting */
+        HttpResponseCache cache = HttpResponseCache.getInstalled();
+        if (cache != null) {
+            cache.flush();
+        }
 
         super.onDestroy();
     }

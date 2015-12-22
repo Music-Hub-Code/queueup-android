@@ -55,4 +55,8 @@
     <string name="set_location">Use Location</string>
     <string name="current_location_create">Create the playlist at your current location</string>
     <string name="current_location_move">Move the playlist to your current location</string>
+    <string name="playlist_reset">Reset Tracks</string>
+    <string name="added_by_name">Added by %1$s</string>
+    <string name="hosted_by">Hosted by</string>
+    <string name="hosted_by_name">%1$s</string>
 </resources>

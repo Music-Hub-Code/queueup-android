@@ -134,6 +134,9 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
             case R.id.action_playlist_relocate:
                 showRelocateDialog();
                 return true;
+            case R.id.action_playlist_reset:
+                showResetDialog();
+                return true;
             case R.id.action_playlist_invite:
                 Intent inviteIntent = new Intent(mActivity.getBaseContext(), InviteContactsActivity.class);
 
@@ -179,6 +182,13 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
 
         playlistHeader = mActivity.getLayoutInflater().inflate(R.layout.playlist_player_header, null);
         playlistFooter = mActivity.getLayoutInflater().inflate(R.layout.playlist_footer, null);
+
+        TextView adminName = (TextView) playlistHeader.findViewById(R.id.playlist_admin_name);
+        if (playlist.adminName != null) {
+            adminName.setText(getResources().getString(R.string.hosted_by_name, playlist.adminName));
+        } else {
+            adminName.setText(getResources().getString(R.string.hosted_by_name, "an anonymous user"));
+        }
 
         /* If the current playlist playlist is this one, show the controls */
         if (currentPlaylistIsPlaying()) {
@@ -240,10 +250,10 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
                 ViewGroup parent = (ViewGroup) playHereButton.getParent();
                 parent.removeView(playHereButton);
                 TextView replacement = new TextView(getActivity());
-                if (!playlist.adminName.isEmpty()) {
-                    replacement.setText("Created by " + playlist.adminName);
+                if (playlist.addedByName != null) {
+                    replacement.setText(getResources().getString(R.string.added_by_name, playlist.addedByName));
                 } else {
-                    replacement.setText("Created by a QueueUp user");
+                    replacement.setText(getResources().getString(R.string.added_by_name, "an anonymous user"));
                 }
                 replacement.setGravity(Gravity.CENTER);
                 replacement.setTextColor(getResources().getColor(R.color.accent_dark));
@@ -381,9 +391,9 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
                 @Override
                 public void run() {
                     if (playing) {
-                        button.setImageResource(R.drawable.ic_action_pause_36);
+                        button.setImageResource(R.drawable.ic_pause_white);
                     } else {
-                        button.setImageResource(R.drawable.ic_action_play_arrow_36);
+                        button.setImageResource(R.drawable.ic_play_arrow_white);
                     }
                 }
             });
@@ -487,6 +497,19 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
         }).show();
 
     }
+
+    public void showResetDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(mActivity);
+        builder.setTitle("Reset Tracks")
+                .setMessage("Do you want to reset tracks that have already been played?")
+                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        resetTracks();
+                    }
+                }).setNegativeButton("No", null).show();
+    }
+
 
     public void showTrackDeleteDialog(int position) {
         AlertDialog.Builder builder = new AlertDialog.Builder(mActivity);
@@ -602,6 +625,23 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
             }
         });
     }
+
+    public void resetTracks() {
+        mQueueUpClient.playlistReset(mPlaylistId, new QueueUp.CallReceiver<QueueUpPlaylist>() {
+
+            @Override
+            public void onResult(QueueUpPlaylist result) {
+                mTrackListAdapter.updateTrackList(result.tracks);
+            }
+
+            @Override
+            public void onException(Exception e) {
+                Log.e(QueueUp.LOG_TAG, e.getMessage());
+                mActivity.toast(e.getMessage());
+            }
+        });
+    }
+
 
     public boolean currentPlaylistIsPlaying() {
         return (mActivity.getPlaybackController() != null && mActivity.getPlaybackController().getPlaylistId().equals(mPlaylistId));

@@ -15,6 +15,9 @@
         android:icon="@drawable/ic_pin_drop_white"
         app:showAsAction="never"
         />
+    <item android:id="@+id/action_playlist_reset" android:title="@string/playlist_reset"
+        app:showAsAction="never"
+        />
     <item android:id="@+id/action_playlist_delete" android:title="@string/playlist_delete"
         android:icon="@drawable/ic_action_delete_white"
         app:showAsAction="never"

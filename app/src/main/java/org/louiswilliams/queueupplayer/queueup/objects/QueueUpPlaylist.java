@@ -19,6 +19,8 @@ public class QueueUpPlaylist extends QueueUpObject {
     public double longitude = -1;
     public double distance = - 1;
     public List<QueueUpTrack> tracks;
+    public String addedByUserId;
+    public String addedByName;
     public boolean playing;
 
 
@@ -44,6 +46,12 @@ public class QueueUpPlaylist extends QueueUpObject {
             JSONObject currentJson = obj.optJSONObject("current");
             if (currentJson != null ) {
                 current = new SpotifyTrack(currentJson);
+            }
+
+            JSONObject addedBy = obj.optJSONObject("current_addedBy");
+            if (addedBy != null) {
+                addedByUserId = addedBy.optString("_id");
+                addedByName = addedBy.optString("name");
             }
 
             JSONArray jsonTracks = obj.optJSONArray("tracks");
