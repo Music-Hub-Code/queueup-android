@@ -8,14 +8,19 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -25,15 +30,18 @@ import org.json.JSONObject;
 import org.louiswilliams.queueupplayer.R;
 import org.louiswilliams.queueupplayer.activity.MainActivity;
 import org.louiswilliams.queueupplayer.queueup.QueueUp;
+import org.louiswilliams.queueupplayer.queueup.api.SpotifyClient;
+import org.louiswilliams.queueupplayer.queueup.objects.SpotifyPlaylist;
 import org.louiswilliams.queueupplayer.queueup.objects.SpotifyTrack;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
 
-public class AddTrackFragment extends Fragment {
+public class AddTrackFragment extends Fragment implements BackButtonListener {
 
     private MainActivity mActivity;
     private View mView;
@@ -113,6 +121,8 @@ public class AddTrackFragment extends Fragment {
 
         final ImageButton searchClear = (ImageButton) mView.findViewById(R.id.track_search_clear);
         searchClear.setVisibility(View.GONE);
+        final Button importButton = (Button) mView.findViewById(R.id.import_from_spotify_button);
+        final LinearLayout importParent = (LinearLayout) mView.findViewById(R.id.import_from_spotify_wrap);
 
         mSearchBox.addTextChangedListener(new TextWatcher() {
             @Override
@@ -124,11 +134,14 @@ public class AddTrackFragment extends Fragment {
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 searchTracks(s.toString());
 
-                /* Toggle display of clear button */
+                /* Toggle display of clear and import buttons */
                 if (s.length() == 0) {
                     searchClear.setVisibility(View.GONE);
-                } else if (searchClear.getVisibility() == View.GONE) {
+                    importParent.setVisibility(View.VISIBLE);
+                    mTrackListAdapter.updateTrackList(Collections.<SpotifyTrack>emptyList());
+                } else {
                     searchClear.setVisibility(View.VISIBLE);
+                    importParent.setVisibility(View.GONE);
                 }
             }
 
@@ -142,6 +155,34 @@ public class AddTrackFragment extends Fragment {
             @Override
             public void onClick(View view) {
                 mSearchBox.setText(null);
+            }
+        });
+
+        importButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mActivity.spotifyLogin(new QueueUp.CallReceiver<String>() {
+                    @Override
+                    public void onResult(String accessToken) {
+                        SpotifyClient.with(accessToken).getMyPlaylists(new QueueUp.CallReceiver<List<SpotifyPlaylist>>() {
+                            @Override
+                            public void onResult(List<SpotifyPlaylist> result) {
+                                Log.d(QueueUp.LOG_TAG, "Got Spotify playlists: " + result.size());
+                            }
+
+                            @Override
+                            public void onException(Exception e) {
+                                Log.e(QueueUp.LOG_TAG, e.getMessage());
+                            }
+                        });
+                    }
+
+                    @Override
+                    public void onException(Exception e) {
+                        Log.e(QueueUp.LOG_TAG, e.getMessage());
+                    }
+                });
+
             }
         });
 
@@ -242,7 +283,7 @@ public class AddTrackFragment extends Fragment {
                             @Override
                             public void run() {
                                 mTrackListAdapter.updateTrackList(results);
-                                Log.d(QueueUp.LOG_TAG, results.size() +  " search results");
+                                Log.d(QueueUp.LOG_TAG, results.size() + " search results");
                             }
                         });
                     }
@@ -264,6 +305,18 @@ public class AddTrackFragment extends Fragment {
         mActivity.getQueueUpClient().searchTracks(query, offset, receiver);
 
     }
+
+    @Override
+    public boolean onBackButtonPressed() {
+        /* If the back button is pressed and there is a query in the box, clear it */
+        if (mSearchBox.getText().length() > 0) {
+            mSearchBox.setText(null);
+            return true;
+        }
+        return false;
+    }
+
+
     public static class TrackSearchListAdapter extends BaseAdapter {
 
         private Context mContext;

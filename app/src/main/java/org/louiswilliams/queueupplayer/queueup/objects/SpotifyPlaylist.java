@@ -1,39 +1,37 @@
 package org.louiswilliams.queueupplayer.queueup.objects;
 
-import android.util.Log;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.louiswilliams.queueupplayer.queueup.QueueUp;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class SpotifyAlbum extends SpotifyObject {
-    public List<String> imageUrls;
+public class SpotifyPlaylist extends SpotifyObject {
 
-    public SpotifyAlbum (JSONObject obj) {
+    List<String> imageUrls;
+    int totalTraacks;
+    SpotifyUser owner;
+
+
+    public SpotifyPlaylist(JSONObject obj) {
         super(obj);
-        imageUrls = new ArrayList<String>();
+
         try {
+            imageUrls = new ArrayList<>();
             JSONArray images = (JSONArray) obj.getJSONArray("images");
             for (int i = 0; i < images.length(); i++) {
                 JSONObject image = (JSONObject) images.get(i);
                 imageUrls.add(image.getString("url"));
             }
 
+            JSONObject ownerJson = obj.optJSONObject("owner");
+            owner = new SpotifyUser(ownerJson);
+
+            JSONObject tracks = obj.optJSONObject("tracks");
+            totalTraacks = tracks.optInt("total", 0);
         } catch (JSONException e) {
-            Log.e(QueueUp.LOG_TAG, "JSON Error: " + e.getMessage());
+            e.printStackTrace();
         }
-
-    }
-
-    @Override
-    public String toString() {
-        return "SpotifyAlbum[id=" + id +
-                ", uri=" + uri +
-                ", name=" + name +
-                ", imageUrls=" + imageUrls + "]";
     }
 }

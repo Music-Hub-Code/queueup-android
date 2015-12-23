@@ -64,7 +64,7 @@ public class SpotifyTokenManager{
                     JSONObject postJSON = new JSONObject();
                     postJSON.put("code", code);
 
-                    client.sendRequest(connection, postJSON, new QueueUp.CallReceiver<JSONObject>() {
+                    client.sendApiRequest(connection, postJSON, new QueueUp.CallReceiver<JSONObject>() {
                         @Override
                         public void onResult(JSONObject response) {
 
@@ -117,7 +117,7 @@ public class SpotifyTokenManager{
                     JSONObject postJSON = new JSONObject();
                     postJSON.put("refresh_token", getEncryptedRefreshToken());
 
-                    client.sendRequest(connection, postJSON, new QueueUp.CallReceiver<JSONObject>() {
+                    client.sendApiRequest(connection, postJSON, new QueueUp.CallReceiver<JSONObject>() {
                         @Override
                         public void onResult(JSONObject response) {
                             try {

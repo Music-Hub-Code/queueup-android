@@ -10,9 +10,6 @@ import org.louiswilliams.queueupplayer.queueup.QueueUp;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by Louis on 5/23/2015.
- */
 public class SpotifyTrack extends SpotifyObject {
     public long durationMs;
     public SpotifyAlbum album;

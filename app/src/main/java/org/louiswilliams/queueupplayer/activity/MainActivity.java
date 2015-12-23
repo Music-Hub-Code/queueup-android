@@ -52,6 +52,7 @@ import com.squareup.picasso.Picasso;
 import org.louiswilliams.queueupplayer.QueueUpApplication;
 import org.louiswilliams.queueupplayer.R;
 import org.louiswilliams.queueupplayer.fragment.AddTrackFragment;
+import org.louiswilliams.queueupplayer.fragment.BackButtonListener;
 import org.louiswilliams.queueupplayer.fragment.LocationSelectFragment;
 import org.louiswilliams.queueupplayer.fragment.PlaylistFragment;
 import org.louiswilliams.queueupplayer.fragment.PlaylistListFragment;
@@ -64,9 +65,11 @@ import org.louiswilliams.queueupplayer.queueup.QueueUpException;
 import org.louiswilliams.queueupplayer.queueup.QueueUpLocationListener;
 import org.louiswilliams.queueupplayer.queueup.QueueUpStore;
 import org.louiswilliams.queueupplayer.queueup.api.QueueUpClient;
+import org.louiswilliams.queueupplayer.queueup.api.SpotifyClient;
 import org.louiswilliams.queueupplayer.queueup.api.SpotifyTokenManager;
 import org.louiswilliams.queueupplayer.queueup.objects.QueueUpPlaylist;
 import org.louiswilliams.queueupplayer.queueup.objects.QueueUpUser;
+import org.louiswilliams.queueupplayer.queueup.objects.SpotifyUser;
 import org.louiswilliams.queueupplayer.service.PlayerService;
 
 import java.io.File;
@@ -76,9 +79,7 @@ import java.util.List;
 
 public class MainActivity
         extends AppCompatActivity
-        implements
-        PlaybackReceiver,
-        FragmentManager.OnBackStackChangedListener {
+        implements PlaybackReceiver, FragmentManager.OnBackStackChangedListener {
 
     public static final String PLAYLISTS_ALL = "all";
     public static final String PLAYLISTS_NEARBY = "nearby";
@@ -86,7 +87,6 @@ public class MainActivity
     public static final String PLAYLISTS_MINE = "mine";
     public static final int[] NAVIGATION_TITLES = {R.string.nearby_playlists, R.string.top_playlists, R.string.friends_playlists, R.string.my_playlists};
     public static final String[] NAVIGATION_ACTIONS = {PLAYLISTS_NEARBY, PLAYLISTS_ALL, PLAYLISTS_FRIENDS, PLAYLISTS_MINE};
-    private static final String REDIRECT_URI = "queueup://callback";
     private static final String LOG_TAG = QueueUp.LOG_TAG;
     private static final int LOCATION_SETTINGS_CODE = 4444;
 
@@ -104,6 +104,7 @@ public class MainActivity
     private QueueUpStore mStore;
     private ServiceConnection mServiceConnection;
     private SpotifyTokenManager mSpotifyTokenManager;
+    private QueueUp.CallReceiver<String> spotifyAuthListener;
     private String mClientToken;
     private String mEmailAddress;
     private String mFacebookId;
@@ -444,7 +445,7 @@ public class MainActivity
         mDrawerLayout.closeDrawers();
     }
 
-    public void spotifyLogin() {
+    public void spotifyLogin(final QueueUp.CallReceiver<String> listener) {
 
         /* If we have an access token*/
         if (mSpotifyTokenManager.haveAccessToken()) {
@@ -453,35 +454,36 @@ public class MainActivity
             if (mSpotifyTokenManager.haveValidAccessToken()) {
 
                 /* Initialize with the valid access token... */
-                mPlayerService.initPlayer(mSpotifyTokenManager.getAccessToken());
+                listener.onResult(mSpotifyTokenManager.getAccessToken());
             } else {
 
                 /* Refresh an expired token */
                 mSpotifyTokenManager.refreshToken(new QueueUp.CallReceiver<String>() {
                     @Override
                     public void onResult(String result) {
-                        mPlayerService.initPlayer(result);
+                        listener.onResult(result);
                     }
 
                     @Override
                     public void onException(Exception e) {
-                        e.printStackTrace();
-                        Log.e(QueueUp.LOG_TAG, "Error refreshing token: " + e.getMessage());
+                        listener.onException(new Exception("Error refreshing token: ", e));
                     }
                 });
             }
         } else {
 
+            /* Listen for the intent response */
+            spotifyAuthIntentListen(listener);
+
             /* Build a request to log in through the browser...*/
             AuthenticationRequest.Builder builder = new AuthenticationRequest.Builder(
                     mSpotifyClientId,
                     AuthenticationResponse.Type.CODE,
-                    REDIRECT_URI);
+                    QueueUp.SPOTIFY_LOGIN_REDIRECT_URI);
             builder.setScopes(new String[]{"user-read-private", "streaming"});
             AuthenticationRequest request = builder.build();
 
             AuthenticationClient.openLoginInBrowser(this, request);
-
             /* To be seen again... in onNewIntent */
         }
     }
@@ -494,12 +496,19 @@ public class MainActivity
 
             showPlaylistSearchResultsFragment(query);
 
-
         /* Spotify auth response intent */
         } else if (Intent.ACTION_VIEW.equals(intent.getAction())) {
             Uri uri = intent.getData();
-            if (uri != null) {
+
+            /* Get the reference to the listener */
+            final QueueUp.CallReceiver<String> receiver = spotifyAuthListener;
+
+            if (uri != null && receiver != null) {
                 AuthenticationResponse response = AuthenticationResponse.fromUri(uri);
+
+                /* Consume the listener by invalidating it */
+                spotifyAuthListener = null;
+
                 switch (response.getType()) {
                     case CODE:
 
@@ -508,19 +517,17 @@ public class MainActivity
 
                             @Override
                             public void onResult(String result) {
-                                mPlayerService.initPlayer(result);
+                                receiver.onResult(result);
                             }
 
                             @Override
                             public void onException(Exception e) {
-                                e.printStackTrace();
-                                Log.e(QueueUp.LOG_TAG, "Error swapping code for token:" + e.getMessage());
-                                toast("Error swapping code for token");
+                                receiver.onException(new Exception("Error swapping code for token", e));
                             }
                         });
                     case ERROR:
                         if (response.getError() != null) {
-                            Log.e(QueueUp.LOG_TAG, "Login Error: " + response.getError());
+                            receiver.onException(new Exception("Login error: "+ response.getError()));
                         }
                         break;
                 }
@@ -583,7 +590,34 @@ public class MainActivity
                 mPlayerService = ((PlayerService.LocalBinder) iBinder).getService();
 
                 if (doLogin) {
-                    spotifyLogin();
+                    spotifyLogin(new QueueUp.CallReceiver<String>() {
+                        @Override
+                        public void onResult(final String accessToken) {
+                            SpotifyClient.with(accessToken).getMe(new QueueUp.CallReceiver<SpotifyUser>() {
+
+                                @Override
+                                public void onResult(SpotifyUser user) {
+                                    if (SpotifyUser.PRODUCT_PREMIUM.equalsIgnoreCase(user.product)) {
+                                        mPlayerService.initPlayer(accessToken);
+                                    } else {
+                                        toast("You need Spotify Premium");
+                                    }
+                                }
+
+                                @Override
+                                public void onException(Exception e) {
+                                    Log.e(QueueUp.LOG_TAG, e.getMessage());
+                                    toast(e.getMessage());
+                                }
+                            });
+                        }
+
+                        @Override
+                        public void onException(Exception e) {
+                            Log.e(QueueUp.LOG_TAG, e.getMessage());
+                            toast(e.getMessage());
+                        }
+                    });
                 }
 
                 if (listener != null) {
@@ -676,6 +710,11 @@ public class MainActivity
     }
 
 
+    public void spotifyAuthIntentListen(QueueUp.CallReceiver<String> receiver) {
+        spotifyAuthListener = receiver;
+    }
+
+
     public void populateHeaderWithProfileInfo(View headerView) {
         ImageView userImage = (ImageView) headerView.findViewById(R.id.drawer_user_image);
         final TextView userName = (TextView) headerView.findViewById(R.id.drawer_user_name);
@@ -710,7 +749,6 @@ public class MainActivity
 
 
     }
-
 
     public void doLogin() {
         Intent loginIntent = new Intent(getBaseContext(), LoginActivity.class);
@@ -869,11 +907,16 @@ public class MainActivity
     @Override
     public void onBackPressed() {
         if (getFragmentManager().getBackStackEntryCount() == 0) {
-
             super.onBackPressed();
-
         } else {
-            getFragmentManager().popBackStack();
+            Fragment current = getCurrentFragment();
+            if (current != null && current instanceof BackButtonListener) {
+
+                /* If the fragment doesn't consume the event, do the default action */
+                if (!((BackButtonListener) current).onBackButtonPressed()) {
+                    getFragmentManager().popBackStack();
+                }
+            }
         }
     }
 

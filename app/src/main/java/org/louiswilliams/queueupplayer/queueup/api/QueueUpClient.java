@@ -58,11 +58,11 @@ public class QueueUpClient {
         this.userId = userId;
 
         if (sslContext == null) {
-            sslContext = getSslContext(context);
+            sslContext = createSslContext(context);
         }
     }
 
-    public static SSLContext getSslContext(Context applicationContext) throws QueueUpException {
+    public static SSLContext createSslContext(Context applicationContext) throws QueueUpException {
         SSLContext sslContext = null;
         try {
             CertificateFactory cf = CertificateFactory.getInstance(CF_CSR);
@@ -659,7 +659,7 @@ public class QueueUpClient {
             URL url = new URL(QueueUp.API_URL + uri);
             connection = (HttpsURLConnection) url.openConnection();
             connection.setRequestMethod("POST");
-            sendRequest(connection, object, receiver);
+            sendApiRequest(connection, object, receiver);
         } catch (IOException e) {
             receiver.onException(e);
         }
@@ -671,27 +671,44 @@ public class QueueUpClient {
         try {
             URL url = new URL(QueueUp.API_URL + uri);
             connection = (HttpsURLConnection) url.openConnection();
-            sendRequest(connection, null, receiver);
+            sendApiRequest(connection, null, receiver);
         } catch (IOException e) {
             receiver.onException(e);
         }
         return connection;
     }
 
-    private HttpsURLConnection sendApiRequest(final HttpsURLConnection connection, final JSONObject data, final QueueUp.CallReceiver<JSONObject> receiver) {
+    /**
+     * Used to send a request to the QueueUp server only, as this pins the required certificate
+     *
+     * @param connection Connection created from URL
+     * @param data Data to send to make this a POST request
+     * @param receiver Callback on affirmative result or an error
+     * @return The same connection passed in
+     */
+    public HttpsURLConnection sendApiRequest(final HttpsURLConnection connection, final JSONObject data, final QueueUp.CallReceiver<JSONObject> receiver) {
         if (clientToken != null && userId != null) {
             ApiHmac.hmacSha1(clientToken).setAuthHeadersForUser(connection, userId);
+        }
+        if (sslContext  != null ) {
+            connection.setSSLSocketFactory(sslContext.getSocketFactory());
         }
         return sendRequest(connection, data, receiver);
     }
 
-    public HttpsURLConnection sendRequest(final HttpsURLConnection connection, final JSONObject data, final QueueUp.CallReceiver<JSONObject> receiver) {
+    /**
+     * Used to send any HTTPs request. Use this to make requests to other servers
+     *
+     * @param connection Connection created from URL
+     * @param data Data to send to make this a POST request
+     * @param receiver Callback on affirmative result or an error
+     * @return The same connection passed in
+     */
+    public static HttpsURLConnection sendRequest(final HttpsURLConnection connection, final JSONObject data, final QueueUp.CallReceiver<JSONObject> receiver) {
         new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
-                    connection.setSSLSocketFactory(sslContext.getSocketFactory());
-
                     boolean isPost = data != null;
 
                     /* POST data */
@@ -732,7 +749,7 @@ public class QueueUpClient {
         return connection;
     }
 
-    public JSONObject readJsonFromConnection(HttpURLConnection connection) throws IOException, JSONException {
+    public static JSONObject readJsonFromConnection(HttpURLConnection connection) throws IOException, JSONException {
         InputStream inputStream;
         try {
             inputStream = connection.getInputStream();
@@ -753,7 +770,7 @@ public class QueueUpClient {
         return new JSONObject(response.toString());
     }
 
-    public void writeJsonToConnection(JSONObject json, HttpURLConnection connection) throws IOException {
+    public static void writeJsonToConnection(JSONObject json, HttpURLConnection connection) throws IOException {
         String content = json.toString();
         connection.setDoOutput(true);
         connection.setFixedLengthStreamingMode(content.length());

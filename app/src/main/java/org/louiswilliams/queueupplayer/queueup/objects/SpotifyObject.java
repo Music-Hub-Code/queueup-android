@@ -6,9 +6,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.louiswilliams.queueupplayer.queueup.QueueUp;
 
-/**
- * Created by Louis on 5/23/2015.
- */
 public abstract class SpotifyObject {
     public String id;
     public String uri;
@@ -16,13 +13,9 @@ public abstract class SpotifyObject {
 
 
     public SpotifyObject(JSONObject obj) {
-        try {
-            id = obj.getString("id");
-            uri = obj.getString("uri");
-            name = obj.getString("name");
-        } catch (JSONException e) {
-            Log.e(QueueUp.LOG_TAG, "JSON problem: " + e.getMessage());
-        }
+        id = obj.optString("id");
+        uri = obj.optString("uri");
+        name = obj.optString("name");
     }
 
     @Override
