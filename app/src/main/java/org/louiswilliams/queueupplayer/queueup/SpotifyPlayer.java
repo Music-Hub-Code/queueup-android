@@ -66,10 +66,10 @@ public class SpotifyPlayer implements PlaylistListener, PlayerNotificationCallba
     }
 
     @Override
-    public void onPlayerReady() {
+    public void onPlayerReady(boolean ready) {
         final QueueUpStateChange state = mPlaybackController.getCurrentState();
 
-        if (state != null && state.current != null) {
+        if (ready && state != null && state.current != null) {
 
             mPlayer.getPlayerState(new PlayerStateCallback() {
                 @Override

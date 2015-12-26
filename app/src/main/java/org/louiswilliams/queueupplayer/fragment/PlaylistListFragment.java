@@ -38,7 +38,7 @@ public class PlaylistListFragment extends AbstractPlaylistListFragment implement
 
 
     @Override
-    protected void populate() {
+    protected void populate(boolean refresh) {
         Log.d(QueueUp.LOG_TAG, "populating list...");
 
         /* Handle which action to take */
@@ -54,16 +54,16 @@ public class PlaylistListFragment extends AbstractPlaylistListFragment implement
 
         switch (mAction) {
             case MainActivity.PLAYLISTS_ALL:
-                populateAll();
+                populateAll(refresh);
                 break;
             case MainActivity.PLAYLISTS_NEARBY:
-                populateNearby();
+                populateNearby(refresh);
                 break;
             case MainActivity.PLAYLISTS_FRIENDS:
-                populateFriends();
+                populateFriends(refresh);
                 break;
             case MainActivity.PLAYLISTS_MINE:
-                populateMine();
+                populateMine(refresh);
                 break;
             default:
                 throw new IllegalStateException("No valid action given");
@@ -71,25 +71,13 @@ public class PlaylistListFragment extends AbstractPlaylistListFragment implement
 
     }
 
-    public void populateAll() {
+    public void populateAll(final boolean refresh) {
 
         mActivity.getQueueUpClient().playlistGetList(new QueueUp.CallReceiver<List<QueueUpPlaylist>>() {
             @Override
             public void onResult(List<QueueUpPlaylist> playlists) {
                 Log.d(QueueUp.LOG_TAG, "Playlist all success");
-                mPlaylists = playlists;
-
-                adapter = new PlaylistGridAdapter(mActivity, mPlaylists, R.layout.playlist_item);
-                final ProgressBar progress = (ProgressBar) mView.findViewById(R.id.loading_progress_bar);
-
-                mActivity.runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        progress.setVisibility(View.GONE);
-                        playlistGrid.setAdapter(adapter);
-                    }
-                });
-
+                populateDone(playlists, null, refresh);
             }
 
             @Override
@@ -100,7 +88,7 @@ public class PlaylistListFragment extends AbstractPlaylistListFragment implement
         });
     }
 
-    public void populateNearby() {
+    public void populateNearby(final boolean refresh) {
          /* Find nearby playlists */
         /* If the user hasn't enabled location services... */
         if (mActivity.getLocationListener() == null || !mActivity.isLocationEnabled()) {
@@ -111,65 +99,33 @@ public class PlaylistListFragment extends AbstractPlaylistListFragment implement
         Location location = mActivity.getLocationListener().getCurrentBestLocation();
 
         /* If we don't have a location yet, let the user know*/
-        final TextView notification = (TextView) mView.findViewById(R.id.playlist_notification);
         if (location == null) {
             mActivity.getLocationListener().getSingleLocationUpdate(this);
 
-            mActivity.runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    notification.setText(R.string.waiting_for_location);
-                    notification.setVisibility(View.VISIBLE);
-                }
-            });
+            populateDone(null, getString(R.string.waiting_for_location), refresh);
             return;
-        } else {
-            notification.setVisibility(View.GONE);
         }
 
         mActivity.getQueueUpClient().getNearbyPlaylists(location, new QueueUp.CallReceiver<List<QueueUpPlaylist>>() {
             @Override
             public void onResult(List<QueueUpPlaylist> playlists) {
-                mPlaylists = playlists;
-
-                adapter = new PlaylistGridAdapter(mActivity, mPlaylists, R.layout.playlist_item);
-                final ProgressBar progress = (ProgressBar) mView.findViewById(R.id.loading_progress_bar);
-
                 if (playlists.size() > 0) {
-                    mPlaylists = playlists;
-                    adapter = new PlaylistGridAdapter(mActivity, mPlaylists, R.layout.playlist_item);
-
-                    mActivity.runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            progress.setVisibility(View.GONE);
-                            playlistGrid.setAdapter(adapter);
-                        }
-                    });
+                    populateDone(playlists, null, refresh);
                 } else {
-
-
-                    mActivity.runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            progress.setVisibility(View.GONE);
-                            notification.setText(getString(R.string.no_playlists_nearby));
-                            notification.setVisibility(View.VISIBLE);
-                        }
-                    });
+                    populateDone(null, getString(R.string.no_playlists_nearby), refresh);
                 }
-
             }
 
             @Override
             public void onException(Exception e) {
                 mActivity.toast(e.getMessage());
                 e.printStackTrace();
+                populateDone(null, null, refresh);
             }
         });
     }
 
-    public void populateFriends() {
+    public void populateFriends(final boolean refresh) {
         /* If the user is logged in with Facebook, do a graph request to get their FB friends*/
         AccessToken accessToken = mActivity.getAccessToken();
         if (accessToken != null) {
@@ -185,33 +141,11 @@ public class PlaylistListFragment extends AbstractPlaylistListFragment implement
                     mActivity.getQueueUpClient().getFriendsPlaylists(ids, new QueueUp.CallReceiver<List<QueueUpPlaylist>>() {
                         @Override
                         public void onResult(List<QueueUpPlaylist> playlists) {
-                            mPlaylists  = playlists;
-
-                            final ProgressBar progress = (ProgressBar) mView.findViewById(R.id.loading_progress_bar);
-                            final TextView notification = (TextView) mView.findViewById(R.id.playlist_notification);
 
                             if (playlists.size() > 0) {
-                                mPlaylists = playlists;
-                                adapter = new PlaylistGridAdapter(mActivity, mPlaylists, R.layout.playlist_item);
-
-                                mActivity.runOnUiThread(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        progress.setVisibility(View.GONE);
-                                        playlistGrid.setAdapter(adapter);
-                                    }
-                                });
+                                populateDone(playlists, null, refresh);
                             } else {
-
-
-                                mActivity.runOnUiThread(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        progress.setVisibility(View.GONE);
-                                        notification.setText(getString(R.string.no_friends_playlists));
-                                        notification.setVisibility(View.VISIBLE);
-                                    }
-                                });
+                                populateDone(null, getString(R.string.no_friends_playlists), refresh);
                             }
                         }
 
@@ -219,61 +153,28 @@ public class PlaylistListFragment extends AbstractPlaylistListFragment implement
                         public void onException(Exception e) {
                             mActivity.toast(e.getMessage());
                             e.printStackTrace();
+                            populateDone(null, null, refresh);
                         }
                     });
-
                 }
             });
 
             graphRequest.executeAsync();
 
         } else {
-            final ProgressBar progress = (ProgressBar) mView.findViewById(R.id.loading_progress_bar);
-            final TextView playlistNotif = (TextView) mView.findViewById(R.id.playlist_notification);
-
-            mActivity.runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    progress.setVisibility(View.GONE);
-                    playlistNotif.setText(getString(R.string.facebook_notification));
-                    playlistNotif.setVisibility(View.VISIBLE);
-                }
-            });
-
-
+            populateDone(null, getString(R.string.facebook_notification), refresh);
         }
     }
 
-    public void populateMine() {
-            mActivity.getQueueUpClient().getUserPlaylists(mActivity.getCurrentUserId(), new QueueUp.CallReceiver<List<QueueUpPlaylist>>() {
+    public void populateMine(final boolean refresh) {
+        mActivity.getQueueUpClient().getUserPlaylists(mActivity.getCurrentUserId(), new QueueUp.CallReceiver<List<QueueUpPlaylist>>() {
             @Override
             public void onResult(List<QueueUpPlaylist> playlists) {
 
-                final ProgressBar progress = (ProgressBar) mView.findViewById(R.id.loading_progress_bar);
-                final TextView notification = (TextView) mView.findViewById(R.id.playlist_notification);
-
                 if (playlists.size() > 0) {
-                    mPlaylists = playlists;
-                    adapter = new PlaylistGridAdapter(mActivity, mPlaylists, R.layout.playlist_item);
-
-                    mActivity.runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            progress.setVisibility(View.GONE);
-                            playlistGrid.setAdapter(adapter);
-                        }
-                    });
+                    populateDone(playlists, null, refresh);
                 } else {
-
-
-                    mActivity.runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            progress.setVisibility(View.GONE);
-                            notification.setText(getString(R.string.create_playlist_notification));
-                            notification.setVisibility(View.VISIBLE);
-                        }
-                    });
+                    populateDone(null, getString(R.string.create_playlist_notification), refresh);
                 }
             }
 
@@ -281,6 +182,7 @@ public class PlaylistListFragment extends AbstractPlaylistListFragment implement
             public void onException(Exception e) {
                 mActivity.toast(e.getMessage());
                 Log.e(QueueUp.LOG_TAG, "Failed to getString playlist list: " + e.getMessage());
+                populateDone(null, null, refresh);
             }
         });
     }
@@ -288,7 +190,7 @@ public class PlaylistListFragment extends AbstractPlaylistListFragment implement
     @Override
     public void onLocation(Location location) {
         if (mAction.equals(MainActivity.PLAYLISTS_NEARBY)) {
-            populateNearby();
+            populateNearby(true);
         }
     }
 }

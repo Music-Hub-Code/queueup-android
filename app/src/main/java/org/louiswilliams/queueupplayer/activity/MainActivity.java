@@ -21,6 +21,7 @@ import android.net.http.HttpResponseCache;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.os.Looper;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -57,6 +58,7 @@ import org.louiswilliams.queueupplayer.fragment.LocationSelectFragment;
 import org.louiswilliams.queueupplayer.fragment.PlaylistFragment;
 import org.louiswilliams.queueupplayer.fragment.PlaylistListFragment;
 import org.louiswilliams.queueupplayer.fragment.PlaylistSearchResultsFragment;
+import org.louiswilliams.queueupplayer.fragment.SpotifyPlaylistListFragment;
 import org.louiswilliams.queueupplayer.queueup.PlaybackController;
 import org.louiswilliams.queueupplayer.queueup.PlaybackReceiver;
 import org.louiswilliams.queueupplayer.queueup.PlaylistListener;
@@ -361,6 +363,16 @@ public class MainActivity
         transaction.commit();
     }
 
+    public void showSpotifyPlaylistListFragment() {
+        FragmentTransaction transaction = getFragmentManager().beginTransaction();
+
+        SpotifyPlaylistListFragment fragment = new SpotifyPlaylistListFragment();
+
+        transaction.replace(R.id.content_frame, fragment);
+        transaction.addToBackStack(fragment.getClass().getName());
+        transaction.commit();
+    }
+
     public void showLocationSelectCreateFragment(String playlistName) {
         FragmentTransaction transaction = getFragmentManager().beginTransaction();
         Bundle bundle = new Bundle();
@@ -480,7 +492,7 @@ public class MainActivity
                     mSpotifyClientId,
                     AuthenticationResponse.Type.CODE,
                     QueueUp.SPOTIFY_LOGIN_REDIRECT_URI);
-            builder.setScopes(new String[]{"user-read-private", "streaming"});
+            builder.setScopes(new String[]{"user-read-private", "playlist-read-private", "streaming"});
             AuthenticationRequest request = builder.build();
 
             AuthenticationClient.openLoginInBrowser(this, request);
@@ -561,8 +573,13 @@ public class MainActivity
             mPlayerServiceIntent = null;
             mServiceConnection = null;
         }
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                recreate();
 
-        recreate();
+            }
+        });
     }
 
     public boolean isPlayerServiceRunning() {
@@ -601,6 +618,7 @@ public class MainActivity
                                         mPlayerService.initPlayer(accessToken);
                                     } else {
                                         toast("You need Spotify Premium");
+                                        mPlayerService.stopPlayback();
                                     }
                                 }
 

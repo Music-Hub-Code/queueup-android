@@ -9,23 +9,24 @@ import org.louiswilliams.queueupplayer.queueup.objects.SpotifyUser;
 
 import java.io.IOException;
 import java.net.URL;
-import java.security.KeyManagementException;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLContext;
 
 public class SpotifyClient {
 
     public static final String SPOTIFY_API_FORMAT = "https://api.spotify.com/v1/%s";
 
-    String accessToken;
+    private String accessToken;
+    private Map<String,String> eTags;
 
     public SpotifyClient(String accessToken) {
         this.accessToken = accessToken;
+        this.eTags = new ConcurrentHashMap<>();
     }
 
     public static SpotifyClient with(String accessToken) {
@@ -71,6 +72,21 @@ public class SpotifyClient {
         });
     }
 
+    public void getUser(String userId, final QueueUp.CallReceiver<SpotifyUser> receiver) {
+        apiRequest("users/" + userId, null, new QueueUp.CallReceiver<JSONObject>() {
+            @Override
+            public void onResult(JSONObject result) {
+                SpotifyUser user = new SpotifyUser(result);
+                receiver.onResult(user);
+            }
+
+            @Override
+            public void onException(Exception e) {
+                receiver.onException(e);
+            }
+        });
+    }
+
     public void apiRequest(final String uri, final JSONObject data, final QueueUp.CallReceiver<JSONObject> receiver) {
         final String urlString = String.format(SPOTIFY_API_FORMAT, uri);
         new Thread(new Runnable() {
@@ -78,10 +94,29 @@ public class SpotifyClient {
             public void run() {
                 try {
                     URL url = new URL(urlString);
-                    HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
+                    final HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
                     connection.setRequestProperty("Authorization", "Bearer " + accessToken);
+//                    String etag = eTags.get(urlString);
+//                    if (etag != null) {
+//                        connection.setRequestProperty("If-None-Match", etag);
+//                    }
 
-                    QueueUpClient.sendRequest(connection, data, receiver);
+                    /* Handle the ETag caching */
+                    QueueUpClient.sendRequest(connection, data, new QueueUp.CallReceiver<JSONObject>() {
+                        @Override
+                        public void onResult(JSONObject result) {
+//                            String etag = connection.getHeaderField("ETag");
+//                            if (etag != null) {
+//                                eTags.put(urlString, etag);
+//                            }
+                            receiver.onResult(result);
+                        }
+
+                        @Override
+                        public void onException(Exception e) {
+                            receiver.onException(e);
+                        }
+                    });
                 } catch (IOException e) {
                     receiver.onException(e);
                 }

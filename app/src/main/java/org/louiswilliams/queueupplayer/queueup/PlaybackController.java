@@ -4,7 +4,7 @@ import org.louiswilliams.queueupplayer.queueup.objects.QueueUpStateChange;
 
 public interface PlaybackController {
 
-    void updatePlaybackReady();
+    void updatePlaybackReady(boolean ready);
 
     void updateTrackPlaying(boolean playing);
 

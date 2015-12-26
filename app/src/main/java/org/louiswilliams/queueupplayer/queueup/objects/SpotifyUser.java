@@ -2,6 +2,7 @@ package org.louiswilliams.queueupplayer.queueup.objects;
 
 import org.json.JSONObject;
 
+import java.io.IOException;
 import java.util.List;
 
 public class SpotifyUser extends SpotifyObject {

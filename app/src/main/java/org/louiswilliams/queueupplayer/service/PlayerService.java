@@ -116,6 +116,7 @@ public class PlayerService extends Service implements PlaybackController {
                 @Override
                 public void onError(Throwable throwable) {
                     Log.e(QueueUp.LOG_TAG, "Could not initialize: " + throwable.getMessage());
+                    updatePlaybackReady(false);
                 }
             });
 
@@ -130,7 +131,7 @@ public class PlayerService extends Service implements PlaybackController {
         /* Attach the player listener */
         mSpotifyPlayer.startReceivingPlaybackNotifications();
         addPlaylistListener(mSpotifyPlayer);
-        updatePlaybackReady();
+        updatePlaybackReady(true);
         updateTrackPlaying(true);
 
     }
@@ -155,6 +156,7 @@ public class PlayerService extends Service implements PlaybackController {
     @Override
     public void onDestroy() {
         removeAllPlaylistListeners();
+        updatePlaybackReady(false);
         updateTrackPlaying(false);
         mPlaylistPlayer.disconnect();
         mNotification.cancel();
@@ -211,8 +213,8 @@ public class PlayerService extends Service implements PlaybackController {
     }
 
     @Override
-    public void updatePlaybackReady() {
-        mPlaylistPlayer.updatePlaybackReady();
+    public void updatePlaybackReady(boolean ready) {
+        mPlaylistPlayer.updatePlaybackReady(ready);
     }
 
     @Override

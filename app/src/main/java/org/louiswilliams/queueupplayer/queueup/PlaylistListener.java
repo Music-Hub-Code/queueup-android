@@ -11,6 +11,6 @@ public interface PlaylistListener {
     void onTrackChanged(SpotifyTrack track);
     void onQueueChanged(List<QueueUpTrack> tracks);
     void onTrackProgress(int progressMs, int durationMs);
-    void onPlayerReady();
+    void onPlayerReady(boolean status);
     String getPlaylistId();
 }

@@ -30,6 +30,8 @@ public class PlayerNotification extends Notification implements PlaylistListener
     private static final String SKIP_BUTTON_INTENT = "QUEUEUP_SKIP_BUTTON";
     private static final String STOP_BUTTON_INTENT = "QUEUEUP_STOP_BUTTON";
 
+    public String CREATOR = "org.louiswilliams.queueup";
+
     private Context mContext;
     private NotificationManager mNotificationManager;
     private Builder mBuilder;
@@ -136,7 +138,11 @@ public class PlayerNotification extends Notification implements PlaylistListener
     public void onQueueChanged(List<QueueUpTrack> tracks) {   }
 
     @Override
-    public void onPlayerReady() {}
+    public void onPlayerReady(boolean ready) {
+        if (!ready) {
+            cancel();
+        }
+    }
 
     @Override
     public String getPlaylistId() {

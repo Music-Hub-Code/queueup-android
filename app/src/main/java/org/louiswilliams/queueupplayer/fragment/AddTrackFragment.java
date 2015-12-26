@@ -161,28 +161,8 @@ public class AddTrackFragment extends Fragment implements BackButtonListener {
         importButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                mActivity.spotifyLogin(new QueueUp.CallReceiver<String>() {
-                    @Override
-                    public void onResult(String accessToken) {
-                        SpotifyClient.with(accessToken).getMyPlaylists(new QueueUp.CallReceiver<List<SpotifyPlaylist>>() {
-                            @Override
-                            public void onResult(List<SpotifyPlaylist> result) {
-                                Log.d(QueueUp.LOG_TAG, "Got Spotify playlists: " + result.size());
-                            }
-
-                            @Override
-                            public void onException(Exception e) {
-                                Log.e(QueueUp.LOG_TAG, e.getMessage());
-                            }
-                        });
-                    }
-
-                    @Override
-                    public void onException(Exception e) {
-                        Log.e(QueueUp.LOG_TAG, e.getMessage());
-                    }
-                });
-
+                mActivity.getFragmentManager().popBackStack();
+                mActivity.showSpotifyPlaylistListFragment();
             }
         });
 

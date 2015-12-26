@@ -42,32 +42,22 @@ public class PlaylistSearchResultsFragment extends AbstractPlaylistListFragment 
     }
 
     @Override
-    protected void populate() {
+    protected void populate(final boolean refresh) {
 
         /* Do a search query and pass the results back to the fragment  */
         mActivity.getQueueUpClient().searchPlaylists(mQuery, new QueueUp.CallReceiver<List<QueueUpPlaylist>>() {
             @Override
             public void onResult(List<QueueUpPlaylist> playlists) {
                 Log.d(QueueUp.LOG_TAG, "Playlist search success");
-                mPlaylists = playlists;
 
-                adapter = new PlaylistGridAdapter(mActivity, mPlaylists, R.layout.playlist_item);
-                final ProgressBar progress = (ProgressBar) mView.findViewById(R.id.loading_progress_bar);
-
-                mActivity.runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        progress.setVisibility(View.GONE);
-                        playlistGrid.setAdapter(adapter);
-                    }
-                });
-
+                populateDone(playlists, null, refresh);
             }
 
             @Override
             public void onException(Exception e) {
                 Log.e(QueueUp.LOG_TAG, e.getMessage());
                 mActivity.toast(e.getMessage());
+                populateDone(null, null, refresh);
             }
         });
 

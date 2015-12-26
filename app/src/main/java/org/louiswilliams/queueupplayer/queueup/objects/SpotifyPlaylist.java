@@ -9,9 +9,9 @@ import java.util.List;
 
 public class SpotifyPlaylist extends SpotifyObject {
 
-    List<String> imageUrls;
-    int totalTraacks;
-    SpotifyUser owner;
+    public List<String> imageUrls;
+    public int totalTracks;
+    public SpotifyUser owner;
 
 
     public SpotifyPlaylist(JSONObject obj) {
@@ -29,7 +29,7 @@ public class SpotifyPlaylist extends SpotifyObject {
             owner = new SpotifyUser(ownerJson);
 
             JSONObject tracks = obj.optJSONObject("tracks");
-            totalTraacks = tracks.optInt("total", 0);
+            totalTracks = tracks.optInt("total", 0);
         } catch (JSONException e) {
             e.printStackTrace();
         }

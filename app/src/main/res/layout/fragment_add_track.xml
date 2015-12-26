@@ -58,7 +58,7 @@
             android:padding="4dp"
             style="?android:attr/borderlessButtonStyle"
             android:textColor="@color/accent_dark"
-            android:text="Import from Spotify" />
+            android:text="@string/import_from_spotify" />
     </LinearLayout>
 
 

@@ -21,6 +21,7 @@ import android.widget.BaseAdapter;
 import android.widget.GridView;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.gc.materialdesign.views.ProgressBarDeterminate;
@@ -43,7 +44,7 @@ import java.util.List;
 
 public abstract class AbstractPlaylistListFragment extends Fragment implements PlaylistListener, SwipeRefreshLayout.OnRefreshListener {
 
-    protected abstract void populate();
+    protected abstract void populate(boolean refresh);
 
     protected GridView playlistGrid;
     protected List<QueueUpPlaylist> mPlaylists;
@@ -80,7 +81,7 @@ public abstract class AbstractPlaylistListFragment extends Fragment implements P
         mView = (SwipeRefreshLayout) inflater.inflate(R.layout.fragment_playlist_list, container, false);
         mView.setOnRefreshListener(this);
 
-        populate();
+        populate(false);
 
         playlistGrid = (GridView) mView.findViewById(R.id.playlist_grid);
         playlistGrid.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -301,6 +302,34 @@ public abstract class AbstractPlaylistListFragment extends Fragment implements P
 //        updatePlayButton(playing);
     }
 
+    protected void populateDone(final List<QueueUpPlaylist> playlists, final String message, final boolean refresh) {
+        final ProgressBar progress = (ProgressBar) mView.findViewById(R.id.loading_progress_bar);
+        final TextView notification = (TextView) mView.findViewById(R.id.playlist_notification);
+
+        mActivity.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (playlists != null) {
+                    mPlaylists = playlists;
+                    adapter = new PlaylistGridAdapter(mActivity, mPlaylists, R.layout.playlist_item);
+                    playlistGrid.setAdapter(adapter);
+                }
+                if (message != null) {
+                    notification.setText(getString(R.string.create_playlist_notification));
+                    notification.setVisibility(View.VISIBLE);
+                } else {
+                    notification.setVisibility(View.GONE);
+                }
+                progress.setVisibility(View.GONE);
+                if (refresh) {
+                    mView.setRefreshing(false);
+                }
+            }
+        });
+    }
+
+
+
     @Override
     public void onPlayingChanged(boolean playing) {
         updatePlayButton(playing);
@@ -331,7 +360,7 @@ public abstract class AbstractPlaylistListFragment extends Fragment implements P
     }
 
     @Override
-    public void onPlayerReady() {
+    public void onPlayerReady(boolean ready) {
         /* TODO: Implement */
     }
 
@@ -342,8 +371,7 @@ public abstract class AbstractPlaylistListFragment extends Fragment implements P
 
     @Override
     public void onRefresh() {
-        populate();
-        mView.setRefreshing(false);
+        populate(true);
     }
 
     class PlaylistGridAdapter extends BaseAdapter {

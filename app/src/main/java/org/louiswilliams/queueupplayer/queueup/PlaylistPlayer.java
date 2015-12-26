@@ -53,11 +53,11 @@ public class PlaylistPlayer extends PlaylistClient implements PlaybackController
     }
 
     @Override
-    public void updatePlaybackReady() {
+    public void updatePlaybackReady(boolean ready) {
         Log.d(QueueUp.LOG_TAG, "Playback ready");
 
         for(PlaylistListener listener : playlistListeners) {
-            listener.onPlayerReady();
+            listener.onPlayerReady(ready);
         }
     }
 

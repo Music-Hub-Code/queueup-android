@@ -57,6 +57,7 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
     private String mPlaylistId;
     private TrackListAdapter mTrackListAdapter;
     private View mView;
+    private View mPlaylistHeader;
 
     private MainActivity mActivity;
 
@@ -167,7 +168,7 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
         mTrackListAdapter = new TrackListAdapter(mActivity, tracks, R.layout.track_item);
         mTrackList = (ListView) mView.findViewById(R.id.track_list);
 
-        final View playlistHeader, playlistFooter;
+        final View playlistFooter;
         final ImageButton addTrackButton = (ImageButton) mView.findViewById(R.id.add_track_button);
 
         addTrackButton.setOnClickListener(new View.OnClickListener() {
@@ -180,10 +181,10 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
 
 
 
-        playlistHeader = mActivity.getLayoutInflater().inflate(R.layout.playlist_player_header, null);
+        mPlaylistHeader = mActivity.getLayoutInflater().inflate(R.layout.playlist_player_header, null);
         playlistFooter = mActivity.getLayoutInflater().inflate(R.layout.playlist_footer, null);
 
-        TextView adminName = (TextView) playlistHeader.findViewById(R.id.playlist_admin_name);
+        TextView adminName = (TextView) mPlaylistHeader.findViewById(R.id.playlist_admin_name);
         if (playlist.adminName != null) {
             adminName.setText(getResources().getString(R.string.hosted_by_name, playlist.adminName));
         } else {
@@ -192,7 +193,7 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
 
         /* If the current playlist playlist is this one, show the controls */
         if (currentPlaylistIsPlaying()) {
-            showPlaylistControls(playlistHeader, playlist.playing);
+            showPlaylistControls(mPlaylistHeader, playlist.playing);
             setProgressBar(View.GONE);
             mActivity.getPlaybackController().addPlaylistListener(PlaylistFragment.this);
 
@@ -200,7 +201,7 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
 
             subscribeAsClient();
 
-            final Button playHereButton = (Button) playlistHeader.findViewById(R.id.play_here_button);
+            final Button playHereButton = (Button) mPlaylistHeader.findViewById(R.id.play_here_button);
 
             /* If the user is the admin of the current playlist, give the option to play, otherwise say who owns it */
             if (isAdmin) {
@@ -236,10 +237,6 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
                             /* Tell the activity to subscribe to this playlist and launch the player */
                             mActivity.subscribePlaylistPlayer(mPlaylistId, PlaylistFragment.this);
 
-                            /* Insert the playlist controls */
-                            showPlaylistControls(playlistHeader, playlist.playing);
-
-
                         }
                     };
                 }
@@ -265,9 +262,9 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
 
         }
 
-        final ImageView albumArt = (ImageView) playlistHeader.findViewById(R.id.playlist_image);
-        final TextView trackName = (TextView) playlistHeader.findViewById(R.id.playlist_current_track);
-        final TextView trackArtist = (TextView) playlistHeader.findViewById(R.id.playlist_current_artist);
+        final ImageView albumArt = (ImageView) mPlaylistHeader.findViewById(R.id.playlist_image);
+        final TextView trackName = (TextView) mPlaylistHeader.findViewById(R.id.playlist_current_track);
+        final TextView trackArtist = (TextView) mPlaylistHeader.findViewById(R.id.playlist_current_artist);
 
         mActivity.runOnUiThread(new Runnable() {
             @Override
@@ -296,7 +293,7 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
                 albumArt.getLayoutParams().height = mTrackList.getWidth() - (mTrackList.getPaddingLeft() + mTrackList.getPaddingRight());
                 albumArt.requestLayout();
 
-                mTrackList.addHeaderView(playlistHeader, null, true);
+                mTrackList.addHeaderView(mPlaylistHeader, null, true);
                 mTrackList.addFooterView(playlistFooter, null, false);
                 mTrackList.setAdapter(mTrackListAdapter);
 
@@ -716,7 +713,11 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
     }
 
     @Override
-    public void onPlayerReady() {
+    public void onPlayerReady(boolean status) {
+        /* Insert the playlist controls, only if the player was successful */
+        if (status) {
+            showPlaylistControls(mPlaylistHeader, true);
+        }
         setProgressBar(View.GONE);
     }
 

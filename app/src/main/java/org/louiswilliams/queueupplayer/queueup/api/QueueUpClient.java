@@ -2,6 +2,7 @@ package org.louiswilliams.queueupplayer.queueup.api;
 
 import android.content.Context;
 import android.location.Location;
+import android.net.http.HttpResponseCache;
 import android.util.Log;
 
 import org.json.JSONArray;
@@ -25,7 +26,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
+import java.net.CacheResponse;
 import java.net.HttpURLConnection;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.security.KeyManagementException;
@@ -37,6 +40,7 @@ import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
@@ -719,8 +723,8 @@ public class QueueUpClient {
                     }
 
                     JSONObject response = readJsonFromConnection(connection);
-                    if (connection.getResponseCode() == 200) {
 
+                    if (connection.getResponseCode() == 200) {
                         receiver.onResult(response);
                     } else {
 
@@ -735,7 +739,7 @@ public class QueueUpClient {
                     }
 
 
-                } catch (IOException | JSONException e) {
+                } catch (IOException | JSONException e ) {
                     e.printStackTrace();
                     receiver.onException(e);
                 } finally {
@@ -760,6 +764,10 @@ public class QueueUpClient {
         }
         if (inputStream == null) return new JSONObject();
 
+        return readJsonFromStream(inputStream);
+    }
+
+    public static JSONObject readJsonFromStream(InputStream inputStream) throws IOException {
         BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
         StringBuilder response = new StringBuilder();
         String line;
@@ -767,7 +775,13 @@ public class QueueUpClient {
             response.append(line);
         }
         reader.close();
-        return new JSONObject(response.toString());
+        JSONObject jsonResponse;
+        try {
+            jsonResponse = new JSONObject(response.toString());
+        } catch (JSONException e) {
+            jsonResponse = null;
+        }
+        return jsonResponse;
     }
 
     public static void writeJsonToConnection(JSONObject json, HttpURLConnection connection) throws IOException {
