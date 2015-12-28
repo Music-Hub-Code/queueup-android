@@ -5,7 +5,6 @@ import android.app.Fragment;
 import android.content.Context;
 import android.os.Bundle;
 import android.util.Log;
-import android.util.SparseBooleanArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,6 +17,7 @@ import android.widget.TextView;
 
 import com.squareup.picasso.Picasso;
 
+import org.json.JSONObject;
 import org.louiswilliams.queueupplayer.R;
 import org.louiswilliams.queueupplayer.activity.MainActivity;
 import org.louiswilliams.queueupplayer.queueup.QueueUp;
@@ -26,16 +26,15 @@ import org.louiswilliams.queueupplayer.queueup.objects.SpotifyPlaylist;
 import org.louiswilliams.queueupplayer.queueup.objects.SpotifyTrack;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 public class SpotifyPlaylistFragment extends Fragment {
 
     private MainActivity mActivity;
     private View mView;
     private String mPlaylistId;
-    private String mUserId;
+    private String mSpotifyPlaylist;
+    private String mSpoitfyUser;
     private SpotifyClient spotifyClient;
     private TrackListAdapter mTrackListAdapter;
     private ListView mTrackList;
@@ -57,13 +56,14 @@ public class SpotifyPlaylistFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         mView = inflater.inflate(R.layout.fragment_spotify_playlist, container, false);
         mPlaylistId = getArguments().getString("playlist_id");
-        mUserId = getArguments().getString("user_id");
+        mSpotifyPlaylist = getArguments().getString("spotify_playlist_id");
+        mSpoitfyUser = getArguments().getString("spotify_user_id");
 
         mActivity.spotifyLogin(new QueueUp.CallReceiver<String>() {
             @Override
             public void onResult(String accessToken) {
                 spotifyClient = new SpotifyClient(accessToken);
-                spotifyClient.getUserPlaylist(mUserId, mPlaylistId, new QueueUp.CallReceiver<SpotifyPlaylist>() {
+                spotifyClient.getUserPlaylist(mSpoitfyUser, mSpotifyPlaylist, new QueueUp.CallReceiver<SpotifyPlaylist>() {
                     @Override
                     public void onResult(final SpotifyPlaylist playlist) {
                         populate(playlist);
@@ -105,7 +105,26 @@ public class SpotifyPlaylistFragment extends Fragment {
         addSelectedButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                controlsProgress.setVisibility(View.VISIBLE);
 
+                List<SpotifyTrack> tracks = mTrackListAdapter.getCheckedTracks();
+                List<String> trackIds = new ArrayList<String>();
+                for (SpotifyTrack track : tracks) {
+                    trackIds.add(track.id);
+                }
+
+                mActivity.getQueueUpClient().playlistAddTracks(mPlaylistId, trackIds, new QueueUp.CallReceiver<JSONObject>() {
+                    @Override
+                    public void onResult(JSONObject result) {
+                        mActivity.getFragmentManager().popBackStack(PlaylistFragment.class.getName(), 0);
+                    }
+
+                    @Override
+                    public void onException(Exception e) {
+                        mActivity.toast(e.getMessage());
+                        mActivity.getFragmentManager().popBackStack(PlaylistFragment.class.getName(), 0);
+                    }
+                });
             }
         });
 
@@ -126,14 +145,14 @@ public class SpotifyPlaylistFragment extends Fragment {
 
         private Context mContext;
         private List<SpotifyTrack> mTrackList;
-        private Set<SpotifyTrack> checkedSet;
+        private List<SpotifyTrack> checkedList;
         private int mResource;
 
         public TrackListAdapter(Context context, List<SpotifyTrack> tracks,  int resource) {
             mContext = context;
             mTrackList = tracks;
             mResource = resource;
-            checkedSet = new HashSet<>();
+            checkedList = new ArrayList<>();
         }
 
         public void updateTrackList(List<SpotifyTrack> list) {
@@ -151,19 +170,19 @@ public class SpotifyPlaylistFragment extends Fragment {
         public void setItemChecked(int position, boolean checked) {
             SpotifyTrack track = mTrackList.get(position);
             if (!checked) {
-                checkedSet.remove(track);
+                checkedList.remove(track);
             } else {
-                checkedSet.add(mTrackList.get(position));
+                checkedList.add(mTrackList.get(position));
             }
             notifyDataSetChanged();
         }
 
         public boolean isItemChecked(int position) {
-            return checkedSet.contains(mTrackList.get(position));
+            return checkedList.contains(mTrackList.get(position));
         }
 
-        public Set<SpotifyTrack> getCheckedTracks() {
-            return checkedSet;
+        public List<SpotifyTrack> getCheckedTracks() {
+            return checkedList;
         }
 
         @Override
@@ -192,7 +211,7 @@ public class SpotifyPlaylistFragment extends Fragment {
                 trackView = convertView;
             }
 
-            if (checkedSet.contains(mTrackList.get(position))) {
+            if (checkedList.contains(mTrackList.get(position))) {
                 trackView.setBackgroundColor(getResources().getColor(R.color.tertiary_light));
             } else {
                 trackView.setBackgroundColor(getResources().getColor(R.color.primary_dark));

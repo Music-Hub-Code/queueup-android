@@ -36,6 +36,7 @@ public class SpotifyPlaylistListFragment extends Fragment implements SwipeRefres
     private List<SpotifyPlaylist> mPlaylists;
     private PlaylistGridAdapter mAdapter;
     private SpotifyClient spotifyClient;
+    private String playlistId;
 
 
     @Override
@@ -89,6 +90,8 @@ public class SpotifyPlaylistListFragment extends Fragment implements SwipeRefres
         mView = (SwipeRefreshLayout) inflater.inflate(R.layout.fragment_playlist_list, container, false);
         mView.setOnRefreshListener(this);
 
+        playlistId = getArguments().getString("playlist_id");
+
         mActivity.spotifyLogin(new QueueUp.CallReceiver<String>() {
 
             @Override
@@ -110,7 +113,7 @@ public class SpotifyPlaylistListFragment extends Fragment implements SwipeRefres
                 SpotifyPlaylist playlist = mPlaylists.get(position);
                 Log.d(QueueUp.LOG_TAG, "Using playlist ID: " + playlist.id);
 
-                mActivity.showSpotifyPlaylistFragment(playlist.owner.id, playlist.id);
+                mActivity.showSpotifyPlaylistFragment(playlistId, playlist.owner.id, playlist.id);
             }
         });
 

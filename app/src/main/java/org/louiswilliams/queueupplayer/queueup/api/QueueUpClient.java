@@ -418,6 +418,20 @@ public class QueueUpClient {
         }
     }
 
+    public void playlistAddTracks(String playlistId, List<String> tracks, final QueueUp.CallReceiver<JSONObject> receiver) {
+        try {
+            JSONObject request = new JSONObject();
+            JSONArray tracksJson = new JSONArray();
+            for (String track : tracks) {
+                tracksJson.put(track);
+            }
+            request.put("tracks", tracksJson);
+            sendApiPost("/playlists/" + playlistId + "/add_multiple", request, receiver);
+        } catch (JSONException e) {
+            Log.e(QueueUp.LOG_TAG, "JSON error adding track: " + e.getMessage());
+        }
+    }
+
     public void playlistDeleteTrack(String playlistId, String trackId, final QueueUp.CallReceiver<QueueUpPlaylist> receiver) {
         try {
             JSONObject request = new JSONObject();
@@ -728,11 +742,14 @@ public class QueueUpClient {
                         receiver.onResult(response);
                     } else {
 
-                        /* Attempt to getString the error message */
-                        JSONObject error = response.optJSONObject("error");
-                        String message = "Error (" + connection.getResponseCode() + "): ";
-                        if (error != null) {
-                            message += error.optString("message", "UNKNOWN");
+                        String messageFormat = "Error (%d): %s";
+                        String message;
+                        if (response != null) {
+                            /* Attempt to getString the error message */
+                            JSONObject error = response.optJSONObject("error");
+                            message = String.format(messageFormat, connection.getResponseCode(), error.optString("message", "UNKNOWN"));
+                        } else {
+                            message = String.format(messageFormat, connection.getResponseCode(), "No data sent");
                         }
 
                         receiver.onException(new QueueUpException(message));

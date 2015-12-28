@@ -364,21 +364,25 @@ public class MainActivity
         transaction.commit();
     }
 
-    public void showSpotifyPlaylistListFragment() {
+    public void showSpotifyPlaylistListFragment(String playlistId) {
         FragmentTransaction transaction = getFragmentManager().beginTransaction();
+        Bundle bundle = new Bundle();
+        bundle.putString("playlist_id", playlistId);
 
         SpotifyPlaylistListFragment fragment = new SpotifyPlaylistListFragment();
+        fragment.setArguments(bundle);
 
         transaction.replace(R.id.content_frame, fragment);
         transaction.addToBackStack(fragment.getClass().getName());
         transaction.commit();
     }
 
-    public void showSpotifyPlaylistFragment(String userId, String playlistId) {
+    public void showSpotifyPlaylistFragment(String playlistId, String spotifyUserId, String spotifyPlaylistId) {
         FragmentTransaction transaction = getFragmentManager().beginTransaction();
         Bundle bundle = new Bundle();
-        bundle.putString("user_id", userId);
         bundle.putString("playlist_id", playlistId);
+        bundle.putString("spotify_user_id", spotifyUserId);
+        bundle.putString("spotify_playlist_id", spotifyPlaylistId);
 
         SpotifyPlaylistFragment fragment = new SpotifyPlaylistFragment();
         fragment.setArguments(bundle);
