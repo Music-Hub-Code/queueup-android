@@ -72,6 +72,7 @@ public class SpotifyPlaylistListFragment extends Fragment implements SwipeRefres
                         if (refresh) {
                             mView.setRefreshing(false);
                         }
+                        mActivity.setTitle("My Playlists");
                     }
                 });
             }
@@ -99,7 +100,7 @@ public class SpotifyPlaylistListFragment extends Fragment implements SwipeRefres
             public void onException(Exception e) {
                 Log.e(QueueUp.LOG_TAG, e.getMessage());
             }
-       });
+        });
 
 
         playlistGrid = (GridView) mView.findViewById(R.id.playlist_grid);
@@ -108,7 +109,8 @@ public class SpotifyPlaylistListFragment extends Fragment implements SwipeRefres
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 SpotifyPlaylist playlist = mPlaylists.get(position);
                 Log.d(QueueUp.LOG_TAG, "Using playlist ID: " + playlist.id);
-                // TODO: show playlist tracks
+
+                mActivity.showSpotifyPlaylistFragment(playlist.owner.id, playlist.id);
             }
         });
 
@@ -124,6 +126,8 @@ public class SpotifyPlaylistListFragment extends Fragment implements SwipeRefres
             }
         });
 
+        View addButton = mView.findViewById(R.id.add_playlist_button);
+        addButton.setVisibility(View.GONE);
 
         View playerBar = mView.findViewById(R.id.player_bar);
         playerBar.setVisibility(View.GONE);

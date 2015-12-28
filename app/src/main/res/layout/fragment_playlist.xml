@@ -16,6 +16,7 @@
         android:paddingLeft="18dp"
         android:paddingEnd="14dp"
         android:paddingRight="14dp"
+        android:drawSelectorOnTop="true"
         android:clipToPadding="false"
         >
 

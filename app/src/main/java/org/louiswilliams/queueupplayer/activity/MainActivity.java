@@ -58,6 +58,7 @@ import org.louiswilliams.queueupplayer.fragment.LocationSelectFragment;
 import org.louiswilliams.queueupplayer.fragment.PlaylistFragment;
 import org.louiswilliams.queueupplayer.fragment.PlaylistListFragment;
 import org.louiswilliams.queueupplayer.fragment.PlaylistSearchResultsFragment;
+import org.louiswilliams.queueupplayer.fragment.SpotifyPlaylistFragment;
 import org.louiswilliams.queueupplayer.fragment.SpotifyPlaylistListFragment;
 import org.louiswilliams.queueupplayer.queueup.PlaybackController;
 import org.louiswilliams.queueupplayer.queueup.PlaybackReceiver;
@@ -367,6 +368,20 @@ public class MainActivity
         FragmentTransaction transaction = getFragmentManager().beginTransaction();
 
         SpotifyPlaylistListFragment fragment = new SpotifyPlaylistListFragment();
+
+        transaction.replace(R.id.content_frame, fragment);
+        transaction.addToBackStack(fragment.getClass().getName());
+        transaction.commit();
+    }
+
+    public void showSpotifyPlaylistFragment(String userId, String playlistId) {
+        FragmentTransaction transaction = getFragmentManager().beginTransaction();
+        Bundle bundle = new Bundle();
+        bundle.putString("user_id", userId);
+        bundle.putString("playlist_id", playlistId);
+
+        SpotifyPlaylistFragment fragment = new SpotifyPlaylistFragment();
+        fragment.setArguments(bundle);
 
         transaction.replace(R.id.content_frame, fragment);
         transaction.addToBackStack(fragment.getClass().getName());
@@ -934,6 +949,8 @@ public class MainActivity
                 if (!((BackButtonListener) current).onBackButtonPressed()) {
                     getFragmentManager().popBackStack();
                 }
+            } else {
+                getFragmentManager().popBackStack();
             }
         }
     }

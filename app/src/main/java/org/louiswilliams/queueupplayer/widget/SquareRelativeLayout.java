@@ -1,12 +1,10 @@
 package org.louiswilliams.queueupplayer.widget;
 
+import android.annotation.TargetApi;
 import android.content.Context;
 import android.util.AttributeSet;
 import android.widget.RelativeLayout;
 
-/**
- * Created by Louis on 6/30/2015.
- */
 public class SquareRelativeLayout extends RelativeLayout {
     public SquareRelativeLayout(Context context) {
         super(context);
@@ -18,6 +16,11 @@ public class SquareRelativeLayout extends RelativeLayout {
 
     public SquareRelativeLayout(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
+    }
+
+    @TargetApi(21)
+    public SquareRelativeLayout(Context context, AttributeSet attributeSet, int defStyleAttr, int defStyleRes) {
+        super(context, attributeSet, defStyleAttr, defStyleRes);
     }
 
     @Override

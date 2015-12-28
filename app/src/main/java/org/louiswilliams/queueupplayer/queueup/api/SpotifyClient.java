@@ -4,7 +4,9 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.louiswilliams.queueupplayer.queueup.QueueUp;
+import org.louiswilliams.queueupplayer.queueup.objects.SpotifyAlbum;
 import org.louiswilliams.queueupplayer.queueup.objects.SpotifyPlaylist;
+import org.louiswilliams.queueupplayer.queueup.objects.SpotifyTrack;
 import org.louiswilliams.queueupplayer.queueup.objects.SpotifyUser;
 
 import java.io.IOException;
@@ -78,6 +80,20 @@ public class SpotifyClient {
             public void onResult(JSONObject result) {
                 SpotifyUser user = new SpotifyUser(result);
                 receiver.onResult(user);
+            }
+
+            @Override
+            public void onException(Exception e) {
+                receiver.onException(e);
+            }
+        });
+    }
+
+    public void getUserPlaylist(String userId, final String playlistId, final QueueUp.CallReceiver<SpotifyPlaylist> receiver) {
+        apiRequest("users/" + userId + "/playlists/" + playlistId, null, new QueueUp.CallReceiver<JSONObject>() {
+            @Override
+            public void onResult(JSONObject result) {
+                receiver.onResult(new SpotifyPlaylist(result));
             }
 
             @Override

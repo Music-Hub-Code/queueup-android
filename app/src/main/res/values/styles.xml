@@ -13,6 +13,7 @@
     <color name="background_primary_light">#fffafafa</color>
     <color name="primary_light">#fff5f5f5</color>
     <color name="secondary_light">#ff757575</color>
+    <color name="tertiary_light">#ff505050</color>
     <color name="background_primary_dark">#ff303030</color>
     <color name="primary_dark">#ff212121</color>
     <color name="secondary_dark">#ff000000</color>
