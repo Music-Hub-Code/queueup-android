@@ -464,7 +464,7 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
     public void showDeleteDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(mActivity);
         builder.setTitle("Delete Playlist")
-                .setMessage("Are you sure you want to delete your playlist?")
+                .setMessage("Are you sure you want to delete your playlist? You can't undo this.")
                 .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
@@ -479,7 +479,7 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
         mActivity.getLocationListener().startUpdates();
         AlertDialog.Builder builder = new AlertDialog.Builder(mActivity);
         builder.setTitle("Move Playlist Here")
-                .setMessage("Do you want to move the playlist to your current location?")
+                .setMessage("Do you want to move the playlist to your current location? You can't undo this.")
                 .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
@@ -513,7 +513,7 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
         final String trackId = ((QueueUpTrack) mTrackListAdapter.getItem(position)).id;
 
         builder.setTitle("Remove Track")
-                .setMessage("Are you sure you want to remove this track?")
+                .setMessage("Are you sure you want to remove this track? You can't undo this.")
                 .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {

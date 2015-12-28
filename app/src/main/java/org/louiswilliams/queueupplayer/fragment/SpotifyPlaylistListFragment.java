@@ -80,6 +80,7 @@ public class SpotifyPlaylistListFragment extends Fragment implements SwipeRefres
 
             @Override
             public void onException(Exception e) {
+                mActivity.toast(e.getMessage());
                 Log.e(QueueUp.LOG_TAG, e.getMessage());
             }
         });
@@ -97,6 +98,7 @@ public class SpotifyPlaylistListFragment extends Fragment implements SwipeRefres
             @Override
             public void onResult(String accessToken) {
                 spotifyClient = SpotifyClient.with(accessToken);
+                populate(false);
             }
 
             @Override
@@ -134,8 +136,6 @@ public class SpotifyPlaylistListFragment extends Fragment implements SwipeRefres
 
         View playerBar = mView.findViewById(R.id.player_bar);
         playerBar.setVisibility(View.GONE);
-
-        populate(false);
 
         return mView;
     }

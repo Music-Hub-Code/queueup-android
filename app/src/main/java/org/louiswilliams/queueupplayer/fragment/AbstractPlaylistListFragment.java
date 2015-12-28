@@ -315,7 +315,7 @@ public abstract class AbstractPlaylistListFragment extends Fragment implements P
                     playlistGrid.setAdapter(adapter);
                 }
                 if (message != null) {
-                    notification.setText(getString(R.string.create_playlist_notification));
+                    notification.setText(message);
                     notification.setVisibility(View.VISIBLE);
                 } else {
                     notification.setVisibility(View.GONE);
