@@ -541,6 +541,16 @@ public class QueueUpClient {
         });
     }
 
+    public void setUserName(String userId, String name, final QueueUp.CallReceiver<JSONObject> receiver) {
+        JSONObject obj = new JSONObject();
+        try {
+            obj.put("name", name);
+            sendApiPost("/users/" + userId + "/name", obj, receiver);
+        } catch (JSONException e) {
+            receiver.onException(e);
+        }
+    }
+
     public void userGet(String userId, final QueueUp.CallReceiver<QueueUpUser> receiver) {
         sendApiGet("/users/" + userId, new QueueUp.CallReceiver<JSONObject>() {
             @Override

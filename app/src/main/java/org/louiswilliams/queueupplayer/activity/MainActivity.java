@@ -26,6 +26,7 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
+import android.telecom.Call;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.MenuItem;
@@ -50,6 +51,7 @@ import com.spotify.sdk.android.authentication.AuthenticationRequest;
 import com.spotify.sdk.android.authentication.AuthenticationResponse;
 import com.squareup.picasso.Picasso;
 
+import org.json.JSONObject;
 import org.louiswilliams.queueupplayer.QueueUpApplication;
 import org.louiswilliams.queueupplayer.R;
 import org.louiswilliams.queueupplayer.fragment.AddTrackFragment;
@@ -113,6 +115,7 @@ public class MainActivity
     private String mFacebookId;
     private String mSpotifyClientId;
     private String mUserId;
+    private String mUserName;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -156,6 +159,7 @@ public class MainActivity
 
         mClientToken = mStore.getString(QueueUpStore.CLIENT_TOKEN);
         mUserId = mStore.getString(QueueUpStore.USER_ID);
+        mUserName = mStore.getString(QueueUpStore.USER_NAME);
         mFacebookId = mStore.getString(QueueUpStore.FACEBOOK_ID);
         mEmailAddress = mStore.getString(QueueUpStore.EMAIL_ADDRESS);
         mSpotifyClientId = getString(R.string.spotify_client_id);
@@ -433,6 +437,15 @@ public class MainActivity
         return mUserId;
     }
 
+    public void setClientName(String name, QueueUp.CallReceiver<JSONObject> receiver) {
+        if (name != null && name.length() > 0) {
+            mStore.putString(QueueUpStore.USER_NAME, name);
+            mQueueUpClient.setUserName(getCurrentUserId(), name, receiver);
+        } else {
+            receiver.onException(new QueueUpException("Name cannot be empty"));
+        }
+    }
+
     public Fragment getCurrentFragment() {
         return getFragmentManager().findFragmentById(R.id.content_frame);
     }
@@ -461,6 +474,10 @@ public class MainActivity
 
     public QueueUpClient getQueueUpClient() {
         return mQueueUpClient;
+    }
+
+    public QueueUpStore getStore() {
+        return mStore;
     }
 
     public void navigateDrawer(int index) {
@@ -736,6 +753,10 @@ public class MainActivity
         return mEmailAddress != null || mFacebookId != null;
     }
 
+    public boolean clientHasName() {
+        return mUserName != null;
+    }
+
     public AccessToken getAccessToken() {
         AccessToken accessToken = AccessToken.getCurrentAccessToken();
         Log.d(QueueUp.LOG_TAG, "Access token: " + accessToken);
@@ -766,22 +787,27 @@ public class MainActivity
             userName.setText(profile.getFirstName() + " " + profile.getLastName());
         } else {
 
-            mQueueUpClient.userGet(mUserId, new QueueUp.CallReceiver<QueueUpUser>() {
-                @Override
-                public void onResult(final QueueUpUser result) {
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            userName.setText(result.name);
-                        }
-                    });
-                }
+            if (mUserName == null) {
+                mQueueUpClient.userGet(mUserId, new QueueUp.CallReceiver<QueueUpUser>() {
+                    @Override
+                    public void onResult(final QueueUpUser result) {
+                        mStore.putString(QueueUpStore.USER_NAME, result.name);
+                        mUserName = result.name;
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                userName.setText(mUserName);
+                            }
+                        });
+                    }
 
-                @Override
-                public void onException(Exception e) {
-                    toast(e.getMessage());
-                }
-            });
+                    @Override
+                    public void onException(Exception e) {
+                        toast(e.getMessage());
+                    }
+                });
+
+            }
         }
 
 

@@ -8,9 +8,6 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AbsListView;
@@ -30,8 +27,6 @@ import org.json.JSONObject;
 import org.louiswilliams.queueupplayer.R;
 import org.louiswilliams.queueupplayer.activity.MainActivity;
 import org.louiswilliams.queueupplayer.queueup.QueueUp;
-import org.louiswilliams.queueupplayer.queueup.api.SpotifyClient;
-import org.louiswilliams.queueupplayer.queueup.objects.SpotifyPlaylist;
 import org.louiswilliams.queueupplayer.queueup.objects.SpotifyTrack;
 
 import java.util.ArrayList;

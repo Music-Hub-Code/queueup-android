@@ -15,22 +15,27 @@ import org.louiswilliams.queueupplayer.R;
 import org.louiswilliams.queueupplayer.activity.MainActivity;
 import org.louiswilliams.queueupplayer.queueup.QueueUp;
 
-public class PlaylistNameFragment extends DialogFragment {
+public class CreatePlaylistDialog extends DialogFragment {
 
-    private String newPlaylistName;
+    private String name;
     private String dialogTitle = "Playlist name";
+    private String hint = "Playlist name";
     private String textContent = null;
     private MainActivity mainActivity;
     private EditText nameBox;
-    private PlaylistNameListener playlistNameListener;
+    private NameListener nameListener;
 
 
-    public void setPlaylistNameListener(PlaylistNameListener playlistNameListener) {
-        this.playlistNameListener = playlistNameListener;
+    public void setNameListener(NameListener nameListener) {
+        this.nameListener = nameListener;
     }
 
     public void setDialogTitle(String name) {
         dialogTitle = name;
+    }
+
+    public void setHint(String hint) {
+        this.hint = hint;
     }
 
     public void setTextContent(String content) {
@@ -65,6 +70,7 @@ public class PlaylistNameFragment extends DialogFragment {
         View dialogView = getActivity().getLayoutInflater().inflate(R.layout.fragment_create_playlist, null);
 
         nameBox = (EditText) dialogView.findViewById(R.id.playlist_name_box);
+        nameBox.setHint(hint);
 
         if (textContent != null) {
             nameBox.append(textContent);
@@ -76,22 +82,21 @@ public class PlaylistNameFragment extends DialogFragment {
             @Override
             public void onClick(DialogInterface dialog, int which) {
 
-                newPlaylistName = nameBox.getText().toString();
+                name = nameBox.getText().toString();
 
-                if (playlistNameListener != null) {
-                    playlistNameListener.onPlaylistCreate(PlaylistNameFragment.this);
+                if (nameListener != null) {
+                    nameListener.onName(CreatePlaylistDialog.this);
                 }
             }
         });
         builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                if (playlistNameListener != null) {
-                    playlistNameListener.onCancel();
+                if (nameListener != null) {
+                    nameListener.onCancel();
                 }
             }
         });
-
 
         mainActivity.showKeyboard();
         return builder.create();
@@ -104,12 +109,12 @@ public class PlaylistNameFragment extends DialogFragment {
         super.onDismiss(dialogInterface);
     }
 
-    public String getPlaylistName() {
-        return  newPlaylistName;
+    public String getName() {
+        return name;
     }
 
-    public interface PlaylistNameListener {
-        void onPlaylistCreate(PlaylistNameFragment dialogFragment);
+    public interface NameListener {
+        void onName(CreatePlaylistDialog dialogFragment);
         void onCancel();
     }
 }

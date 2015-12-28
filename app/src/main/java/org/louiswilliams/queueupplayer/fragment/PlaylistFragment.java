@@ -280,7 +280,7 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
                         albumArt.setOnClickListener(new View.OnClickListener() {
                             @Override
                             public void onClick(View view) {
-                                showTrackOptionsDialog(null, playlist.current, false);
+                                showTrackOptionsDialog(null, playlist.current, playlist.addedByName, false);
                             }
                         });
                     }
@@ -426,14 +426,14 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
     }
 
     public void showRenameDialog() {
-        PlaylistNameFragment playlistNameFragment = new PlaylistNameFragment();
+        CreatePlaylistDialog createPlaylistDialog = new CreatePlaylistDialog();
 
-        playlistNameFragment.setDialogTitle("Rename Playlist");
-        playlistNameFragment.setTextContent(mThisPlaylist.name);
-        playlistNameFragment.setPlaylistNameListener(new PlaylistNameFragment.PlaylistNameListener() {
+        createPlaylistDialog.setDialogTitle("Rename Playlist");
+        createPlaylistDialog.setTextContent(mThisPlaylist.name);
+        createPlaylistDialog.setNameListener(new CreatePlaylistDialog.NameListener() {
             @Override
-            public void onPlaylistCreate(PlaylistNameFragment dialogFragment) {
-                renamePlaylist(dialogFragment.getPlaylistName());
+            public void onName(CreatePlaylistDialog dialogFragment) {
+                renamePlaylist(dialogFragment.getName());
             }
 
             @Override
@@ -441,7 +441,7 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
             }
         });
 
-        playlistNameFragment.show(getFragmentManager(), "create_playlist");
+        createPlaylistDialog.show(getFragmentManager(), "create_playlist");
     }
 
     public void renamePlaylist(String newName) {
@@ -523,7 +523,7 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
                 .show();
     }
 
-    public void showTrackOptionsDialog(final String trackId, final SpotifyTrack track, boolean showDelete) {
+    public void showTrackOptionsDialog(final String trackId, final SpotifyTrack track, String addedByName, boolean showDelete) {
         AlertDialog.Builder builder = new AlertDialog.Builder(mActivity);
 
         String[] trackOptions;
@@ -534,15 +534,18 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
             trackOptions = new String[] {"Exit and open in Spotify"};
         }
 
-        builder.setTitle(track.name + " by " + track.artists.get(0).name)
-            .setItems(trackOptions, new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialogInterface, int i) {
-                    if (i == 0) {
-//                        openLink(track.uri);
-                        showOpenInSpotifyDialog(track.uri);
-                    } else if (i == 1) {
-                        removeTrack(trackId);
+        if (addedByName != null) {
+            builder.setTitle("Added by " + addedByName);
+        } else {
+            builder.setTitle(track.name + " by " + track.artists.get(0).name);
+        }
+        builder.setItems(trackOptions, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                if (i == 0) {
+                    showOpenInSpotifyDialog(track.uri);
+                } else if (i == 1) {
+                    removeTrack(trackId);
                     }
                 }
             }).show();
@@ -834,7 +837,7 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
             trackView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    showTrackOptionsDialog(track.id, track.track, userCanDeleteTrack(track));
+                    showTrackOptionsDialog(track.id, track.track, track.addedByName, userCanDeleteTrack(track));
                 }
             });
             return trackView;

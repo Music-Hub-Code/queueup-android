@@ -27,6 +27,7 @@ import android.widget.TextView;
 import com.gc.materialdesign.views.ProgressBarDeterminate;
 import com.squareup.picasso.Picasso;
 
+import org.json.JSONObject;
 import org.louiswilliams.queueupplayer.R;
 import org.louiswilliams.queueupplayer.activity.MainActivity;
 import org.louiswilliams.queueupplayer.queueup.LocationUpdateListener;
@@ -34,6 +35,7 @@ import org.louiswilliams.queueupplayer.queueup.PlaybackController;
 import org.louiswilliams.queueupplayer.queueup.PlaylistListener;
 import org.louiswilliams.queueupplayer.queueup.QueueUp;
 import org.louiswilliams.queueupplayer.queueup.QueueUpLocationListener;
+import org.louiswilliams.queueupplayer.queueup.QueueUpStore;
 import org.louiswilliams.queueupplayer.queueup.objects.QueueUpPlaylist;
 import org.louiswilliams.queueupplayer.queueup.objects.QueueUpStateChange;
 import org.louiswilliams.queueupplayer.queueup.objects.QueueUpTrack;
@@ -90,14 +92,15 @@ public abstract class AbstractPlaylistListFragment extends Fragment implements P
                 QueueUpPlaylist playlist = mPlaylists.get(position);
                 Log.d(QueueUp.LOG_TAG, "Using playlist ID: " + playlist.id);
 
-                mActivity.showPlaylistFragment(playlist.id);
+                showSetNameDialog(playlist.id);
             }
         });
 
         /* Enable the swipe to refresh only if the first item is showing and at the top  */
         playlistGrid.setOnScrollListener(new AbsListView.OnScrollListener() {
             @Override
-            public void onScrollStateChanged(AbsListView absListView, int i) {}
+            public void onScrollStateChanged(AbsListView absListView, int i) {
+            }
 
             @Override
             public void onScroll(AbsListView absListView, int firstVisible, int visibleItems, int totalItems) {
@@ -166,17 +169,17 @@ public abstract class AbstractPlaylistListFragment extends Fragment implements P
             final QueueUpLocationListener locationListener = mActivity.getLocationListener();
             locationListener.startUpdates();
 
-            PlaylistNameFragment playlistNameFragment = new PlaylistNameFragment();
+            CreatePlaylistDialog createPlaylistDialog = new CreatePlaylistDialog();
 
-            playlistNameFragment.setDialogTitle("New Playlist");
-            playlistNameFragment.setPlaylistNameListener(new PlaylistNameFragment.PlaylistNameListener() {
+            createPlaylistDialog.setDialogTitle("New Playlist");
+            createPlaylistDialog.setNameListener(new CreatePlaylistDialog.NameListener() {
                 @Override
-                public void onPlaylistCreate(final PlaylistNameFragment dialogFragment) {
+                public void onName(final CreatePlaylistDialog dialogFragment) {
                     mActivity.getLocationListener().getSingleLocationUpdate(new LocationUpdateListener() {
                         @Override
                         public void onLocation(Location location) {
                             locationListener.stopUpdates();
-                            mActivity.doCreatePlaylist(dialogFragment.getPlaylistName(), location);
+                            mActivity.doCreatePlaylist(dialogFragment.getName(), location);
                         }
                     });
                 }
@@ -187,12 +190,53 @@ public abstract class AbstractPlaylistListFragment extends Fragment implements P
                 }
             });
 
-            playlistNameFragment.show(getFragmentManager(), "create_playlist");
+            createPlaylistDialog.show(getFragmentManager(), "create_playlist");
         } else {
             mActivity.toast("You need to log in first");
             mActivity.doLogin();
         }
 
+    }
+
+    public void showSetNameDialog(final String playlistId) {
+        if (mActivity.isClientRegistered() || mActivity.clientHasName()) {
+            mActivity.showPlaylistFragment(playlistId);
+        } else {
+
+            final SetNameDialog setNameDialog = new SetNameDialog();
+
+            setNameDialog.setDialogTitle("What's your name? Log in or enter your name to continue");
+            setNameDialog.setHint("Your Name");
+            setNameDialog.setNameListener(new SetNameDialog.NameListener() {
+                @Override
+                public void onName() {
+                    String name = setNameDialog.getName();
+                    mActivity.setClientName(name, new QueueUp.CallReceiver<JSONObject>() {
+                        @Override
+                        public void onResult(JSONObject result) {
+                            mActivity.showPlaylistFragment(playlistId);
+                        }
+
+                        @Override
+                        public void onException(Exception e) {
+                            mActivity.toast(e.getMessage());
+                        }
+                    });
+                }
+
+                @Override
+                public void onLogIn() {
+                    mActivity.doLogin();
+                }
+
+                @Override
+                public void onCancel() {
+
+                }
+            });
+
+            setNameDialog.show(getFragmentManager(), "set_user_name");
+        }
     }
 
     public void setupPlayerBar(View bar) {

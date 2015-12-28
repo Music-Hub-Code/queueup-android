@@ -7,6 +7,7 @@ public class QueueUpStore {
 
     public static final String STORE_NAME = "authStore";
     public static final String USER_ID = "userId";
+    public static final String USER_NAME = "userName";
     public static final String CLIENT_TOKEN = "clientToken";
     public static final String FACEBOOK_ID = "facebookId";
     public static final String DEVICE_ID = "deviceId";
