@@ -8,6 +8,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.Button;
@@ -30,14 +31,18 @@ import java.util.List;
 
 public class SpotifyPlaylistFragment extends Fragment {
 
+    private static final int OFFSET = 100;
+
     private MainActivity mActivity;
     private View mView;
+    private SpotifyPlaylist mPlaylist;
     private String mPlaylistId;
     private String mSpotifyPlaylist;
-    private String mSpoitfyUser;
+    private String mSpotifyUser;
     private SpotifyClient spotifyClient;
     private TrackListAdapter mTrackListAdapter;
     private ListView mTrackList;
+    private boolean loadingMoreItems;
 
     @Override
     public void onAttach(Context activity) {
@@ -57,15 +62,16 @@ public class SpotifyPlaylistFragment extends Fragment {
         mView = inflater.inflate(R.layout.fragment_spotify_playlist, container, false);
         mPlaylistId = getArguments().getString("playlist_id");
         mSpotifyPlaylist = getArguments().getString("spotify_playlist_id");
-        mSpoitfyUser = getArguments().getString("spotify_user_id");
+        mSpotifyUser = getArguments().getString("spotify_user_id");
 
         mActivity.spotifyLogin(new QueueUp.CallReceiver<String>() {
             @Override
             public void onResult(String accessToken) {
                 spotifyClient = new SpotifyClient(accessToken);
-                spotifyClient.getUserPlaylist(mSpoitfyUser, mSpotifyPlaylist, new QueueUp.CallReceiver<SpotifyPlaylist>() {
+                spotifyClient.getUserPlaylist(mSpotifyUser, mSpotifyPlaylist, new QueueUp.CallReceiver<SpotifyPlaylist>() {
                     @Override
                     public void onResult(final SpotifyPlaylist playlist) {
+                        mPlaylist = playlist;
                         populate(playlist);
                     }
 
@@ -91,7 +97,10 @@ public class SpotifyPlaylistFragment extends Fragment {
     public void populate(final SpotifyPlaylist playlist) {
         mTrackListAdapter = new TrackListAdapter(mActivity, playlist.tracks, R.layout.track_item);
         mTrackList = (ListView) mView.findViewById(R.id.track_list);
+
         final View controlsProgress = mView.findViewById(R.id.loading_progress_bar);
+        final View searchFooter = mActivity.getLayoutInflater().inflate(R.layout.track_search_footer, null);
+
         Button addSelectedButton = (Button) mView.findViewById(R.id.add_selected_tracks);
 
         mTrackList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -101,6 +110,22 @@ public class SpotifyPlaylistFragment extends Fragment {
                 mTrackListAdapter.setItemChecked(position, !checked);
             }
         });
+
+        mTrackList.setOnScrollListener(new AbsListView.OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(AbsListView view, int scrollState) {
+
+            }
+
+            @Override
+            public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
+
+                if (totalItemCount != 0 && firstVisibleItem + visibleItemCount == totalItemCount) {
+                    loadMoreItems();
+                }
+            }
+        });
+
 
         addSelectedButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -134,11 +159,46 @@ public class SpotifyPlaylistFragment extends Fragment {
             public void run() {
                 controlsProgress.setVisibility(View.GONE);
                 mActivity.setTitle(playlist.name);
+                mTrackList.addFooterView(searchFooter, null, false);
                 mTrackList.setAdapter(mTrackListAdapter);
+
             }
         });
     }
 
+    private void loadMoreItems() {
+        if (!loadingMoreItems) {
+
+            final TextView footerText = (TextView) mTrackList.findViewById(R.id.track_list_footer_text);
+            if (mTrackListAdapter.getTrackList().size() < mPlaylist.totalTracks) {
+                loadingMoreItems = true;
+                footerText.setText("Loading...");
+
+                spotifyClient.getUserPlaylistTracks(mSpotifyUser, mSpotifyPlaylist, mTrackListAdapter.getCount(), OFFSET, new QueueUp.CallReceiver<List<SpotifyTrack>>() {
+                    @Override
+                    public void onResult(List<SpotifyTrack> result) {
+                        mTrackListAdapter.addItems(result);
+
+                    /* Remove lock on loading more tracks */
+                        loadingMoreItems = false;
+                        mActivity.runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                footerText.setText("");
+                            }
+                        });
+                    }
+
+                    @Override
+                    public void onException(Exception e) {
+                        Log.e(QueueUp.LOG_TAG, "Problem loading more tracks: " + e.getMessage());
+                    }
+                });
+            } else {
+                footerText.setText("End of list");
+            }
+        }
+    }
 
 
     public class TrackListAdapter extends BaseAdapter {
@@ -155,10 +215,24 @@ public class SpotifyPlaylistFragment extends Fragment {
             checkedList = new ArrayList<>();
         }
 
+        public List<SpotifyTrack> getTrackList() {
+            return mTrackList;
+        }
+
         public void updateTrackList(List<SpotifyTrack> list) {
             mTrackList = list;
 
             /* Calls are going to be from different asynchronous threads, so to be safe, run on main thread */
+            mActivity.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    notifyDataSetChanged();
+                }
+            });
+        }
+
+        public void addItems(List<SpotifyTrack> list) {
+            mTrackList.addAll(list);
             mActivity.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {

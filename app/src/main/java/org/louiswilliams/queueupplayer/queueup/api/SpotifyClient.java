@@ -103,6 +103,33 @@ public class SpotifyClient {
         });
     }
 
+    public void getUserPlaylistTracks(String userId, final String playlistId, int offset, int limit, final QueueUp.CallReceiver<List<SpotifyTrack>> receiver) {
+        String format = "users/%s/playlists/%s/tracks?offset=%d&limit=%d";
+        apiRequest(String.format(format, userId, playlistId, offset, limit), null, new QueueUp.CallReceiver<JSONObject>() {
+            @Override
+            public void onResult(JSONObject result) {
+                List<SpotifyTrack>  tracks = new ArrayList<>();
+                JSONArray items = result.optJSONArray("items");
+                try {
+                    if (items != null) {
+                        for (int i = 0; i < items.length(); i++) {
+                            JSONObject item = items.getJSONObject(i).getJSONObject("track");
+                            tracks.add(new SpotifyTrack(item));
+                        }
+                    }
+                    receiver.onResult(tracks);
+                } catch (JSONException e) {
+                    receiver.onException(e);
+                }
+            }
+
+            @Override
+            public void onException(Exception e) {
+                receiver.onException(e);
+            }
+        });
+    }
+
     public void apiRequest(final String uri, final JSONObject data, final QueueUp.CallReceiver<JSONObject> receiver) {
         final String urlString = String.format(SPOTIFY_API_FORMAT, uri);
         new Thread(new Runnable() {
