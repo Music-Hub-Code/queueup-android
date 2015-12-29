@@ -156,7 +156,7 @@ public class AddTrackFragment extends Fragment implements BackButtonListener {
         importButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                mActivity.getFragmentManager().popBackStack();
+                mActivity.getFragmentManager().popBackStack(PlaylistFragment.class.getName(), 0);
                 mActivity.showSpotifyPlaylistListFragment(mPlaylistId);
             }
         });

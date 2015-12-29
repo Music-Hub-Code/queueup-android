@@ -94,6 +94,7 @@ public class MainActivity
     public static final String[] NAVIGATION_ACTIONS = {PLAYLISTS_NEARBY, PLAYLISTS_ALL, PLAYLISTS_FRIENDS, PLAYLISTS_MINE};
     private static final String LOG_TAG = QueueUp.LOG_TAG;
     private static final int LOCATION_SETTINGS_CODE = 4444;
+    private static final int SPOTIFY_LOGIN_CODE = 1234;
 
 
     private boolean showNewTrackOnPlaylistLoad;
@@ -531,9 +532,49 @@ public class MainActivity
             builder.setScopes(new String[]{"user-read-private", "playlist-read-private", "streaming"});
             AuthenticationRequest request = builder.build();
 
-            AuthenticationClient.openLoginInBrowser(this, request);
+            AuthenticationClient.openLoginActivity(this, SPOTIFY_LOGIN_CODE, request);
+//            AuthenticationClient.openLoginInBrowser(this, request);
             /* To be seen again... in onNewIntent */
         }
+    }
+
+    private void handleSpotifyLoginResponse(AuthenticationResponse response) {
+        final QueueUp.CallReceiver<String> receiver = spotifyAuthListener;
+
+        /* Consume the listener by invalidating it */
+        spotifyAuthListener = null;
+
+        switch (response.getType()) {
+            case CODE:
+
+                /* Swap out the token for a code */
+                mSpotifyTokenManager.swapCodeForToken(response.getCode(), new QueueUp.CallReceiver<String>() {
+
+                    @Override
+                    public void onResult(String result) {
+                        if (receiver != null) {
+                            receiver.onResult(result);
+                        }
+                    }
+
+                    @Override
+                    public void onException(Exception e) {
+                        if (receiver != null) {
+                            receiver.onException(new Exception("Error swapping code for token", e));
+                        }
+                    }
+                });
+            case ERROR:
+                if (response.getError() != null && receiver != null) {
+                    receiver.onException(new Exception("Login error: "+ response.getError()));
+                }
+                break;
+            default:
+                receiver.onException(new QueueUpException("Received response from Spotify: " + response.getType().name()));
+                break;
+        }
+
+
     }
 
     private void handleIntent(Intent intent) {
@@ -551,35 +592,10 @@ public class MainActivity
             /* Get the reference to the listener */
             final QueueUp.CallReceiver<String> receiver = spotifyAuthListener;
 
-            if (uri != null && receiver != null) {
+            if (uri != null) {
                 AuthenticationResponse response = AuthenticationResponse.fromUri(uri);
 
-                /* Consume the listener by invalidating it */
-                spotifyAuthListener = null;
-
-                switch (response.getType()) {
-                    case CODE:
-
-                        /* Swap out the token for a code */
-                        mSpotifyTokenManager.swapCodeForToken(response.getCode(), new QueueUp.CallReceiver<String>() {
-
-                            @Override
-                            public void onResult(String result) {
-                                receiver.onResult(result);
-                            }
-
-                            @Override
-                            public void onException(Exception e) {
-                                receiver.onException(new Exception("Error swapping code for token", e));
-                            }
-                        });
-                    case ERROR:
-                        if (response.getError() != null) {
-                            receiver.onException(new Exception("Login error: "+ response.getError()));
-                        }
-                        break;
-                }
-
+                handleSpotifyLoginResponse(response);
                 /* Clear the data so reloading the activity doesn't try to swap a token again */
                 intent.setData(null);
             }
@@ -822,6 +838,7 @@ public class MainActivity
     public void doLogout() {
         mStore.clear();
 
+        AuthenticationClient.clearCookies(this);
         LoginManager.getInstance().logOut();
 
         recreate();
@@ -942,6 +959,7 @@ public class MainActivity
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
+        super.onActivityResult(requestCode, resultCode, intent);
         if (requestCode == LoginActivity.QUEUEUP_LOGIN_REQUEST_CODE) {
             if (resultCode == RESULT_OK) {
                 recreate();
@@ -959,6 +977,9 @@ public class MainActivity
             if (isLocationEnabled()) {
                 navigateDrawer(0);
             }
+        } else if (requestCode == SPOTIFY_LOGIN_CODE) {
+            AuthenticationResponse response = AuthenticationClient.getResponse(resultCode, intent);
+            handleSpotifyLoginResponse(response);
         }
     }
 

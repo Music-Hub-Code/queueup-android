@@ -3,6 +3,7 @@ package org.louiswilliams.queueupplayer.fragment;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Fragment;
+import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -186,7 +187,9 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
 
         TextView adminName = (TextView) mPlaylistHeader.findViewById(R.id.playlist_admin_name);
         if (playlist.adminName != null) {
-            adminName.setText(getResources().getString(R.string.hosted_by_name, playlist.adminName));
+            if (isAdded()) {
+                adminName.setText(getResources().getString(R.string.hosted_by_name, playlist.adminName));
+            }
         } else {
             adminName.setText(getResources().getString(R.string.hosted_by_name, "an anonymous user"));
         }
@@ -417,8 +420,10 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
                     Picasso.with(mActivity).load(current.album.imageUrls.get(0)).into(albumArt);
                 }
 
-                trackName.setText(current.name);
-                trackArtist.setText(current.artists.get(0).name);
+                if (current != null) {
+                    trackName.setText(current.name);
+                    trackArtist.setText(current.artists.get(0).name);
+                }
 
             }
         });
@@ -680,7 +685,11 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
 
     public void openLink(String uri) {
         Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(uri));
-        startActivity(intent);
+        try {
+            startActivity(intent);
+        } catch (ActivityNotFoundException e) {
+            mActivity.toast("Spotify not installed");
+        }
     }
 
     @Override
