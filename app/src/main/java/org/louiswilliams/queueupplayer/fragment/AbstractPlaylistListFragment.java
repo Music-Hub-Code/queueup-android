@@ -42,6 +42,7 @@ import org.louiswilliams.queueupplayer.queueup.objects.QueueUpTrack;
 import org.louiswilliams.queueupplayer.queueup.objects.SpotifyTrack;
 
 import java.text.DecimalFormat;
+import java.util.Collections;
 import java.util.List;
 
 public abstract class AbstractPlaylistListFragment extends Fragment implements PlaylistListener, SwipeRefreshLayout.OnRefreshListener {
@@ -355,9 +356,12 @@ public abstract class AbstractPlaylistListFragment extends Fragment implements P
             public void run() {
                 if (playlists != null) {
                     mPlaylists = playlists;
-                    adapter = new PlaylistGridAdapter(mActivity, mPlaylists, R.layout.playlist_item);
-                    playlistGrid.setAdapter(adapter);
+                } else {
+                    mPlaylists = Collections.emptyList();
                 }
+                adapter = new PlaylistGridAdapter(mActivity, mPlaylists, R.layout.playlist_item);
+                playlistGrid.setAdapter(adapter);
+
                 if (message != null) {
                     notification.setText(message);
                     notification.setVisibility(View.VISIBLE);

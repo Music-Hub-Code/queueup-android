@@ -82,7 +82,7 @@ public class PlaylistListFragment extends AbstractPlaylistListFragment implement
 
             @Override
             public void onException(Exception e) {
-                mActivity.toast(e.getMessage());
+                populateDone(null, e.getMessage(), refresh);
                 Log.e(QueueUp.LOG_TAG, "Failed to getString playlist list: " + e.getMessage());
             }
         });
@@ -92,6 +92,7 @@ public class PlaylistListFragment extends AbstractPlaylistListFragment implement
          /* Find nearby playlists */
         /* If the user hasn't enabled location services... */
         if (mActivity.getLocationListener() == null || !mActivity.isLocationEnabled()) {
+            populateDone(null, null, refresh);
             mActivity.alertLocationEnable();
             mActivity.navigateDrawer(1); // Display "All" instead of nearby
             return;
@@ -118,9 +119,8 @@ public class PlaylistListFragment extends AbstractPlaylistListFragment implement
 
             @Override
             public void onException(Exception e) {
-                mActivity.toast(e.getMessage());
                 e.printStackTrace();
-                populateDone(null, null, refresh);
+                populateDone(null, e.getMessage(), refresh);
             }
         });
     }
@@ -151,9 +151,7 @@ public class PlaylistListFragment extends AbstractPlaylistListFragment implement
 
                         @Override
                         public void onException(Exception e) {
-                            mActivity.toast(e.getMessage());
-                            e.printStackTrace();
-                            populateDone(null, null, refresh);
+                            populateDone(null, e.getMessage(), refresh);
                         }
                     });
                 }
@@ -180,9 +178,8 @@ public class PlaylistListFragment extends AbstractPlaylistListFragment implement
 
             @Override
             public void onException(Exception e) {
-                mActivity.toast(e.getMessage());
                 Log.e(QueueUp.LOG_TAG, "Failed to getString playlist list: " + e.getMessage());
-                populateDone(null, null, refresh);
+                populateDone(null, e.getMessage(), refresh);
             }
         });
     }

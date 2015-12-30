@@ -31,6 +31,7 @@ import java.net.HttpURLConnection;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.net.UnknownHostException;
 import java.security.KeyManagementException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
@@ -752,23 +753,46 @@ public class QueueUpClient {
                         receiver.onResult(response);
                     } else {
 
-                        String messageFormat = "Error (%d): %s";
+                        String messageFormat = "%s: (%d) %s";
+                        String errName;
                         String message;
+
+                        /* Describe the problem */
+                        if (connection.getResponseCode() == 502) {
+                            errName = "The server cannot be reached";
+                        } else if (connection.getResponseCode() == 403){
+                            errName = "You do not have permission to do this";
+                        } else if (connection.getResponseCode() == 404) {
+                            errName = "This page does not exist";
+                        } else if (connection.getResponseCode() == 500){
+                            errName = "The server encountered an error";
+                        } else {
+                            errName = "Unknown error";
+                        }
+
+                        /* Include more detailed information, if sent */
                         if (response != null) {
                             /* Attempt to getString the error message */
                             JSONObject error = response.optJSONObject("error");
-                            message = String.format(messageFormat, connection.getResponseCode(), error.optString("message", "UNKNOWN"));
+                            if (error != null) {
+                                message = String.format(messageFormat, errName, connection.getResponseCode(), error.toString());
+                            } else {
+                                message = String.format(messageFormat, errName, connection.getResponseCode(), response.toString());
+                            }
                         } else {
-                            message = String.format(messageFormat, connection.getResponseCode(), "No data sent");
+                            message = String.format(messageFormat, errName, connection.getResponseCode(), "No data sent");
                         }
 
                         receiver.onException(new QueueUpException(message));
                     }
 
 
-                } catch (IOException | JSONException e ) {
-                    e.printStackTrace();
-                    receiver.onException(e);
+                } catch (JSONException e) {
+                    receiver.onException(new QueueUpException("Unable to parse response: " + e.getMessage(), e));
+                } catch (IOException e) {
+                    if (e instanceof UnknownHostException) {
+                        receiver.onException(new QueueUpException("Not connected to the Internet"));
+                    }
                 } finally {
                     if (connection != null) {
                         connection.disconnect();
