@@ -84,9 +84,10 @@ public abstract class AbstractPlaylistListFragment extends Fragment implements P
         mView = (SwipeRefreshLayout) inflater.inflate(R.layout.fragment_playlist_list, container, false);
         mView.setOnRefreshListener(this);
 
+        playlistGrid = (GridView) mView.findViewById(R.id.playlist_grid);
+
         populate(false);
 
-        playlistGrid = (GridView) mView.findViewById(R.id.playlist_grid);
         playlistGrid.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -163,8 +164,7 @@ public abstract class AbstractPlaylistListFragment extends Fragment implements P
 
     public void showCreatePlaylistDialog() {
         if (mActivity.isClientRegistered()) {
-            if (!mActivity.isLocationEnabled()) {
-                mActivity.alertLocationEnable();
+            if (!mActivity.locationPermissionGranted(true) || !mActivity.isLocationEnabled(true)) {
                 return;
             }
             final QueueUpLocationListener locationListener = mActivity.getLocationListener();

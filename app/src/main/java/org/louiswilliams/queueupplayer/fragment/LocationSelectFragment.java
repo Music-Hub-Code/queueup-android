@@ -79,9 +79,8 @@ public class LocationSelectFragment extends Fragment implements OnMapReadyCallba
         if (!isGooglePlayServicesAvailable()) {
             mActivity.toast("Google Play Services not Installed");
             mActivity.getFragmentManager().popBackStack();
-        } else if (mActivity.getLocationListener() == null || !mActivity.isLocationEnabled()) {
+        } else if (!mActivity.locationPermissionGranted(true) || !mActivity.isLocationEnabled(true)) {
             mActivity.getFragmentManager().popBackStack();
-            mActivity.alertLocationEnable();
         }
         mActivity.getLocationListener().startUpdates();
     }

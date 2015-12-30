@@ -21,12 +21,11 @@ import android.net.http.HttpResponseCache;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.os.Looper;
+import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
-import android.telecom.Call;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.MenuItem;
@@ -95,6 +94,7 @@ public class MainActivity
     private static final String LOG_TAG = QueueUp.LOG_TAG;
     private static final int LOCATION_SETTINGS_CODE = 4444;
     private static final int SPOTIFY_LOGIN_CODE = 1234;
+    private static final int REQUEST_PERMISSION = 1;
 
 
     private boolean showNewTrackOnPlaylistLoad;
@@ -144,17 +144,7 @@ public class MainActivity
         getFragmentManager().addOnBackStackChangedListener(this);
 
         /* Start listening for location updates until we get a decent and fresh and decently accurate location */
-        if (locationListener == null) {
-            LocationManager locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
-
-            if (ensureAndRequestPermission(Manifest.permission.ACCESS_COARSE_LOCATION) && ensureAndRequestPermission(Manifest.permission.ACCESS_FINE_LOCATION)) {
-                locationListener = new QueueUpLocationListener(locationManager);
-                locationListener.startUpdatesUntilBest();
-            }
-        } else {
-            locationListener.stopUpdates();
-            locationListener.startUpdatesUntilBest();
-        }
+        initLocationListener(false);
 
         mStore = QueueUpStore.with(this);
 
@@ -722,12 +712,46 @@ public class MainActivity
         stopPlayback();
     }
 
-    public boolean isLocationEnabled() {
-        LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-        return (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) ||
-                locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER));
+    public void initLocationListener(boolean requestIfNotEnabled) {
+        if (locationListener == null) {
+            LocationManager locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+
+            if (locationPermissionGranted(requestIfNotEnabled)) {
+                locationListener = new QueueUpLocationListener(locationManager);
+                locationListener.startUpdatesUntilBest();
+            }
+        } else {
+            locationListener.stopUpdates();
+            locationListener.startUpdatesUntilBest();
+        }
     }
 
+    public boolean isLocationEnabled(boolean requestIfDisabled) {
+        LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        boolean disabled =  (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) ||
+                locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER));
+        if (requestIfDisabled && disabled) {
+            alertLocationEnable();
+        }
+        return disabled;
+    }
+
+    /** Provide rationale for location permission request if previously denied */
+    public void alertLocationRequestRationale(final String permission) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+
+        builder.setTitle(R.string.location_not_found_title);  // GPS not found
+        builder.setMessage(R.string.location_not_found_message); // Want to enable?
+        builder.setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialogInterface, int i) {
+                ActivityCompat.requestPermissions(MainActivity.this, new String[]{permission}, REQUEST_PERMISSION);
+            }
+        });
+        builder.setNegativeButton(R.string.no, null);
+        builder.create().show();
+    }
+
+    /** Provide user with option to enable location services in system */
     public void alertLocationEnable() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         final Intent intent = new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS);
@@ -743,17 +767,37 @@ public class MainActivity
         builder.create().show();
     }
 
-    public boolean ensureAndRequestPermission(String permission) {
+    public boolean locationPermissionGranted(boolean requestIfDisabled) {
+        final String permission = Manifest.permission.ACCESS_FINE_LOCATION;
         boolean disabled = false;
 
         /* Only in marshmallow do we need to do this */
         if (Build.VERSION.SDK_INT >= 23) {
-            disabled= (ActivityCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED);
-            if (disabled) {
-                ActivityCompat.requestPermissions(this, new String[]{permission}, 1);
+            disabled = (ActivityCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED);
+            if (disabled && requestIfDisabled) {
+                if (ActivityCompat.shouldShowRequestPermissionRationale(this, permission)) {
+                    alertLocationRequestRationale(permission);
+                } else {
+                    ActivityCompat.requestPermissions(this, new String[]{permission}, REQUEST_PERMISSION);
+                }
             }
         }
         return !disabled;
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String permissions[], @NonNull int[] grantResults) {
+        switch (requestCode) {
+            case REQUEST_PERMISSION:
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    initLocationListener(true);
+                } else {
+                    toast("Location permission not granted");
+                }
+                break;
+            default:
+                break;
+        }
     }
 
     public void displayHomeUp() {
@@ -974,7 +1018,7 @@ public class MainActivity
                 toast(message);
             }
         } else if (requestCode == LOCATION_SETTINGS_CODE) {
-            if (isLocationEnabled()) {
+            if (isLocationEnabled(false)) {
                 navigateDrawer(0);
             }
         } else if (requestCode == SPOTIFY_LOGIN_CODE) {

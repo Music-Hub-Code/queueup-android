@@ -91,9 +91,8 @@ public class PlaylistListFragment extends AbstractPlaylistListFragment implement
     public void populateNearby(final boolean refresh) {
          /* Find nearby playlists */
         /* If the user hasn't enabled location services... */
-        if (mActivity.getLocationListener() == null || !mActivity.isLocationEnabled()) {
+        if (!mActivity.locationPermissionGranted(true) || !mActivity.isLocationEnabled(true)) {
             populateDone(null, null, refresh);
-            mActivity.alertLocationEnable();
             mActivity.navigateDrawer(1); // Display "All" instead of nearby
             return;
         }

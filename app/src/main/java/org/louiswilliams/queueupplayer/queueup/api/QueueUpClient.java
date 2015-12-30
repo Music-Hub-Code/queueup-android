@@ -758,14 +758,16 @@ public class QueueUpClient {
                         String message;
 
                         /* Describe the problem */
-                        if (connection.getResponseCode() == 502) {
-                            errName = "The server cannot be reached";
+                        if (connection.getResponseCode() == 400){
+                            errName = "Client error";
                         } else if (connection.getResponseCode() == 403){
                             errName = "You do not have permission to do this";
                         } else if (connection.getResponseCode() == 404) {
                             errName = "This page does not exist";
-                        } else if (connection.getResponseCode() == 500){
+                        } else if (connection.getResponseCode() == 500) {
                             errName = "The server encountered an error";
+                        } else if (connection.getResponseCode() == 502) {
+                            errName = "The server cannot be reached";
                         } else {
                             errName = "Unknown error";
                         }
