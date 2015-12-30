@@ -728,12 +728,12 @@ public class MainActivity
 
     public boolean isLocationEnabled(boolean requestIfDisabled) {
         LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-        boolean disabled =  (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) ||
+        boolean enabled =  (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) ||
                 locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER));
-        if (requestIfDisabled && disabled) {
+        if (requestIfDisabled && !enabled) {
             alertLocationEnable();
         }
-        return disabled;
+        return enabled;
     }
 
     /** Provide rationale for location permission request if previously denied */
