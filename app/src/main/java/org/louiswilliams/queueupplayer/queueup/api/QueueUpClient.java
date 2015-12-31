@@ -793,6 +793,7 @@ public class QueueUpClient {
                     receiver.onException(new QueueUpException("Unable to parse response: " + e.getMessage(), e));
                 } catch (IOException e) {
                     if (e instanceof UnknownHostException) {
+                        e.printStackTrace();
                         receiver.onException(new QueueUpException("Not connected to the Internet"));
                     }
                 } finally {

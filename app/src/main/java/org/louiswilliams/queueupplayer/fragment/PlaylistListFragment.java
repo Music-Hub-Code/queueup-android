@@ -102,7 +102,11 @@ public class PlaylistListFragment extends AbstractPlaylistListFragment implement
         if (location == null) {
             mActivity.getLocationListener().getSingleLocationUpdate(this);
 
-            populateDone(null, getString(R.string.waiting_for_location), refresh);
+            String m = null;
+            if (isAdded())  {
+                m = getString(R.string.waiting_for_location);
+            }
+            populateDone(null, m, refresh);
             return;
         }
 
@@ -112,7 +116,11 @@ public class PlaylistListFragment extends AbstractPlaylistListFragment implement
                 if (playlists.size() > 0) {
                     populateDone(playlists, null, refresh);
                 } else {
-                    populateDone(null, getString(R.string.no_playlists_nearby), refresh);
+                    String m = null;
+                    if (isAdded())  {
+                        m = getString(R.string.no_playlists_nearby);
+                    }
+                    populateDone(null, m, refresh);
                 }
             }
 
@@ -144,7 +152,11 @@ public class PlaylistListFragment extends AbstractPlaylistListFragment implement
                             if (playlists.size() > 0) {
                                 populateDone(playlists, null, refresh);
                             } else {
-                                populateDone(null, getString(R.string.no_friends_playlists), refresh);
+                                String m = null;
+                                if (isAdded())  {
+                                    m = getString(R.string.no_friends_playlists);
+                                }
+                                populateDone(null, m, refresh);
                             }
                         }
 
@@ -159,7 +171,11 @@ public class PlaylistListFragment extends AbstractPlaylistListFragment implement
             graphRequest.executeAsync();
 
         } else {
-            populateDone(null, getString(R.string.facebook_notification), refresh);
+            String m = null;
+            if (isAdded())  {
+                m = getString(R.string.facebook_notification);
+            }
+            populateDone(null, m, refresh);
         }
     }
 
