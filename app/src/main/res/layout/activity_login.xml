@@ -18,21 +18,36 @@
 
         <ImageView
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:src="@drawable/queueup_logo"
+            android:layout_height="200dp"
+            android:src="@drawable/queueup_logo_material"
             android:scaleType="centerInside"
             android:layout_gravity="center_horizontal"
             android:layout_marginBottom="20dp"
             />
 
 
+        <com.facebook.login.widget.LoginButton
+            android:id="@+id/login_button"
+            android:layout_width="fill_parent"
+            android:layout_height="64dp"
+            android:layout_gravity="center_horizontal"
             />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:text="@string/or"
+            android:layout_marginTop="30dp"
+            android:layout_marginBottom="30dp"
+            android:layout_gravity="center_horizontal" />
+
+
         <RadioGroup
             android:id="@+id/login_button_group"
             android:orientation="horizontal"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="0dp"
+            android:layout_weight="1"
             android:layout_gravity="center_horizontal">
 
             <ToggleButton
@@ -64,6 +79,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:inputType="textEmailAddress"
+            android:fontFamily="sans-serif"
             android:hint="@string/email_address"
             android:ems="10"
             android:id="@+id/email"
@@ -73,6 +89,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:inputType="textCapWords|textPersonName"
+            android:fontFamily="sans-serif"
             android:hint="@string/full_name"
             android:ems="10"
             android:id="@+id/user_name"
@@ -83,6 +100,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:inputType="textPassword"
+            android:fontFamily="sans-serif"
             android:hint="Password"
             android:ems="10"
             android:id="@+id/password"
@@ -92,6 +110,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:inputType="textPassword"
+            android:fontFamily="sans-serif"
             android:hint="Password confirmation"
             android:ems="10"
             android:id="@+id/password_conf"
@@ -106,21 +125,6 @@
             android:textColor="@color/accent_material_dark"
             android:id="@+id/login_multi_button" />
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textAppearance="?android:attr/textAppearanceMedium"
-            android:text="@string/or"
-            android:layout_marginTop="20dp"
-            android:layout_marginBottom="30dp"
-            android:layout_gravity="center_horizontal" />
-
-        <com.facebook.login.widget.LoginButton
-            android:id="@+id/login_button"
-            android:layout_width="fill_parent"
-            android:layout_height="64dp"
-            android:layout_gravity="center_horizontal"
-            />
 
     </LinearLayout>
 </RelativeLayout>

@@ -556,7 +556,7 @@ public class MainActivity
                 });
             case ERROR:
                 if (response.getError() != null && receiver != null) {
-                    receiver.onException(new Exception("Login error: "+ response.getError()));
+                    receiver.onException(new QueueUpException(response.getError()));
                 }
                 break;
             default:

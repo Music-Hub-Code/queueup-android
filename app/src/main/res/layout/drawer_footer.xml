@@ -10,9 +10,9 @@
     >
     <ImageView
         android:layout_width="match_parent"
-        android:layout_height="42dp"
+        android:layout_height="36dp"
         android:scaleType="centerInside"
-        android:src="@drawable/queueup_logo"
+        android:src="@drawable/queueup_logo_material"
         />
 
     <TextView

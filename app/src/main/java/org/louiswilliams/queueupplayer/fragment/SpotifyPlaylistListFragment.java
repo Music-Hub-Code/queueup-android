@@ -26,6 +26,7 @@ import org.louiswilliams.queueupplayer.queueup.QueueUp;
 import org.louiswilliams.queueupplayer.queueup.api.SpotifyClient;
 import org.louiswilliams.queueupplayer.queueup.objects.SpotifyPlaylist;
 
+import java.util.Collections;
 import java.util.List;
 
 public class SpotifyPlaylistListFragment extends Fragment implements SwipeRefreshLayout.OnRefreshListener {
@@ -53,37 +54,31 @@ public class SpotifyPlaylistListFragment extends Fragment implements SwipeRefres
 
     private void populate(final boolean refresh) {
         /* Get the user's following playlists and update the adapter on success */
-        if (spotifyClient == null) {
-            return;
-        }
-        spotifyClient.getMyPlaylists(new QueueUp.CallReceiver<List<SpotifyPlaylist>>() {
+        mActivity.spotifyLogin(new QueueUp.CallReceiver<String>() {
+
             @Override
-            public void onResult(List<SpotifyPlaylist> result) {
+            public void onResult(String accessToken) {
+                spotifyClient = SpotifyClient.with(accessToken);
 
-                mPlaylists = result;
-
-                mAdapter = new PlaylistGridAdapter(mActivity, mPlaylists, R.layout.playlist_item);
-
-                final ProgressBar progress = (ProgressBar) mView.findViewById(R.id.loading_progress_bar);
-                mActivity.runOnUiThread(new Runnable() {
+                spotifyClient.getMyPlaylists(new QueueUp.CallReceiver<List<SpotifyPlaylist>>() {
                     @Override
-                    public void run() {
-                        progress.setVisibility(View.GONE);
-                        playlistGrid.setAdapter(mAdapter);
-                        if (refresh) {
-                            mView.setRefreshing(false);
-                        }
-                        mActivity.setTitle("My Playlists");
+                    public void onResult(List<SpotifyPlaylist> result) {
+                        populateDone(result, null, refresh);
+                    }
+
+                    @Override
+                    public void onException(Exception e) {
+                        populateDone(null, "Error: " + e.getMessage(), refresh);
                     }
                 });
             }
 
             @Override
             public void onException(Exception e) {
-                mActivity.toast(e.getMessage());
-                Log.e(QueueUp.LOG_TAG, e.getMessage());
+                populateDone(null, "Spotify: " + e.getMessage(), refresh);
             }
         });
+
     }
 
     @Override
@@ -92,21 +87,6 @@ public class SpotifyPlaylistListFragment extends Fragment implements SwipeRefres
         mView.setOnRefreshListener(this);
 
         playlistId = getArguments().getString("playlist_id");
-
-        mActivity.spotifyLogin(new QueueUp.CallReceiver<String>() {
-
-            @Override
-            public void onResult(String accessToken) {
-                spotifyClient = SpotifyClient.with(accessToken);
-                populate(false);
-            }
-
-            @Override
-            public void onException(Exception e) {
-                Log.e(QueueUp.LOG_TAG, e.getMessage());
-            }
-        });
-
 
         playlistGrid = (GridView) mView.findViewById(R.id.playlist_grid);
         playlistGrid.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -130,6 +110,9 @@ public class SpotifyPlaylistListFragment extends Fragment implements SwipeRefres
                 mView.setEnabled(firstVisible == 0 && topPosition >= 0);
             }
         });
+        mActivity.setTitle("My Playlists");
+
+        populate(false);
 
         View addButton = mView.findViewById(R.id.add_playlist_button);
         addButton.setVisibility(View.GONE);
@@ -143,6 +126,36 @@ public class SpotifyPlaylistListFragment extends Fragment implements SwipeRefres
     @Override
     public void onRefresh() {
         populate(true);
+    }
+
+    public void  populateDone(final List<SpotifyPlaylist> playlists, final String message, final boolean refresh) {
+        final ProgressBar progress = (ProgressBar) mView.findViewById(R.id.loading_progress_bar);
+        final TextView notification = (TextView) mView.findViewById(R.id.playlist_notification);
+
+        mActivity.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+            if (message != null) {
+                String help = "%s. Swipe down to try again";
+                String m = String.format(help, message);
+                notification.setText(m);
+                notification.setVisibility(View.VISIBLE);
+            } else {
+                notification.setVisibility(View.GONE);
+            }
+            if (playlists != null) {
+                mPlaylists = playlists;
+            } else {
+                mPlaylists = Collections.emptyList();
+            }
+            mAdapter = new PlaylistGridAdapter(mActivity, mPlaylists, R.layout.playlist_item);
+            playlistGrid.setAdapter(mAdapter);
+            progress.setVisibility(View.GONE);
+            if (refresh) {
+                mView.setRefreshing(false);
+            }
+            }
+        });
     }
 
     class PlaylistGridAdapter extends BaseAdapter {
