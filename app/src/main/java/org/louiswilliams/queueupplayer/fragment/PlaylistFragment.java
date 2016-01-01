@@ -210,7 +210,7 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
 
             subscribeAsClient();
 
-            final Button playHereButton = (Button) mPlaylistHeader.findViewById(R.id.play_here_button);
+            final ImageButton playHereButton = (ImageButton) mPlaylistHeader.findViewById(R.id.play_here_button);
 
             /* If the user is the admin of the current playlist, give the option to play, otherwise say who owns it */
             if (isAdmin) {

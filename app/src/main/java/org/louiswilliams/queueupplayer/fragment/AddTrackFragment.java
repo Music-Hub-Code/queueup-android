@@ -116,7 +116,7 @@ public class AddTrackFragment extends Fragment implements BackButtonListener {
 
         final ImageButton searchClear = (ImageButton) mView.findViewById(R.id.track_search_clear);
         searchClear.setVisibility(View.GONE);
-        final Button importButton = (Button) mView.findViewById(R.id.import_from_spotify_button);
+        final ImageButton importButton = (ImageButton) mView.findViewById(R.id.import_from_spotify_button);
         final LinearLayout importParent = (LinearLayout) mView.findViewById(R.id.import_from_spotify_wrap);
 
         mSearchBox.addTextChangedListener(new TextWatcher() {
