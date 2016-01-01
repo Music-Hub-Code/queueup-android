@@ -6,10 +6,14 @@ import android.os.Binder;
 import android.os.IBinder;
 import android.util.Log;
 
+import com.google.android.gms.analytics.ExceptionReporter;
+import com.google.android.gms.analytics.Tracker;
 import com.spotify.sdk.android.player.Config;
+import com.spotify.sdk.android.player.ConnectionStateCallback;
 import com.spotify.sdk.android.player.Player;
 import com.spotify.sdk.android.player.Spotify;
 
+import org.louiswilliams.queueupplayer.QueueUpApplication;
 import org.louiswilliams.queueupplayer.R;
 import org.louiswilliams.queueupplayer.queueup.PlaybackController;
 import org.louiswilliams.queueupplayer.queueup.PlaybackReceiver;
@@ -24,7 +28,7 @@ import org.louiswilliams.queueupplayer.queueup.api.QueueUpClient;
 import org.louiswilliams.queueupplayer.queueup.objects.QueueUpStateChange;
 import org.louiswilliams.queueupplayer.widget.PlayerNotification;
 
-public class PlayerService extends Service implements PlaybackController {
+public class PlayerService extends Service implements PlaybackController, ConnectionStateCallback {
 
     public static final String EXTRA_PLAYLIST_ID = "PLAYLIST_ID";
 
@@ -33,22 +37,28 @@ public class PlayerService extends Service implements PlaybackController {
     private PlaylistPlayer mPlaylistPlayer;
     private PlaybackReceiver mPlaybackReceiver;
     private QueueUpClient queueUpClient;
-    private QueueUpStore mStore;
     private SpotifyPlayer mSpotifyPlayer;
     private String mSpotifyClientId;
-    private String mClientToken;
-    private String mUserId;
+    private Tracker mTracker;
 
     @Override
     public void onCreate() {
         mBinder = new LocalBinder();
         mNotification = new PlayerNotification(this);
 
+        mTracker = ((QueueUpApplication)getApplication()).getDefaultTracker();
+        Thread.UncaughtExceptionHandler uncaughtExceptionHandler = new ExceptionReporter(
+                mTracker,
+                Thread.getDefaultUncaughtExceptionHandler(),
+                getApplicationContext()
+        );
+        Thread.setDefaultUncaughtExceptionHandler(uncaughtExceptionHandler);
+
         mSpotifyClientId = getString(R.string.spotify_client_id);
 
-        mStore = QueueUpStore.with(this);
-        mClientToken = mStore.getString(QueueUpStore.CLIENT_TOKEN);
-        mUserId = mStore.getString(QueueUpStore.USER_ID);
+        QueueUpStore mStore = QueueUpStore.with(this);
+        String mClientToken = mStore.getString(QueueUpStore.CLIENT_TOKEN);
+        String mUserId = mStore.getString(QueueUpStore.USER_ID);
 
         try {
             queueUpClient = new QueueUpClient(getApplicationContext(), mClientToken, mUserId);
@@ -99,6 +109,7 @@ public class PlayerService extends Service implements PlaybackController {
 
     public void initPlayer(String accessToken) {
         Config playerConfig = new Config(this, accessToken, mSpotifyClientId);
+        playerConfig.useCache(false);
 
         /* Don't getString another player if there's already one initialized */
         if (mSpotifyPlayer != null &&  mSpotifyPlayer.getPlayer().isInitialized()) {
@@ -130,6 +141,7 @@ public class PlayerService extends Service implements PlaybackController {
 
         /* Attach the player listener */
         mSpotifyPlayer.startReceivingPlaybackNotifications();
+        mSpotifyPlayer.getPlayer().addConnectionStateCallback(this);
         addPlaylistListener(mSpotifyPlayer);
         updatePlaybackReady(true);
         updateTrackPlaying(true);
@@ -169,7 +181,9 @@ public class PlayerService extends Service implements PlaybackController {
 
 
     public void addPlaylistListener(PlaylistListener listener) {
-        mPlaylistPlayer.addPlaylistListener(listener);
+        if (mPlaylistPlayer != null) {
+            mPlaylistPlayer.addPlaylistListener(listener);
+        }
     }
 
     public void removePlaylistListener(PlaylistListener listener) {
@@ -234,6 +248,34 @@ public class PlayerService extends Service implements PlaybackController {
 
     public void setPlaybackReceiver(PlaybackReceiver receiver) {
         mPlaybackReceiver = receiver;
+    }
+
+
+    /* Spotify ConnectionStateCallback */
+    @Override
+    public void onLoggedIn() {
+
+    }
+
+    @Override
+    public void onLoggedOut() {
+        Log.w(QueueUp.LOG_TAG, "Spotify logged out. Stopping player service");
+        stopSelf();
+    }
+
+    @Override
+    public void onLoginFailed(Throwable throwable) {
+
+    }
+
+    @Override
+    public void onTemporaryError() {
+
+    }
+
+    @Override
+    public void onConnectionMessage(String s) {
+
     }
 
     public class LocalBinder extends Binder {

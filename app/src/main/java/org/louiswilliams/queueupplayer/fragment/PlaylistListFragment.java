@@ -13,8 +13,11 @@ import android.widget.TextView;
 import com.facebook.AccessToken;
 import com.facebook.GraphRequest;
 import com.facebook.GraphResponse;
+import com.google.android.gms.analytics.HitBuilders;
+import com.google.android.gms.analytics.Tracker;
 
 import org.json.JSONArray;
+import org.louiswilliams.queueupplayer.QueueUpApplication;
 import org.louiswilliams.queueupplayer.R;
 import org.louiswilliams.queueupplayer.activity.MainActivity;
 import org.louiswilliams.queueupplayer.queueup.LocationUpdateListener;
@@ -32,7 +35,6 @@ public class PlaylistListFragment extends AbstractPlaylistListFragment implement
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         mAction = getArguments().getString("action");
-
         return super.onCreateView(inflater, container, savedInstanceState);
     }
 
@@ -51,6 +53,8 @@ public class PlaylistListFragment extends AbstractPlaylistListFragment implement
                 mActivity.setTitle(getString(MainActivity.NAVIGATION_TITLES[mActivity.currentNavigationAction]));
             }
         });
+
+        mTracker.send(new HitBuilders.EventBuilder().setAction("playlist_list").setLabel(mAction).build());
 
         switch (mAction) {
             case MainActivity.PLAYLISTS_ALL:

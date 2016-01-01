@@ -30,8 +30,11 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import com.gc.materialdesign.views.ProgressBarDeterminate;
+import com.google.android.gms.analytics.HitBuilders;
+import com.google.android.gms.analytics.Tracker;
 import com.squareup.picasso.Picasso;
 
+import org.louiswilliams.queueupplayer.QueueUpApplication;
 import org.louiswilliams.queueupplayer.R;
 import org.louiswilliams.queueupplayer.activity.InviteContactsActivity;
 import org.louiswilliams.queueupplayer.activity.MainActivity;
@@ -59,6 +62,7 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
     private TrackListAdapter mTrackListAdapter;
     private View mView;
     private View mPlaylistHeader;
+    private Tracker mTracker;
 
     private MainActivity mActivity;
 
@@ -79,6 +83,8 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(true);
+        mTracker = ((QueueUpApplication) getActivity().getApplication()).getDefaultTracker();
+
     }
 
     @Override

@@ -249,6 +249,4 @@ public class PlaylistClient  {
         void onStateChange(QueueUpStateChange state);
         void onError(String message);
     }
-
-
 }

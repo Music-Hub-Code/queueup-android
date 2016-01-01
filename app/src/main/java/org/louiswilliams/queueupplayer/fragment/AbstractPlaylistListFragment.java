@@ -25,9 +25,12 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.gc.materialdesign.views.ProgressBarDeterminate;
+import com.google.android.gms.analytics.HitBuilders;
+import com.google.android.gms.analytics.Tracker;
 import com.squareup.picasso.Picasso;
 
 import org.json.JSONObject;
+import org.louiswilliams.queueupplayer.QueueUpApplication;
 import org.louiswilliams.queueupplayer.R;
 import org.louiswilliams.queueupplayer.activity.MainActivity;
 import org.louiswilliams.queueupplayer.queueup.LocationUpdateListener;
@@ -54,6 +57,7 @@ public abstract class AbstractPlaylistListFragment extends Fragment implements P
     protected PlaylistGridAdapter adapter;
     protected MainActivity mActivity;
     protected SwipeRefreshLayout mView;
+    protected Tracker mTracker;
 
     @Override
     public void onAttach(Context activity) {
@@ -73,6 +77,8 @@ public abstract class AbstractPlaylistListFragment extends Fragment implements P
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         super.setHasOptionsMenu(true);
+        mTracker = ((QueueUpApplication) getActivity().getApplication()).getDefaultTracker();
+
     }
 
     @Override
@@ -163,6 +169,8 @@ public abstract class AbstractPlaylistListFragment extends Fragment implements P
     }
 
     public void showCreatePlaylistDialog() {
+        mTracker.send(new HitBuilders.EventBuilder().setAction("playlist_create_dialog").build());
+
         if (mActivity.isClientRegistered()) {
             if (!mActivity.locationPermissionGranted(true) || !mActivity.isLocationEnabled(true)) {
                 return;
@@ -187,6 +195,7 @@ public abstract class AbstractPlaylistListFragment extends Fragment implements P
 
                 @Override
                 public void onCancel() {
+                    mTracker.send(new HitBuilders.EventBuilder().setAction("playlist_create_cancel").build());
                     locationListener.stopUpdates();
                 }
             });
@@ -203,6 +212,7 @@ public abstract class AbstractPlaylistListFragment extends Fragment implements P
         if (mActivity.isClientRegistered() || mActivity.clientHasName()) {
             mActivity.showPlaylistFragment(playlistId);
         } else {
+            mTracker.send(new HitBuilders.EventBuilder().setAction("user_name_dialog").build());
 
             final SetNameDialog setNameDialog = new SetNameDialog();
 
@@ -215,6 +225,7 @@ public abstract class AbstractPlaylistListFragment extends Fragment implements P
                     mActivity.setClientName(name, new QueueUp.CallReceiver<JSONObject>() {
                         @Override
                         public void onResult(JSONObject result) {
+                            mTracker.send(new HitBuilders.EventBuilder().setAction("user_name_created").build());
                             mActivity.showPlaylistFragment(playlistId);
                         }
 
@@ -227,12 +238,13 @@ public abstract class AbstractPlaylistListFragment extends Fragment implements P
 
                 @Override
                 public void onLogIn() {
+                    mTracker.send(new HitBuilders.EventBuilder().setAction("user_name_login").build());
                     mActivity.doLogin();
                 }
 
                 @Override
                 public void onCancel() {
-
+                    mTracker.send(new HitBuilders.EventBuilder().setAction("user_name_cancel").build());
                 }
             });
 

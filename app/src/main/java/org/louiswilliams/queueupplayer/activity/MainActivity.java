@@ -44,6 +44,7 @@ import com.facebook.FacebookSdk;
 import com.facebook.Profile;
 import com.facebook.login.LoginManager;
 import com.google.android.gms.analytics.ExceptionReporter;
+import com.google.android.gms.analytics.HitBuilders;
 import com.google.android.gms.analytics.Tracker;
 import com.spotify.sdk.android.authentication.AuthenticationClient;
 import com.spotify.sdk.android.authentication.AuthenticationRequest;
@@ -117,15 +118,16 @@ public class MainActivity
     private String mSpotifyClientId;
     private String mUserId;
     private String mUserName;
+    private Tracker mTracker;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         /* Set up Google analytics for uncaught exceptions */
-        Tracker tracker = ((QueueUpApplication)getApplication()).getDefaultTracker();
+        mTracker = ((QueueUpApplication)getApplication()).getDefaultTracker();
         Thread.UncaughtExceptionHandler uncaughtExceptionHandler = new ExceptionReporter(
-                tracker,
+                mTracker,
                 Thread.getDefaultUncaughtExceptionHandler(),
                 getApplicationContext()
         );
@@ -523,7 +525,8 @@ public class MainActivity
             AuthenticationRequest request = builder.build();
 
             AuthenticationClient.openLoginActivity(this, SPOTIFY_LOGIN_CODE, request);
-//            AuthenticationClient.openLoginInBrowser(this, request);
+            mTracker.send(new HitBuilders.EventBuilder().setAction("spotify_login_activity").setCategory("spotify").build());
+
             /* To be seen again... in onNewIntent */
         }
     }
@@ -534,6 +537,7 @@ public class MainActivity
         /* Consume the listener by invalidating it */
         spotifyAuthListener = null;
 
+        mTracker.send(new HitBuilders.EventBuilder().setAction("spotify_login_response").setCategory("spotify").setLabel(response.getType().name()).build());
         switch (response.getType()) {
             case CODE:
 
@@ -747,7 +751,12 @@ public class MainActivity
                 ActivityCompat.requestPermissions(MainActivity.this, new String[]{permission}, REQUEST_PERMISSION);
             }
         });
-        builder.setNegativeButton(R.string.no, null);
+        builder.setNegativeButton(R.string.no, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                mTracker.send(new HitBuilders.EventBuilder().setAction("location_permission_rationale_deny").setCategory("location").build());
+            }
+        });
         builder.create().show();
     }
 
@@ -763,7 +772,12 @@ public class MainActivity
                 startActivityForResult(intent, LOCATION_SETTINGS_CODE);
             }
         });
-        builder.setNegativeButton(R.string.no, null);
+        builder.setNegativeButton(R.string.no, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                mTracker.send(new HitBuilders.EventBuilder().setAction("location_enable_deny").setCategory("location").build());
+            }
+        });
         builder.create().show();
     }
 
@@ -789,10 +803,13 @@ public class MainActivity
     public void onRequestPermissionsResult(int requestCode, @NonNull String permissions[], @NonNull int[] grantResults) {
         switch (requestCode) {
             case REQUEST_PERMISSION:
+
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     initLocationListener(true);
+                    mTracker.send(new HitBuilders.EventBuilder().setAction("location_permission_granted").setCategory("location").build());
                 } else {
                     toast("Location permission not granted");
+                    mTracker.send(new HitBuilders.EventBuilder().setAction("location_permission_deny").setCategory("location").build());
                 }
                 break;
             default:
@@ -874,12 +891,13 @@ public class MainActivity
     }
 
     public void doLogin() {
+        mTracker.send(new HitBuilders.EventBuilder().setAction("login_activity").build());
         Intent loginIntent = new Intent(getBaseContext(), LoginActivity.class);
         startActivityForResult(loginIntent, LoginActivity.QUEUEUP_LOGIN_REQUEST_CODE);
-
     }
 
     public void doLogout() {
+        mTracker.send(new HitBuilders.EventBuilder().setAction("logout").build());
         mStore.clear();
 
         AuthenticationClient.clearCookies(this);
@@ -947,7 +965,7 @@ public class MainActivity
                 toast("Problem creating playlist");
             }
         });
-
+        mTracker.send(new HitBuilders.EventBuilder().setAction("playlist_create").build());
     }
 
     public QueueUpLocationListener getLocationListener() {
@@ -1005,6 +1023,8 @@ public class MainActivity
     protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
         super.onActivityResult(requestCode, resultCode, intent);
         if (requestCode == LoginActivity.QUEUEUP_LOGIN_REQUEST_CODE) {
+            mTracker.send(new HitBuilders.EventBuilder().setAction("login_result").setValue(resultCode).build());
+
             if (resultCode == RESULT_OK) {
                 recreate();
             } else if (resultCode == RESULT_CANCELED) {

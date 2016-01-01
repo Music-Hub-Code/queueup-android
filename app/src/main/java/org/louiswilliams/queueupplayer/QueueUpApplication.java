@@ -11,8 +11,10 @@ public class QueueUpApplication extends Application {
     private Tracker mTracker;
 
     synchronized public Tracker getDefaultTracker() {
-        GoogleAnalytics analytics = GoogleAnalytics.getInstance(this);
-        mTracker = analytics.newTracker("UA-65320728-1");
+        if (mTracker == null) {
+            GoogleAnalytics analytics = GoogleAnalytics.getInstance(this);
+            mTracker = analytics.newTracker("UA-65320728-1");
+        }
         return mTracker;
     }
 

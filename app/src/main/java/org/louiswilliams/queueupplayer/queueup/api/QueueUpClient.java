@@ -818,6 +818,7 @@ public class QueueUpClient {
         }
         if (inputStream == null) return new JSONObject();
 
+
         return readJsonFromStream(inputStream);
     }
 
@@ -825,10 +826,15 @@ public class QueueUpClient {
         BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
         StringBuilder response = new StringBuilder();
         String line;
-        while ((line = reader.readLine()) != null) {
-            response.append(line);
+        try {
+            while ((line = reader.readLine()) != null) {
+                response.append(line);
+            }
+        } catch (IOException e) {
+            throw e;
+        } finally {
+            reader.close();
         }
-        reader.close();
         JSONObject jsonResponse;
         try {
             jsonResponse = new JSONObject(response.toString());
@@ -844,9 +850,15 @@ public class QueueUpClient {
         connection.setFixedLengthStreamingMode(content.length());
         connection.setRequestProperty("Content-Type", "application/json");
 
+
         DataOutputStream writer = new DataOutputStream(connection.getOutputStream());
-        writer.write(content.getBytes());
-        writer.close();
+        try {
+            writer.write(content.getBytes());
+        } catch (IOException e) {
+            throw e;
+        } finally {
+            writer.close();
+        }
     }
 
 
