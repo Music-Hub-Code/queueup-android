@@ -1,8 +1,10 @@
 package org.louiswilliams.queueupplayer.fragment;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.Fragment;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -103,10 +105,7 @@ public class AddTrackFragment extends Fragment implements BackButtonListener {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 SpotifyTrack track = (SpotifyTrack) mTrackListAdapter.getItem(position);
-                mTrackListAdapter.mTrackList.remove(track);
-                mTrackListAdapter.notifyDataSetChanged();
-                addTrackToPlaylist(track);
-
+                showTrackOptionsDialog(track);
             }
         });
 
@@ -169,6 +168,41 @@ public class AddTrackFragment extends Fragment implements BackButtonListener {
         mActivity.hideKeyboard();
 
         super.onDestroy();
+    }
+
+    public void showTrackOptionsDialog(final SpotifyTrack track) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(mActivity);
+
+        String[] trackOptions = new String[] {"Add Track", "Exit and open in Spotify"};
+
+        builder.setTitle(track.name + " by " + track.artists.get(0).name);
+
+        builder.setItems(trackOptions, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                if (i == 0) {
+                    mTrackListAdapter.mTrackList.remove(track);
+                    mTrackListAdapter.notifyDataSetChanged();
+                    addTrackToPlaylist(track);
+                } else if (i == 1) {
+                    showOpenInSpotifyDialog(track.uri);
+                }
+            }
+        }).show();
+    }
+
+    public void showOpenInSpotifyDialog(final String uri) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(mActivity);
+
+        builder.setTitle("Are you sure you want to exit?")
+                .setMessage("This will leave the app and open Spotify")
+                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        mActivity.openSpotifyUri(uri);
+                    }
+                }).setNegativeButton("No", null)
+                .show();
     }
 
     public void addTrackToPlaylist(SpotifyTrack track) {

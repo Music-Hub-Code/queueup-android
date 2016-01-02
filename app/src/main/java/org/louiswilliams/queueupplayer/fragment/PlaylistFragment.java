@@ -570,7 +570,7 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
                 .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        openLink(uri);
+                        mActivity.openSpotifyUri(uri);
                     }
                 }).setNegativeButton("No", null)
                 .show();
@@ -686,15 +686,6 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
             mPlaylistClient.removeAllPlaylistListeners();
             mPlaylistClient.disconnect();
             mPlaylistClient = null;
-        }
-    }
-
-    public void openLink(String uri) {
-        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(uri));
-        try {
-            startActivity(intent);
-        } catch (ActivityNotFoundException e) {
-            mActivity.toast("Spotify not installed");
         }
     }
 

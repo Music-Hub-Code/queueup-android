@@ -1,8 +1,10 @@
 package org.louiswilliams.queueupplayer.fragment;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.Fragment;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -111,6 +113,14 @@ public class SpotifyPlaylistFragment extends Fragment {
             }
         });
 
+        mTrackList.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+            @Override
+            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+                showTrackOptionsDialog(mTrackListAdapter.getTrackList().get(position));
+                return true;
+            }
+        });
+
         mTrackList.setOnScrollListener(new AbsListView.OnScrollListener() {
             @Override
             public void onScrollStateChanged(AbsListView view, int scrollState) {
@@ -164,6 +174,37 @@ public class SpotifyPlaylistFragment extends Fragment {
 
             }
         });
+    }
+
+    public void showTrackOptionsDialog(final SpotifyTrack track) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(mActivity);
+
+        String[] trackOptions = new String[] {"Exit and open in Spotify"};
+
+        builder.setTitle(track.name + " by " + track.artists.get(0).name);
+
+        builder.setItems(trackOptions, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                if (i == 0) {
+                    showOpenInSpotifyDialog(track.uri);
+                }
+            }
+        }).show();
+    }
+
+    public void showOpenInSpotifyDialog(final String uri) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(mActivity);
+
+        builder.setTitle("Are you sure you want to exit?")
+            .setMessage("This will leave the app and open Spotify")
+            .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    mActivity.openSpotifyUri(uri);
+                }
+            }).setNegativeButton("No", null)
+            .show();
     }
 
     private void loadMoreItems() {

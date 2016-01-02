@@ -7,6 +7,7 @@ import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.app.SearchManager;
+import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -563,12 +564,14 @@ public class MainActivity
                         trackException(e);
                     }
                 });
+                break;
             case ERROR:
                 if (response.getError() != null) {
-                    e = new QueueUpException("Spotify login error: response.getError()");
+                    e = new QueueUpException("Spotify login error" + response.getError());
                 } else {
                     e = new QueueUpException("Spotify login error");
                 }
+                Log.e(QueueUp.LOG_TAG, "Spotify login error: " + response.getError());
                 if (receiver != null) {
                     receiver.onException(e);
                 }
@@ -960,6 +963,15 @@ public class MainActivity
         InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
         imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, InputMethodManager.HIDE_IMPLICIT_ONLY);
 
+    }
+
+    public void openSpotifyUri(String uri) {
+        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(uri));
+        try {
+            startActivity(intent);
+        } catch (ActivityNotFoundException e) {
+            toast("Spotify is not installed");
+        }
     }
 
     /* Create a new playlist */
