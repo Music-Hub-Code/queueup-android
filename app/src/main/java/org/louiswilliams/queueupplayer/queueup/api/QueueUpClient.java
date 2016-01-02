@@ -2,13 +2,18 @@ package org.louiswilliams.queueupplayer.queueup.api;
 
 import android.content.Context;
 import android.location.Location;
-import android.net.http.HttpResponseCache;
 import android.util.Log;
+
+import com.google.android.gms.analytics.HitBuilders;
+import com.google.android.gms.analytics.StandardExceptionParser;
+import com.google.android.gms.analytics.Tracker;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.louiswilliams.queueupplayer.QueueUpApplication;
 import org.louiswilliams.queueupplayer.R;
+import org.louiswilliams.queueupplayer.activity.MainActivity;
 import org.louiswilliams.queueupplayer.queueup.PlaybackReceiver;
 import org.louiswilliams.queueupplayer.queueup.PlaylistClient;
 import org.louiswilliams.queueupplayer.queueup.PlaylistPlayer;
@@ -26,9 +31,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
-import java.net.CacheResponse;
 import java.net.HttpURLConnection;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.net.UnknownHostException;
@@ -41,7 +44,6 @@ import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
@@ -51,19 +53,28 @@ public class QueueUpClient {
 
     private String clientToken, userId;
     private PlaylistPlayer playlistPlayer;
+    private static Context context;
     private static SSLContext sslContext;
     private static HttpsURLConnection searchGetRequest;
+    private static Tracker tracker;
 
     private static final String CF_CSR = "X.509";
     private static final String TLS = "TLS";
 
 
-    public QueueUpClient(Context context, String clientToken, String userId) throws QueueUpException {
+    public QueueUpClient(Context ctx, String clientToken, String userId) throws QueueUpException {
         this.clientToken = clientToken;
         this.userId = userId;
 
+        if (context == null) {
+            context = ctx;
+        }
+
         if (sslContext == null) {
-            sslContext = createSslContext(context);
+            sslContext = createSslContext(ctx);
+        }
+        if (tracker == null) {
+            tracker = ((QueueUpApplication) ctx.getApplicationContext()).getDefaultTracker();
         }
     }
 
@@ -785,7 +796,9 @@ public class QueueUpClient {
                             message = String.format(messageFormat, errName, connection.getResponseCode(), "No data sent");
                         }
 
-                        receiver.onException(new QueueUpException(message));
+                        Exception e = new QueueUpException(message);
+                        MainActivity.trackExceptionWithContext(tracker, context, e);
+                        receiver.onException(e);
                     }
 
 

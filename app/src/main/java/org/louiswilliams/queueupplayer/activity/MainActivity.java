@@ -45,6 +45,7 @@ import com.facebook.Profile;
 import com.facebook.login.LoginManager;
 import com.google.android.gms.analytics.ExceptionReporter;
 import com.google.android.gms.analytics.HitBuilders;
+import com.google.android.gms.analytics.StandardExceptionParser;
 import com.google.android.gms.analytics.Tracker;
 import com.spotify.sdk.android.authentication.AuthenticationClient;
 import com.spotify.sdk.android.authentication.AuthenticationRequest;
@@ -508,6 +509,7 @@ public class MainActivity
                     @Override
                     public void onException(Exception e) {
                         listener.onException(new Exception("Error refreshing token: ", e));
+                        trackException(e);
                     }
                 });
             }
@@ -537,6 +539,7 @@ public class MainActivity
         /* Consume the listener by invalidating it */
         spotifyAuthListener = null;
 
+        Exception e;
         mTracker.send(new HitBuilders.EventBuilder().setAction("spotify_login_response").setCategory("spotify").setLabel(response.getType().name()).build());
         switch (response.getType()) {
             case CODE:
@@ -553,18 +556,28 @@ public class MainActivity
 
                     @Override
                     public void onException(Exception e) {
+                        e = new Exception("Error swapping code for token", e);
                         if (receiver != null) {
-                            receiver.onException(new Exception("Error swapping code for token", e));
+                            receiver.onException(e);
                         }
+                        trackException(e);
                     }
                 });
             case ERROR:
-                if (response.getError() != null && receiver != null) {
-                    receiver.onException(new QueueUpException(response.getError()));
+                if (response.getError() != null) {
+                    e = new QueueUpException("Spotify login error: response.getError()");
+                } else {
+                    e = new QueueUpException("Spotify login error");
                 }
+                if (receiver != null) {
+                    receiver.onException(e);
+                }
+                trackException(e);
                 break;
             default:
-                receiver.onException(new QueueUpException("Received response from Spotify: " + response.getType().name()));
+                e = new QueueUpException("Received response from Spotify: " + response.getType().name());
+                receiver.onException(e);
+                trackException(e);
                 break;
         }
 
@@ -1068,6 +1081,17 @@ public class MainActivity
                 getFragmentManager().popBackStack();
             }
         }
+    }
+
+    public static void trackExceptionWithContext(Tracker tracker, Context context, Exception e) {
+        tracker.send(new HitBuilders.ExceptionBuilder()
+                .setDescription(new StandardExceptionParser(context, null).getDescription(Thread.currentThread().getName(), e))
+                .setFatal(false)
+                .build());
+    }
+
+    public void trackException(Exception e) {
+        MainActivity.trackExceptionWithContext(mTracker, this, e);
     }
 
     public void toast(final String message) {
