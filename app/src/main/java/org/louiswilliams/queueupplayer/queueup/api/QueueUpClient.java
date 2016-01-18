@@ -47,6 +47,7 @@ import java.util.List;
 
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 
 public class QueueUpClient {
@@ -80,25 +81,33 @@ public class QueueUpClient {
 
     public static SSLContext createSslContext(Context applicationContext) throws QueueUpException {
         SSLContext sslContext = null;
+
         try {
-            CertificateFactory cf = CertificateFactory.getInstance(CF_CSR);
-            InputStream in = applicationContext.getResources().openRawResource(R.raw.queueup_crt);
-            Certificate ca = cf.generateCertificate(in);
-            in.close();
+            /* Pin Certificate. Not doing this because of dealing with certificate renewals */
+//            CertificateFactory cf = CertificateFactory.getInstance(CF_CSR);
+//            InputStream in = applicationContext.getResources().openRawResource(R.raw.queueup_crt);
+//            Certificate ca = cf.generateCertificate(in);
+//            in.close();
+//
+//            String keyStoreType = KeyStore.getDefaultType();
+//            KeyStore keyStore = KeyStore.getInstance(keyStoreType);
+//            keyStore.load(null, null);
+//            keyStore.setCertificateEntry("ca", ca);
+//
+//            String tmfAlgorithm = TrustManagerFactory.getDefaultAlgorithm();
+//            TrustManagerFactory tmf = TrustManagerFactory.getInstance(tmfAlgorithm);
+//            tmf.init(keyStore);
+//
+//            sslContext = SSLContext.getInstance(TLS);
+//            sslContext.init(null, tmf.getTrustManagers(), null);
 
-            String keyStoreType = KeyStore.getDefaultType();
-            KeyStore keyStore = KeyStore.getInstance(keyStoreType);
-            keyStore.load(null, null);
-            keyStore.setCertificateEntry("ca", ca);
-
-            String tmfAlgorithm = TrustManagerFactory.getDefaultAlgorithm();
-            TrustManagerFactory tmf = TrustManagerFactory.getInstance(tmfAlgorithm);
-            tmf.init(keyStore);
+            /* Pin public key */
+            TrustManager tm[] = { new PubKeyManager() };
 
             sslContext = SSLContext.getInstance(TLS);
-            sslContext.init(null, tmf.getTrustManagers(), null);
+            sslContext.init(null, tm, null);
 
-        } catch (CertificateException | IOException | KeyStoreException | NoSuchAlgorithmException | KeyManagementException e) {
+        } catch ( NoSuchAlgorithmException | KeyManagementException e) {
             e.printStackTrace();
             throw new QueueUpException("Error loading SSL certificate!", e);
         }
@@ -808,6 +817,9 @@ public class QueueUpClient {
                     if (e instanceof UnknownHostException) {
                         e.printStackTrace();
                         receiver.onException(new QueueUpException("Not connected to the Internet"));
+                    } else {
+                        receiver.onException(e);
+                        e.printStackTrace();
                     }
                 } finally {
                     if (connection != null) {
