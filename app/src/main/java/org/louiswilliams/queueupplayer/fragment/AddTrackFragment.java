@@ -132,7 +132,7 @@ public class AddTrackFragment extends Fragment implements BackButtonListener {
                 if (s.length() == 0) {
                     searchClear.setVisibility(View.GONE);
                     importParent.setVisibility(View.VISIBLE);
-                    mTrackListAdapter.updateTrackList(Collections.<SpotifyTrack>emptyList());
+                    mTrackListAdapter.updateTrackList(new ArrayList<SpotifyTrack>());
                 } else {
                     searchClear.setVisibility(View.VISIBLE);
                     importParent.setVisibility(View.GONE);
