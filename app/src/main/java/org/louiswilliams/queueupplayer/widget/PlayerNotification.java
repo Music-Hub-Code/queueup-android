@@ -76,7 +76,7 @@ public class PlayerNotification extends Notification implements PlaylistListener
         PendingIntent openAppIntent = PendingIntent.getActivity(mContext, 0, new Intent(mContext, MainActivity.class), 0);
         mBuilder.setContentIntent(openAppIntent);
 
-        mBuilder.setSmallIcon(R.drawable.ic_action_pause_circle_fill);
+        mBuilder.setSmallIcon(R.mipmap.ic_queueup);
 
     }
 

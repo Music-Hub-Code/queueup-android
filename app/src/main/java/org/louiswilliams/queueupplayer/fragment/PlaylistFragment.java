@@ -342,53 +342,61 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
     }
 
 
-    public void showPlaylistControls(View parent, boolean playing) {
-        View playlistControls = mActivity.getLayoutInflater().inflate(R.layout.playlist_controls, null);
+    public void showPlaylistControls(final View parent, final boolean playing) {
+        if (Looper.getMainLooper() == Looper.myLooper()) {
+            mActivity.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
 
-        /* Replace the contents of the frame with the new control layout */
-        FrameLayout controlFrame = (FrameLayout) parent.findViewById(R.id.playlist_control_frame);
-        controlFrame.removeAllViews();
-        controlFrame.addView(playlistControls);
+                    View playlistControls = mActivity.getLayoutInflater().inflate(R.layout.playlist_controls, null);
 
-        ImageButton playButton = (ImageButton) playlistControls.findViewById(R.id.play_button);
-        ImageButton skipButton = (ImageButton) playlistControls.findViewById(R.id.skip_button);
-        ImageButton stopButton = (ImageButton) playlistControls.findViewById(R.id.stop_playback_button);
+                    /* Replace the contents of the frame with the new control layout */
+                    FrameLayout controlFrame = (FrameLayout) parent.findViewById(R.id.playlist_control_frame);
+                    controlFrame.removeAllViews();
+                    controlFrame.addView(playlistControls);
 
-        View.OnClickListener playButtonListener = new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                /* Just invert the current playing status */
-                QueueUpStateChange current =  mActivity.getPlaybackController().getCurrentState();
+                    ImageButton playButton = (ImageButton) playlistControls.findViewById(R.id.play_button);
+                    ImageButton skipButton = (ImageButton) playlistControls.findViewById(R.id.skip_button);
+                    ImageButton stopButton = (ImageButton) playlistControls.findViewById(R.id.stop_playback_button);
 
-                /* Unless it's null, which means we should just play anyways */
-                boolean updateToPlaying = (current == null || !current.playing);
-                updateTrackPlaying(updateToPlaying);
-            }
-        };
+                    View.OnClickListener playButtonListener = new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            /* Just invert the current playing status */
+                            QueueUpStateChange current =  mActivity.getPlaybackController().getCurrentState();
 
-        View.OnClickListener skipButtonListener = new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                /* Send the update signal */
-                mActivity.getPlaybackController().updateTrackDone();
-            }
-        };
+                            /* Unless it's null, which means we should just play anyways */
+                            boolean updateToPlaying = (current == null || !current.playing);
+                            updateTrackPlaying(updateToPlaying);
+                        }
+                    };
 
-        View.OnClickListener stopButtonListener = new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                /* Send the update signal */
-                mActivity.stopPlayback();
-            }
-        };
+                    View.OnClickListener skipButtonListener = new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            /* Send the update signal */
+                            mActivity.getPlaybackController().updateTrackDone();
+                        }
+                    };
 
-        playButton.setOnClickListener(playButtonListener);
-        skipButton.setOnClickListener(skipButtonListener);
-        stopButton.setOnClickListener(stopButtonListener);
+                    View.OnClickListener stopButtonListener = new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            /* Send the update signal */
+                            mActivity.stopPlayback();
+                        }
+                    };
 
-        /* Initialize the play button */
-        updatePlayButton(playButton, playing);
+                    playButton.setOnClickListener(playButtonListener);
+                    skipButton.setOnClickListener(skipButtonListener);
+                    stopButton.setOnClickListener(stopButtonListener);
 
+                    /* Initialize the play button */
+                    updatePlayButton(playButton, playing);
+
+                }
+            });
+        }
     }
 
     private  void updatePlayButton(final ImageButton button, final boolean playing) {
@@ -427,8 +435,12 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
                 }
 
                 if (current != null) {
-                    trackName.setText(current.name);
-                    trackArtist.setText(current.artists.get(0).name);
+                    if (trackName != null) {
+                        trackName.setText(current.name);
+                    }
+                    if (trackArtist != null){
+                        trackArtist.setText(current.artists.get(0).name);
+                    }
                 }
 
             }
@@ -813,7 +825,9 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
             TextView artist = (TextView) trackView.findViewById(R.id.track_list_item_artist);
 
             title.setText(track.track.name);
-            artist.setText(track.track.artists.get(0).name);
+            if (track.track.artists.size() > 0) {
+                artist.setText(track.track.artists.get(0).name);
+            }
 
             /* Voting views */
             View votes = trackView.findViewById(R.id.track_votes);
@@ -838,7 +852,9 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
             List<String> imageUrls = track.track.album.imageUrls;
             ImageView image = (ImageView) trackView.findViewById(R.id.track_list_item_image);
 
-            Picasso.with(mContext).load(imageUrls.get(0)).into(image);
+            if (imageUrls.size() > 0) {
+                Picasso.with(mContext).load(imageUrls.get(0)).into(image);
+            }
 
             trackView.setOnClickListener(new View.OnClickListener() {
                 @Override
