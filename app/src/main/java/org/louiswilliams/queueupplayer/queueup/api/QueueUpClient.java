@@ -600,10 +600,7 @@ public class QueueUpClient {
             return;
         }
 
-        if (searchGetRequest != null) {
-            searchGetRequest.disconnect();
-            searchGetRequest = null;
-        }
+        cancelSearch();
 
         String encodedQuery;
 
@@ -643,10 +640,7 @@ public class QueueUpClient {
             return;
         }
 
-        if (searchGetRequest != null) {
-            searchGetRequest.disconnect();
-            searchGetRequest = null;
-        }
+        cancelSearch();
 
         String encodedQuery;
 
@@ -743,6 +737,18 @@ public class QueueUpClient {
             connection.setSSLSocketFactory(sslContext.getSocketFactory());
         }
         return sendRequest(connection, data, receiver);
+    }
+
+    private static void cancelSearch() {
+        if (searchGetRequest != null) {
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    searchGetRequest.disconnect();
+                    searchGetRequest = null;
+                }
+            }).start();
+        }
     }
 
     /**
