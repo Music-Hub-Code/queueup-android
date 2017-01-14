@@ -71,9 +71,9 @@ public class QueueUpClient {
             context = ctx;
         }
 
-        if (sslContext == null) {
-            sslContext = createSslContext(ctx);
-        }
+//        if (sslContext == null) {
+//            sslContext = createSslContext(ctx);
+//        }
         if (tracker == null) {
             tracker = ((QueueUpApplication) ctx.getApplicationContext()).getDefaultTracker();
         }
