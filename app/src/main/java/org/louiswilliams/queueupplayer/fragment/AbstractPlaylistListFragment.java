@@ -401,15 +401,20 @@ public abstract class AbstractPlaylistListFragment extends Fragment implements P
     }
 
     @Override
-    public void onTrackProgress(int progress, int duration) {
+    public void onTrackProgress(final int progress, final int duration) {
         final ProgressBarDeterminate progressBar = (ProgressBarDeterminate) mView.findViewById(R.id.track_progress);
         final TextView progressLabel = (TextView) mView.findViewById(R.id.track_progress_text);
-        String progressText = String.format("%d:%02d", progress / (60 * 1000), (progress / 1000) % 60);
-        String durationText = String.format("%d:%02d", duration / (60 * 1000), (duration / 1000) % 60);
+        final String progressText = String.format("%d:%02d", progress / (60 * 1000), (progress / 1000) % 60);
+        final String durationText = String.format("%d:%02d", duration / (60 * 1000), (duration / 1000) % 60);
 
-        progressLabel.setText(progressText+ "/" + durationText);
-        progressBar.setMax(duration);
-        progressBar.setProgress(progress);
+        mActivity.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                progressLabel.setText(progressText+ "/" + durationText);
+                progressBar.setMax(duration);
+                progressBar.setProgress(progress);
+            }
+        });
 
     }
 

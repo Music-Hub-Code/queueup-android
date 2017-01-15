@@ -343,60 +343,58 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
 
 
     public void showPlaylistControls(final View parent, final boolean playing) {
-        if (Looper.getMainLooper() == Looper.myLooper()) {
-            mActivity.runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
+        mActivity.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
 
-                    View playlistControls = mActivity.getLayoutInflater().inflate(R.layout.playlist_controls, null);
+                View playlistControls = mActivity.getLayoutInflater().inflate(R.layout.playlist_controls, null);
 
-                    /* Replace the contents of the frame with the new control layout */
-                    FrameLayout controlFrame = (FrameLayout) parent.findViewById(R.id.playlist_control_frame);
-                    controlFrame.removeAllViews();
-                    controlFrame.addView(playlistControls);
+                /* Replace the contents of the frame with the new control layout */
+                FrameLayout controlFrame = (FrameLayout) parent.findViewById(R.id.playlist_control_frame);
+                controlFrame.removeAllViews();
+                controlFrame.addView(playlistControls);
 
-                    ImageButton playButton = (ImageButton) playlistControls.findViewById(R.id.play_button);
-                    ImageButton skipButton = (ImageButton) playlistControls.findViewById(R.id.skip_button);
-                    ImageButton stopButton = (ImageButton) playlistControls.findViewById(R.id.stop_playback_button);
+                ImageButton playButton = (ImageButton) playlistControls.findViewById(R.id.play_button);
+                ImageButton skipButton = (ImageButton) playlistControls.findViewById(R.id.skip_button);
+                ImageButton stopButton = (ImageButton) playlistControls.findViewById(R.id.stop_playback_button);
 
-                    View.OnClickListener playButtonListener = new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-                            /* Just invert the current playing status */
-                            QueueUpStateChange current =  mActivity.getPlaybackController().getCurrentState();
+                View.OnClickListener playButtonListener = new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        /* Just invert the current playing status */
+                        QueueUpStateChange current =  mActivity.getPlaybackController().getCurrentState();
 
-                            /* Unless it's null, which means we should just play anyways */
-                            boolean updateToPlaying = (current == null || !current.playing);
-                            updateTrackPlaying(updateToPlaying);
-                        }
-                    };
+                        /* Unless it's null, which means we should just play anyways */
+                        boolean updateToPlaying = (current == null || !current.playing);
+                        updateTrackPlaying(updateToPlaying);
+                    }
+                };
 
-                    View.OnClickListener skipButtonListener = new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-                            /* Send the update signal */
-                            mActivity.getPlaybackController().updateTrackDone();
-                        }
-                    };
+                View.OnClickListener skipButtonListener = new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        /* Send the update signal */
+                        mActivity.getPlaybackController().updateTrackDone();
+                    }
+                };
 
-                    View.OnClickListener stopButtonListener = new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-                            /* Send the update signal */
-                            mActivity.stopPlayback();
-                        }
-                    };
+                View.OnClickListener stopButtonListener = new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        /* Send the update signal */
+                        mActivity.stopPlayback();
+                    }
+                };
 
-                    playButton.setOnClickListener(playButtonListener);
-                    skipButton.setOnClickListener(skipButtonListener);
-                    stopButton.setOnClickListener(stopButtonListener);
+                playButton.setOnClickListener(playButtonListener);
+                skipButton.setOnClickListener(skipButtonListener);
+                stopButton.setOnClickListener(stopButtonListener);
 
-                    /* Initialize the play button */
-                    updatePlayButton(playButton, playing);
+                /* Initialize the play button */
+                updatePlayButton(playButton, playing);
 
-                }
-            });
-        }
+            }
+        });
     }
 
     private  void updatePlayButton(final ImageButton button, final boolean playing) {
@@ -667,7 +665,11 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
 
 
     public boolean currentPlaylistIsPlaying() {
-        return (mActivity.getPlaybackController() != null && mActivity.getPlaybackController().getPlaylistId().equals(mPlaylistId));
+        if (mActivity.getPlaybackController() != null) {
+            String id = mActivity.getPlaybackController().getPlaylistId();
+            return mPlaylistId.equals(id);
+        }
+        return false;
     }
 
     public void subscribeAsClient() {
@@ -714,16 +716,22 @@ public class PlaylistFragment extends Fragment implements PlaylistListener {
     }
 
     @Override
-    public void onTrackProgress(int progress, int duration) {
+    public void onTrackProgress(final int progress, final int duration) {
         final ProgressBarDeterminate progressBar = (ProgressBarDeterminate) mView.findViewById(R.id.track_progress);
         final TextView progressLabel = (TextView) mView.findViewById(R.id.track_progress_text);
-        String progressText = String.format("%d:%02d", progress / (60 * 1000), (progress / 1000) % 60);
-        String durationText = String.format("%d:%02d", duration / (60 * 1000), (duration / 1000) % 60);
+        final String progressText = String.format("%d:%02d", progress / (60 * 1000), (progress / 1000) % 60);
+        final String durationText = String.format("%d:%02d", duration / (60 * 1000), (duration / 1000) % 60);
 
         if (progressBar != null && progressLabel != null) {
-            progressLabel.setText(progressText+ "/" + durationText);
-            progressBar.setMax(duration);
-            progressBar.setProgress(progress);
+            mActivity.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    progressLabel.setText(progressText+ "/" + durationText);
+                    progressBar.setMax(duration);
+                    progressBar.setProgress(progress);
+
+                }
+            });
         }
 
     }

@@ -9,8 +9,8 @@ android {
         applicationId "org.louiswilliams.queueupplayer"
         minSdkVersion 16
         targetSdkVersion 25
-        versionCode 21
-        versionName "1.4.5"
+        versionCode 22
+        versionName "1.4.6"
     }
     buildTypes {
         release {
@@ -44,8 +44,8 @@ dependencies {
     compile 'com.facebook.android:facebook-android-sdk:4.4.0'
     compile 'com.android.support:appcompat-v7:25.1.0'
     compile 'com.squareup.picasso:picasso:2.5.2'
-    compile 'com.spotify.sdk:spotify-auth:1.0.0-beta12@aar'
-    compile 'com.spotify.sdk:spotify-player:1.0.0-beta12@aar'
+    compile 'com.spotify.sdk:spotify-android-auth-1.0.0@aar'
+    compile 'com.spotify.sdk:spotify-player-24-noconnect-2.20b@aar'
     compile 'com.github.navasmdc:MaterialDesign:1.5@aar'
     compile 'io.socket:socket.io-client:0.6.1'
     compile 'com.google.android.gms:play-services-analytics:10.0.1'

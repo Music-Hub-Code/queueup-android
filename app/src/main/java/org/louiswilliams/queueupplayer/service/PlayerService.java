@@ -10,8 +10,10 @@ import com.google.android.gms.analytics.ExceptionReporter;
 import com.google.android.gms.analytics.Tracker;
 import com.spotify.sdk.android.player.Config;
 import com.spotify.sdk.android.player.ConnectionStateCallback;
+import com.spotify.sdk.android.player.Error;
 import com.spotify.sdk.android.player.Player;
 import com.spotify.sdk.android.player.Spotify;
+import com.spotify.sdk.android.player.SpotifyPlayer;
 
 import org.louiswilliams.queueupplayer.QueueUpApplication;
 import org.louiswilliams.queueupplayer.R;
@@ -23,7 +25,7 @@ import org.louiswilliams.queueupplayer.queueup.PlaylistPlayer;
 import org.louiswilliams.queueupplayer.queueup.QueueUp;
 import org.louiswilliams.queueupplayer.queueup.QueueUpException;
 import org.louiswilliams.queueupplayer.queueup.QueueUpStore;
-import org.louiswilliams.queueupplayer.queueup.SpotifyPlayer;
+import org.louiswilliams.queueupplayer.queueup.QueueUpPlayer;
 import org.louiswilliams.queueupplayer.queueup.api.QueueUpClient;
 import org.louiswilliams.queueupplayer.queueup.objects.QueueUpStateChange;
 import org.louiswilliams.queueupplayer.widget.PlayerNotification;
@@ -37,7 +39,7 @@ public class PlayerService extends Service implements PlaybackController, Connec
     private PlaylistPlayer mPlaylistPlayer;
     private PlaybackReceiver mPlaybackReceiver;
     private QueueUpClient queueUpClient;
-    private SpotifyPlayer mSpotifyPlayer;
+    private QueueUpPlayer mQueueUpPlayer;
     private String mSpotifyClientId;
     private Tracker mTracker;
 
@@ -109,18 +111,20 @@ public class PlayerService extends Service implements PlaybackController, Connec
 
     public void initPlayer(String accessToken) {
         Config playerConfig = new Config(this, accessToken, mSpotifyClientId);
-        playerConfig.useCache(false);
+        playerConfig.useCache(true);
 
         /* Don't getString another player if there's already one initialized */
-        if (mSpotifyPlayer != null &&  mSpotifyPlayer.getPlayer().isInitialized()) {
+        if (mQueueUpPlayer != null &&  mQueueUpPlayer.getPlayer().isInitialized()) {
             beginPlayback();
         } else {
 
 
-            Player player = Spotify.getPlayer(playerConfig, this, new Player.InitializationObserver() {
+            SpotifyPlayer player = Spotify.getPlayer(playerConfig, this, new SpotifyPlayer.InitializationObserver() {
 
                 @Override
-                public void onInitialized(Player player) {
+                public void onInitialized(SpotifyPlayer spotifyPlayer) {
+                    // Construct our player wrapper
+                    mQueueUpPlayer = new QueueUpPlayer(PlayerService.this, spotifyPlayer);
                     beginPlayback();
                 }
 
@@ -131,8 +135,6 @@ public class PlayerService extends Service implements PlaybackController, Connec
                 }
             });
 
-            /* Construct our player wrapper */
-            mSpotifyPlayer = new SpotifyPlayer(PlayerService.this, player);
         }
     }
 
@@ -140,20 +142,17 @@ public class PlayerService extends Service implements PlaybackController, Connec
         Log.d(QueueUp.LOG_TAG, "Init Player");
 
         /* Attach the player listener */
-        mSpotifyPlayer.startReceivingPlaybackNotifications();
-        mSpotifyPlayer.getPlayer().addConnectionStateCallback(this);
-        addPlaylistListener(mSpotifyPlayer);
-        updatePlaybackReady(true);
-        updateTrackPlaying(true);
-
+        mQueueUpPlayer.startReceivingPlaybackNotifications();
+        mQueueUpPlayer.getPlayer().addConnectionStateCallback(this);
+        addPlaylistListener(mQueueUpPlayer);
     }
 
     public void unsubscribeFromCurrentPlaylist() {
         if (mPlaylistPlayer != null) {
             Log.d(QueueUp.LOG_TAG, "Unsubscribing from previous player");
             removeAllPlaylistListeners();
-            if (mSpotifyPlayer != null) {
-                mSpotifyPlayer.stopReceivingPlaybackNotifications();
+            if (mQueueUpPlayer != null) {
+                mQueueUpPlayer.stopReceivingPlaybackNotifications();
             }
             mPlaylistPlayer = null;
         }
@@ -172,8 +171,8 @@ public class PlayerService extends Service implements PlaybackController, Connec
         updateTrackPlaying(false);
         mPlaylistPlayer.disconnect();
         mNotification.cancel();
-        if (mSpotifyPlayer != null) {
-            mSpotifyPlayer.stopReceivingPlaybackNotifications();
+        if (mQueueUpPlayer != null) {
+            mQueueUpPlayer.stopReceivingPlaybackNotifications();
             Spotify.destroyPlayer(this);
         }
         super.onDestroy();
@@ -254,7 +253,9 @@ public class PlayerService extends Service implements PlaybackController, Connec
     /* Spotify ConnectionStateCallback */
     @Override
     public void onLoggedIn() {
-
+        Log.i(QueueUp.LOG_TAG, "Spotify Logged in");
+        updatePlaybackReady(true);
+        updateTrackPlaying(true);
     }
 
     @Override
@@ -264,8 +265,8 @@ public class PlayerService extends Service implements PlaybackController, Connec
     }
 
     @Override
-    public void onLoginFailed(Throwable throwable) {
-
+    public void onLoginFailed(Error error) {
+        Log.e(QueueUp.LOG_TAG, "Login error: " + error.toString());
     }
 
     @Override

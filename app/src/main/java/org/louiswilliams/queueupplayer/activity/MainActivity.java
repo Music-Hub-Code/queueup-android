@@ -916,7 +916,6 @@ public class MainActivity
         mTracker.send(new HitBuilders.EventBuilder().setAction("logout").build());
         mStore.clear();
 
-        AuthenticationClient.clearCookies(this);
         LoginManager.getInstance().logOut();
 
         recreate();
